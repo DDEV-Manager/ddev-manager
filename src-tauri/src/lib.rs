@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::thread;
 use tauri::{Emitter, Window};
+use tokio::process::Command as AsyncCommand;
 
 /// Error type for DDEV operations
 #[derive(Debug, thiserror::Error)]
@@ -235,15 +236,16 @@ struct DdevJsonResponse<T> {
     time: String,
 }
 
-/// Run a DDEV command and return the raw output
-fn run_ddev_command(args: &[&str]) -> Result<String, DdevError> {
+/// Run a DDEV command and return the raw output (async version)
+async fn run_ddev_command_async(args: &[&str]) -> Result<String, DdevError> {
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
 
-    let output = Command::new(&ddev_cmd)
+    let output = AsyncCommand::new(&ddev_cmd)
         .args(args)
         .env("PATH", &enhanced_path)
         .output()
+        .await
         .map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {
                 DdevError::NotInstalled
@@ -388,12 +390,14 @@ fn run_ddev_command_streaming(
     Ok(())
 }
 
-/// Run a DDEV command with JSON output
-fn run_ddev_json_command<T: for<'de> Deserialize<'de>>(args: &[&str]) -> Result<T, DdevError> {
+/// Run a DDEV command with JSON output (async version)
+async fn run_ddev_json_command_async<T: for<'de> Deserialize<'de>>(
+    args: &[&str],
+) -> Result<T, DdevError> {
     let mut full_args = vec!["--json-output"];
     full_args.extend_from_slice(args);
 
-    let output = run_ddev_command(&full_args)?;
+    let output = run_ddev_command_async(&full_args).await?;
 
     // Parse the JSON response
     let response: DdevJsonResponse<T> =
@@ -404,14 +408,14 @@ fn run_ddev_json_command<T: for<'de> Deserialize<'de>>(args: &[&str]) -> Result<
 
 /// List all DDEV projects
 #[tauri::command]
-fn list_projects() -> Result<Vec<DdevProjectBasic>, DdevError> {
-    run_ddev_json_command(&["list"])
+async fn list_projects() -> Result<Vec<DdevProjectBasic>, DdevError> {
+    run_ddev_json_command_async(&["list"]).await
 }
 
 /// Get detailed information about a specific project
 #[tauri::command]
-fn describe_project(name: String) -> Result<DdevProjectDetails, DdevError> {
-    run_ddev_json_command(&["describe", &name])
+async fn describe_project(name: String) -> Result<DdevProjectDetails, DdevError> {
+    run_ddev_json_command_async(&["describe", &name]).await
 }
 
 /// Start a DDEV project (non-blocking, streams output via events)
@@ -440,40 +444,37 @@ fn poweroff(window: Window) -> Result<(), DdevError> {
 
 /// List snapshots for a project
 #[tauri::command]
-fn list_snapshots(project: String) -> Result<String, DdevError> {
-    run_ddev_command(&["snapshot", "--list", &project])
+async fn list_snapshots(project: String) -> Result<String, DdevError> {
+    run_ddev_command_async(&["snapshot", "--list", &project]).await
 }
 
 /// Create a snapshot for a project
 #[tauri::command]
-fn create_snapshot(project: String, name: Option<String>) -> Result<String, DdevError> {
-    let mut args = vec!["snapshot"];
-
-    if let Some(ref snapshot_name) = name {
-        args.push("--name");
-        args.push(snapshot_name);
-    }
-
-    args.push(&project);
-    run_ddev_command(&args)
+async fn create_snapshot(project: String, name: Option<String>) -> Result<String, DdevError> {
+    let args = match &name {
+        Some(snapshot_name) => vec!["snapshot", "--name", snapshot_name, &project],
+        None => vec!["snapshot", &project],
+    };
+    run_ddev_command_async(&args).await
 }
 
 /// Restore a snapshot for a project
 #[tauri::command]
-fn restore_snapshot(project: String, snapshot: String) -> Result<String, DdevError> {
-    run_ddev_command(&["snapshot", "restore", &snapshot, &project])
+async fn restore_snapshot(project: String, snapshot: String) -> Result<String, DdevError> {
+    run_ddev_command_async(&["snapshot", "restore", &snapshot, &project]).await
 }
 
 /// Check if DDEV is installed
 #[tauri::command]
-fn check_ddev_installed() -> Result<bool, DdevError> {
+async fn check_ddev_installed() -> Result<bool, DdevError> {
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
 
-    match Command::new(&ddev_cmd)
+    match AsyncCommand::new(&ddev_cmd)
         .arg("version")
         .env("PATH", &enhanced_path)
         .output()
+        .await
     {
         Ok(output) => Ok(output.status.success()),
         Err(_) => Ok(false),
@@ -482,8 +483,8 @@ fn check_ddev_installed() -> Result<bool, DdevError> {
 
 /// Get DDEV version information
 #[tauri::command]
-fn get_ddev_version() -> Result<String, DdevError> {
-    run_ddev_command(&["version"])
+async fn get_ddev_version() -> Result<String, DdevError> {
+    run_ddev_command_async(&["version"]).await
 }
 
 /// Open project URL in default browser
