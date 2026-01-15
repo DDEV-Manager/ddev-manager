@@ -5,6 +5,7 @@ import { ProjectDetails } from "@/components/projects/ProjectDetails";
 import { Terminal } from "@/components/terminal/Terminal";
 import { useDdevInstalled } from "@/hooks/useDdev";
 import { useTerminalStore } from "@/stores/terminalStore";
+import { useTheme } from "@/hooks/useTheme";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient({
@@ -19,6 +20,9 @@ const queryClient = new QueryClient({
 function AppContent() {
   const { data: isInstalled, isLoading } = useDdevInstalled();
   const { isOpen, close, toggle } = useTerminalStore();
+
+  // Initialize theme and zoom settings
+  useTheme();
 
   if (isLoading) {
     return (

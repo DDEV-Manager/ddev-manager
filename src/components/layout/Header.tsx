@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Power, Settings, RefreshCw } from "lucide-react";
 import { usePoweroff, useProjects } from "@/hooks/useDdev";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/useDdev";
 import { cn } from "@/lib/utils";
+import { SettingsModal } from "@/components/settings/SettingsModal";
 
 export function Header() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const queryClient = useQueryClient();
   const poweroff = usePoweroff();
   const { data: projects } = useProjects();
@@ -61,12 +64,15 @@ export function Header() {
         </button>
 
         <button
+          onClick={() => setIsSettingsOpen(true)}
           className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           title="Settings"
         >
           <Settings className="h-4 w-4" />
         </button>
       </div>
+
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </header>
   );
 }

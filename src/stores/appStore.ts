@@ -23,6 +23,10 @@ interface AppState {
   // Theme
   theme: "light" | "dark" | "system";
   setTheme: (theme: "light" | "dark" | "system") => void;
+
+  // Zoom (percentage: 50-200)
+  zoom: number;
+  setZoom: (zoom: number) => void;
 }
 
 const defaultFilter: ProjectFilter = {
@@ -62,11 +66,16 @@ export const useAppStore = create<AppState>()(
       // Theme
       theme: "system",
       setTheme: (theme) => set({ theme }),
+
+      // Zoom
+      zoom: 100,
+      setZoom: (zoom) => set({ zoom: Math.min(200, Math.max(50, zoom)) }),
     }),
     {
       name: "ddev-manager-storage",
       partialize: (state) => ({
         theme: state.theme,
+        zoom: state.zoom,
         sidebarCollapsed: state.sidebarCollapsed,
         sort: state.sort,
       }),
