@@ -49,12 +49,12 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
     setLines([]);
   };
 
-  // Auto-scroll to bottom when new lines are added
+  // Auto-scroll to bottom when new lines are added or terminal is opened
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [lines]);
+  }, [lines, isOpen]);
 
   // Listen for command output events
   useEffect(() => {
