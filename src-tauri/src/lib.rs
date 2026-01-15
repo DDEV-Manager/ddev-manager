@@ -713,10 +713,260 @@ fn remove_addon(window: Window, project: String, addon: String) -> Result<(), Dd
     )
 }
 
+/// Open folder picker dialog
+#[tauri::command]
+async fn select_folder(app: tauri::AppHandle) -> Result<Option<String>, DdevError> {
+    use tauri_plugin_dialog::DialogExt;
+
+    let (tx, rx) = tokio::sync::oneshot::channel();
+
+    app.dialog()
+        .file()
+        .set_title("Select Project Folder")
+        .pick_folder(move |folder| {
+            let result = folder.map(|p| p.to_string());
+            let _ = tx.send(result);
+        });
+
+    rx.await
+        .map_err(|e| DdevError::CommandFailed(format!("Dialog channel error: {}", e)))
+}
+
+/// Create a new DDEV project (streaming output)
+#[tauri::command]
+fn create_project(
+    window: Window,
+    path: String,
+    name: String,
+    project_type: String,
+    php_version: Option<String>,
+    database: Option<String>,
+    webserver: Option<String>,
+    docroot: Option<String>,
+    auto_start: bool,
+) -> Result<(), DdevError> {
+    let command_name = "config".to_string();
+    let project_name = name.clone();
+    let ddev_cmd = get_ddev_command();
+    let enhanced_path = get_enhanced_path();
+
+    // Build the ddev config arguments
+    let mut args = vec![
+        "config".to_string(),
+        format!("--project-name={}", name),
+        format!("--project-type={}", project_type),
+        "--create-docroot".to_string(),
+    ];
+
+    if let Some(php) = php_version {
+        if !php.is_empty() {
+            args.push(format!("--php-version={}", php));
+        }
+    }
+
+    if let Some(db) = database {
+        if !db.is_empty() {
+            args.push(format!("--database={}", db));
+        }
+    }
+
+    if let Some(ws) = webserver {
+        if !ws.is_empty() {
+            args.push(format!("--webserver-type={}", ws));
+        }
+    }
+
+    if let Some(dr) = docroot {
+        if !dr.is_empty() {
+            args.push(format!("--docroot={}", dr));
+        }
+    }
+
+    // Emit start status
+    let _ = window.emit(
+        "command-status",
+        CommandStatus {
+            command: command_name.clone(),
+            project: project_name.clone(),
+            status: "started".to_string(),
+            message: Some(format!("Creating project: ddev {}", args.join(" "))),
+        },
+    );
+
+    // Spawn the command in a background thread
+    thread::spawn(move || {
+        // Run ddev config in the project directory
+        let result = Command::new(&ddev_cmd)
+            .args(&args)
+            .current_dir(&path)
+            .env("PATH", &enhanced_path)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn();
+
+        let mut child = match result {
+            Ok(child) => child,
+            Err(e) => {
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "error".to_string(),
+                        message: Some(format!("Failed to start command: {}", e)),
+                    },
+                );
+                return;
+            }
+        };
+
+        let stdout = child.stdout.take();
+        let stderr = child.stderr.take();
+        let window_clone = window.clone();
+
+        // Spawn thread for stdout
+        let stdout_handle = stdout.map(|stdout| {
+            let window = window.clone();
+            thread::spawn(move || {
+                let reader = BufReader::new(stdout);
+                for line in reader.lines().map_while(Result::ok) {
+                    let _ = window.emit(
+                        "command-output",
+                        CommandOutput {
+                            line,
+                            stream: "stdout".to_string(),
+                        },
+                    );
+                }
+            })
+        });
+
+        // Spawn thread for stderr
+        let stderr_handle = stderr.map(|stderr| {
+            thread::spawn(move || {
+                let reader = BufReader::new(stderr);
+                for line in reader.lines().map_while(Result::ok) {
+                    let _ = window_clone.emit(
+                        "command-output",
+                        CommandOutput {
+                            line,
+                            stream: "stderr".to_string(),
+                        },
+                    );
+                }
+            })
+        });
+
+        // Wait for output threads
+        if let Some(handle) = stdout_handle {
+            let _ = handle.join();
+        }
+        if let Some(handle) = stderr_handle {
+            let _ = handle.join();
+        }
+
+        // Wait for process to complete
+        let status = child.wait();
+
+        match status {
+            Ok(exit_status) if exit_status.success() => {
+                // If auto_start is enabled, start the project
+                if auto_start {
+                    let _ = window.emit(
+                        "command-output",
+                        CommandOutput {
+                            line: "Starting project...".to_string(),
+                            stream: "stdout".to_string(),
+                        },
+                    );
+
+                    let start_result = Command::new(&ddev_cmd)
+                        .args(["start"])
+                        .current_dir(&path)
+                        .env("PATH", &enhanced_path)
+                        .stdout(Stdio::piped())
+                        .stderr(Stdio::piped())
+                        .spawn();
+
+                    if let Ok(mut start_child) = start_result {
+                        let stdout = start_child.stdout.take();
+                        let stderr = start_child.stderr.take();
+                        let window_clone2 = window.clone();
+
+                        let stdout_handle = stdout.map(|stdout| {
+                            let window = window.clone();
+                            thread::spawn(move || {
+                                let reader = BufReader::new(stdout);
+                                for line in reader.lines().map_while(Result::ok) {
+                                    let _ = window.emit(
+                                        "command-output",
+                                        CommandOutput {
+                                            line,
+                                            stream: "stdout".to_string(),
+                                        },
+                                    );
+                                }
+                            })
+                        });
+
+                        let stderr_handle = stderr.map(|stderr| {
+                            thread::spawn(move || {
+                                let reader = BufReader::new(stderr);
+                                for line in reader.lines().map_while(Result::ok) {
+                                    let _ = window_clone2.emit(
+                                        "command-output",
+                                        CommandOutput {
+                                            line,
+                                            stream: "stderr".to_string(),
+                                        },
+                                    );
+                                }
+                            })
+                        });
+
+                        if let Some(handle) = stdout_handle {
+                            let _ = handle.join();
+                        }
+                        if let Some(handle) = stderr_handle {
+                            let _ = handle.join();
+                        }
+
+                        let _ = start_child.wait();
+                    }
+                }
+
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "finished".to_string(),
+                        message: Some("Project created successfully".to_string()),
+                    },
+                );
+            }
+            _ => {
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "error".to_string(),
+                        message: Some("Failed to create project".to_string()),
+                    },
+                );
+            }
+        }
+    });
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             list_projects,
             describe_project,
@@ -735,6 +985,8 @@ pub fn run() {
             fetch_addon_registry,
             install_addon,
             remove_addon,
+            select_folder,
+            create_project,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

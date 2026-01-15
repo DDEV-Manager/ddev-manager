@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
 /* Enable class-based dark mode for manual theme switching */
 @custom-variant dark (&:where(.dark, .dark *));

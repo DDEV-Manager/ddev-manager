@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { ProjectList } from "@/components/projects/ProjectList";
 import { ProjectDetails } from "@/components/projects/ProjectDetails";
 import { Terminal } from "@/components/terminal/Terminal";
+import { Toaster } from "@/components/ui/Toaster";
 import { useDdevInstalled } from "@/hooks/useDdev";
 import { useTerminalStore } from "@/stores/terminalStore";
 import { useTheme } from "@/hooks/useTheme";
@@ -88,6 +89,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
+      <Toaster />
     </QueryClientProvider>
   );
 }

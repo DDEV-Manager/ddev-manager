@@ -264,9 +264,10 @@ When reporting bugs, please include:
 
 ## Roadmap
 
-- [ ] Project creation wizard
+- [x] Add-on management (browse registry, install, remove)
+- [x] Settings (theme toggle, zoom control)
+- [x] Project creation wizard
 - [ ] Log viewer with filtering
-- [ ] Add-on management
 - [ ] System tray integration
 - [ ] Configuration editor
 - [ ] Multiple project selection

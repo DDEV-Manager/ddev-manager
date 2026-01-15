@@ -24,6 +24,7 @@ import {
 } from "@/hooks/useDdev";
 import { useAppStore } from "@/stores/appStore";
 import { cn, getStatusBgColor, formatProjectType } from "@/lib/utils";
+import { toast } from "@/stores/toastStore";
 
 interface CommandStatus {
   command: string;
@@ -46,28 +47,41 @@ export function ProjectDetails() {
   const openUrl = useOpenUrl();
   const openFolder = useOpenFolder();
 
-  // Listen for command completion to clear loading state
+  // Listen for command completion to clear loading state and show toasts
   useEffect(() => {
+    let mounted = true;
     let unlistenFn: (() => void) | null = null;
 
     listen<CommandStatus>("command-status", (event) => {
+      if (!mounted) return;
+
       const { command, project: projectName, status } = event.payload;
 
       // Only handle events for the currently selected project
       if (projectName !== selectedProject) return;
 
-      // Clear operation state when command finishes
-      if (
-        (command === "start" || command === "stop" || command === "restart") &&
-        (status === "finished" || status === "error")
-      ) {
-        setCurrentOperation(null);
+      // Handle start/stop/restart commands
+      if (command === "start" || command === "stop" || command === "restart") {
+        if (status === "finished") {
+          const actionPast =
+            command === "start" ? "started" : command === "stop" ? "stopped" : "restarted";
+          toast.success(`Project ${actionPast}`, `${projectName} has been ${actionPast}`);
+          setCurrentOperation(null);
+        } else if (status === "error") {
+          toast.error(`Failed to ${command}`, "Check the terminal for details");
+          setCurrentOperation(null);
+        }
       }
     }).then((fn) => {
-      unlistenFn = fn;
+      if (mounted) {
+        unlistenFn = fn;
+      } else {
+        fn();
+      }
     });
 
     return () => {
+      mounted = false;
       if (unlistenFn) {
         unlistenFn();
       }

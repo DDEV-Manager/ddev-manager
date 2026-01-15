@@ -10,6 +10,7 @@ import {
 } from "@/hooks/useAddons";
 import { InstalledAddonsList } from "./InstalledAddonsList";
 import { AddonBrowser } from "./AddonBrowser";
+import { toast } from "@/stores/toastStore";
 
 interface CommandStatus {
   command: string;
@@ -36,30 +37,49 @@ export function AddonsSection({ projectName, isProjectRunning }: AddonsSectionPr
   // Listen for addon command completion to refresh the list and clear loading state
   useAddonCommandListener(refetch);
 
-  // Listen for command completion to clear loading states
+  // Listen for command completion to clear loading states and show toasts
   useEffect(() => {
+    let mounted = true;
     let unlistenFn: (() => void) | null = null;
 
     listen<CommandStatus>("command-status", (event) => {
+      if (!mounted) return;
+
       const { command, status } = event.payload;
 
-      if (status === "finished" || status === "error") {
-        if (command === "addon-install") {
+      if (command === "addon-install") {
+        if (status === "finished") {
+          const addonName = installingAddon?.split("/").pop() || "Add-on";
+          toast.success("Add-on installed", `${addonName} has been installed successfully`);
           setInstallingAddon(null);
-        } else if (command === "addon-remove") {
+        } else if (status === "error") {
+          toast.error("Installation failed", "Check the terminal for details");
+          setInstallingAddon(null);
+        }
+      } else if (command === "addon-remove") {
+        if (status === "finished") {
+          toast.success("Add-on removed", "The add-on has been removed successfully");
+          setRemovingAddon(null);
+        } else if (status === "error") {
+          toast.error("Removal failed", "Check the terminal for details");
           setRemovingAddon(null);
         }
       }
     }).then((fn) => {
-      unlistenFn = fn;
+      if (mounted) {
+        unlistenFn = fn;
+      } else {
+        fn();
+      }
     });
 
     return () => {
+      mounted = false;
       if (unlistenFn) {
         unlistenFn();
       }
     };
-  }, []);
+  }, [installingAddon]);
 
   const handleInstall = useCallback(
     (addon: string) => {

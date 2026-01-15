@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Power, Settings, RefreshCw } from "lucide-react";
+import { Power, Settings, RefreshCw, Plus } from "lucide-react";
 import { usePoweroff, useProjects } from "@/hooks/useDdev";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/useDdev";
 import { cn } from "@/lib/utils";
 import { SettingsModal } from "@/components/settings/SettingsModal";
+import { CreateProjectWizard } from "@/components/projects/CreateProjectWizard";
 
 export function Header() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const queryClient = useQueryClient();
   const poweroff = usePoweroff();
   const { data: projects } = useProjects();
@@ -42,6 +44,15 @@ export function Header() {
 
       <div className="flex items-center gap-2">
         <button
+          onClick={() => setIsCreateProjectOpen(true)}
+          className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          title="Create new project"
+        >
+          <Plus className="h-4 w-4" />
+          New Project
+        </button>
+
+        <button
           onClick={handleRefresh}
           className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           title="Refresh projects"
@@ -73,6 +84,10 @@ export function Header() {
       </div>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      <CreateProjectWizard
+        isOpen={isCreateProjectOpen}
+        onClose={() => setIsCreateProjectOpen(false)}
+      />
     </header>
   );
 }
