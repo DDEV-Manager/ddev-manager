@@ -537,6 +537,17 @@ fn poweroff(window: Window) -> Result<(), DdevError> {
     run_ddev_command_streaming(window, "poweroff", "all", &["poweroff"])
 }
 
+/// Delete a DDEV project (removes containers and config, keeps files)
+#[tauri::command]
+fn delete_project(window: Window, name: String) -> Result<(), DdevError> {
+    run_ddev_command_streaming(
+        window,
+        "delete",
+        &name,
+        &["delete", "--omit-snapshot", "--yes", &name],
+    )
+}
+
 /// List snapshots for a project
 #[tauri::command]
 async fn list_snapshots(project: String) -> Result<String, DdevError> {
@@ -973,6 +984,7 @@ pub fn run() {
             start_project,
             stop_project,
             restart_project,
+            delete_project,
             poweroff,
             list_snapshots,
             create_snapshot,

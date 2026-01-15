@@ -10,6 +10,7 @@ import {
   Check,
   Loader2,
   Server,
+  Trash2,
 } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
@@ -19,6 +20,7 @@ import {
   useStartProject,
   useStopProject,
   useRestartProject,
+  useDeleteProject,
   useOpenUrl,
   useOpenFolder,
 } from "@/hooks/useDdev";
@@ -33,22 +35,30 @@ interface CommandStatus {
   message?: string;
 }
 
-type ProjectOperation = "start" | "stop" | "restart" | null;
+type ProjectOperation = "start" | "stop" | "restart" | "delete" | null;
+
+interface OperationState {
+  type: ProjectOperation;
+  projectName: string | null;
+}
 
 export function ProjectDetails() {
   const { selectedProject } = useAppStore();
   const { data: project, isLoading } = useProject(selectedProject);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [currentOperation, setCurrentOperation] = useState<ProjectOperation>(null);
+  const [operation, setOperation] = useState<OperationState>({ type: null, projectName: null });
 
   const startProject = useStartProject();
   const stopProject = useStopProject();
   const restartProject = useRestartProject();
+  const deleteProject = useDeleteProject();
   const openUrl = useOpenUrl();
   const openFolder = useOpenFolder();
 
   // Listen for command completion to clear loading state and show toasts
   useEffect(() => {
+    if (!operation.type || !operation.projectName) return;
+
     let mounted = true;
     let unlistenFn: (() => void) | null = null;
 
@@ -57,19 +67,28 @@ export function ProjectDetails() {
 
       const { command, project: projectName, status } = event.payload;
 
-      // Only handle events for the currently selected project
-      if (projectName !== selectedProject) return;
+      // Only handle events for the project being operated on
+      if (projectName !== operation.projectName) return;
 
-      // Handle start/stop/restart commands
-      if (command === "start" || command === "stop" || command === "restart") {
+      // Handle start/stop/restart/delete commands
+      if (
+        command === "start" ||
+        command === "stop" ||
+        command === "restart" ||
+        command === "delete"
+      ) {
         if (status === "finished") {
-          const actionPast =
-            command === "start" ? "started" : command === "stop" ? "stopped" : "restarted";
-          toast.success(`Project ${actionPast}`, `${projectName} has been ${actionPast}`);
-          setCurrentOperation(null);
+          if (command === "delete") {
+            toast.success("Project removed", `${projectName} has been removed from DDEV`);
+          } else {
+            const actionPast =
+              command === "start" ? "started" : command === "stop" ? "stopped" : "restarted";
+            toast.success(`Project ${actionPast}`, `${projectName} has been ${actionPast}`);
+          }
+          setOperation({ type: null, projectName: null });
         } else if (status === "error") {
           toast.error(`Failed to ${command}`, "Check the terminal for details");
-          setCurrentOperation(null);
+          setOperation({ type: null, projectName: null });
         }
       }
     }).then((fn) => {
@@ -86,25 +105,37 @@ export function ProjectDetails() {
         unlistenFn();
       }
     };
-  }, [selectedProject]);
+  }, [operation]);
 
   const handleStart = useCallback(() => {
     if (!project) return;
-    setCurrentOperation("start");
+    setOperation({ type: "start", projectName: project.name });
     startProject.mutate(project.name);
   }, [project, startProject]);
 
   const handleStop = useCallback(() => {
     if (!project) return;
-    setCurrentOperation("stop");
+    setOperation({ type: "stop", projectName: project.name });
     stopProject.mutate(project.name);
   }, [project, stopProject]);
 
   const handleRestart = useCallback(() => {
     if (!project) return;
-    setCurrentOperation("restart");
+    setOperation({ type: "restart", projectName: project.name });
     restartProject.mutate(project.name);
   }, [project, restartProject]);
+
+  const handleDelete = useCallback(() => {
+    if (!project) return;
+    if (
+      confirm(
+        `Are you sure you want to remove "${project.name}" from DDEV?\n\nThis will remove all DDEV configuration and Docker resources but keep your project files.`
+      )
+    ) {
+      setOperation({ type: "delete", projectName: project.name });
+      deleteProject.mutate(project.name);
+    }
+  }, [project, deleteProject]);
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -136,7 +167,10 @@ export function ProjectDetails() {
   }
 
   const isRunning = project.status === "running";
-  const isOperationPending = currentOperation !== null;
+  // Only consider operation pending if it's for the current project
+  const isCurrentProjectOp = operation.projectName === project.name;
+  const isOperationPending = operation.type !== null && isCurrentProjectOp;
+  const currentOp = isCurrentProjectOp ? operation.type : null;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -165,24 +199,24 @@ export function ProjectDetails() {
                   disabled={isOperationPending}
                   className="flex items-center gap-1.5 rounded-lg bg-yellow-100 px-3 py-1.5 text-sm text-yellow-700 transition-colors hover:bg-yellow-200 disabled:opacity-50 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
                 >
-                  {currentOperation === "restart" ? (
+                  {currentOp === "restart" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <RotateCw className="h-4 w-4" />
                   )}
-                  {currentOperation === "restart" ? "Restarting..." : "Restart"}
+                  {currentOp === "restart" ? "Restarting..." : "Restart"}
                 </button>
                 <button
                   onClick={handleStop}
                   disabled={isOperationPending}
                   className="flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-sm text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                 >
-                  {currentOperation === "stop" ? (
+                  {currentOp === "stop" ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <Square className="h-4 w-4" />
                   )}
-                  {currentOperation === "stop" ? "Stopping..." : "Stop"}
+                  {currentOp === "stop" ? "Stopping..." : "Stop"}
                 </button>
               </>
             ) : (
@@ -191,12 +225,12 @@ export function ProjectDetails() {
                 disabled={isOperationPending}
                 className="flex items-center gap-1.5 rounded-lg bg-green-100 px-3 py-1.5 text-sm text-green-700 transition-colors hover:bg-green-200 disabled:opacity-50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
               >
-                {currentOperation === "start" ? (
+                {currentOp === "start" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Play className="h-4 w-4" />
                 )}
-                {currentOperation === "start" ? "Starting..." : "Start"}
+                {currentOp === "start" ? "Starting..." : "Start"}
               </button>
             )}
           </div>
@@ -352,6 +386,33 @@ export function ProjectDetails() {
               title="Open folder"
             >
               <Folder className="h-4 w-4 text-gray-500" />
+            </button>
+          </div>
+        </section>
+
+        {/* Danger Zone */}
+        <section className="border-t border-gray-200 pt-6 dark:border-gray-800">
+          <h3 className="mb-2 text-sm font-medium text-red-600 dark:text-red-400">Danger Zone</h3>
+          <div className="flex items-center justify-between rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-900/20">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Remove this project
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Removes DDEV configuration and Docker resources. Project files are kept.
+              </p>
+            </div>
+            <button
+              onClick={handleDelete}
+              disabled={isOperationPending}
+              className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+            >
+              {currentOp === "delete" ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              {currentOp === "delete" ? "Removing..." : "Remove"}
             </button>
           </div>
         </section>

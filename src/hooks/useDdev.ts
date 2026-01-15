@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { DdevProjectBasic, DdevProjectDetails } from "@/types/ddev";
 import { useTerminalStore } from "@/stores/terminalStore";
+import { useAppStore } from "@/stores/appStore";
 
 // Query keys
 export const queryKeys = {
@@ -130,6 +131,27 @@ export function usePoweroff() {
       return invoke<void>("poweroff");
     },
     onSuccess: () => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      }, 1000);
+    },
+  });
+}
+
+// Delete project (removes DDEV config and Docker resources, keeps files)
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+  const { open, autoOpen } = useTerminalStore();
+  const { setSelectedProject } = useAppStore();
+
+  return useMutation({
+    mutationFn: async (name: string) => {
+      if (autoOpen) open();
+      return invoke<void>("delete_project", { name });
+    },
+    onSuccess: () => {
+      // Clear selection and refresh projects list
+      setSelectedProject(null);
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: queryKeys.projects });
       }, 1000);

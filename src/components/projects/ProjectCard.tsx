@@ -60,36 +60,15 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
           : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          {/* Status indicator */}
-          <div
-            className={cn(
-              "h-2.5 w-2.5 flex-shrink-0 rounded-full",
-              getStatusBgColor(project.status)
-            )}
-            title={project.status}
-          />
-
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate font-medium text-gray-900 dark:text-gray-100">
-              {project.name}
-            </h3>
-            <div className="mt-0.5 flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {formatProjectType(project.type)}
-              </span>
-              <span className="text-xs text-gray-400 dark:text-gray-600">•</span>
-              <span
-                className="truncate text-xs text-gray-400 dark:text-gray-500"
-                title={project.shortroot}
-              >
-                {truncatePath(project.shortroot, 30)}
-              </span>
-            </div>
-          </div>
-        </div>
-
+      {/* Title row with status, name, and actions */}
+      <div className="flex items-center gap-2">
+        <div
+          className={cn("h-2.5 w-2.5 flex-shrink-0 rounded-full", getStatusBgColor(project.status))}
+          title={project.status}
+        />
+        <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900 dark:text-gray-100">
+          {project.name}
+        </h3>
         {/* Quick actions */}
         <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           {isRunning ? (
@@ -140,6 +119,17 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
             </>
           )}
         </div>
+      </div>
+
+      {/* Type and path - full width */}
+      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        {formatProjectType(project.type)}
+      </div>
+      <div
+        className="overflow-hidden text-xs whitespace-nowrap text-gray-400 dark:text-gray-500"
+        title={project.shortroot}
+      >
+        {truncatePath(project.shortroot, 43)}
       </div>
     </div>
   );

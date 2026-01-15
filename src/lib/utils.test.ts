@@ -97,25 +97,30 @@ describe("formatProjectType", () => {
 
 describe("truncatePath", () => {
   it("should not truncate paths shorter than maxLength", () => {
-    expect(truncatePath("/home/user/project", 40)).toBe("/home/user/project");
+    expect(truncatePath("/home/user/project", 50)).toBe("/home/user/project");
   });
 
-  it("should truncate long paths with ellipsis", () => {
+  it("should truncate long paths from the left with ellipsis", () => {
     const longPath = "/home/user/very/long/path/to/my/awesome/project";
     const result = truncatePath(longPath, 30);
-    expect(result).toContain(".../");
-    expect(result.length).toBeLessThanOrEqual(34); // 30 + ".../".length
+    expect(result.startsWith("...")).toBe(true);
+    expect(result.length).toBe(30);
   });
 
-  it("should preserve the most relevant end of the path", () => {
+  it("should always show the end of the path", () => {
     const path = "/home/user/projects/myproject";
     const result = truncatePath(path, 20);
+    expect(result).toBe("...rojects/myproject");
     expect(result).toContain("myproject");
   });
 
-  it("should use default maxLength of 40", () => {
+  it("should use default maxLength of 50", () => {
     const shortPath = "/home/user/project";
     expect(truncatePath(shortPath)).toBe(shortPath);
+
+    const longPath = "/home/user/very/long/path/that/exceeds/fifty/characters/easily";
+    const result = truncatePath(longPath);
+    expect(result.length).toBe(50);
   });
 
   it("should handle single segment paths", () => {

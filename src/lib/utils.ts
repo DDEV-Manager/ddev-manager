@@ -59,20 +59,9 @@ export function formatProjectType(type: string): string {
   return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
 }
 
-export function truncatePath(path: string, maxLength: number = 40): string {
+export function truncatePath(path: string, maxLength: number = 50): string {
   if (path.length <= maxLength) return path;
 
-  // Try to show the end of the path which is usually more relevant
-  const parts = path.split("/");
-  let result = parts[parts.length - 1];
-
-  for (let i = parts.length - 2; i >= 0; i--) {
-    const newResult = parts[i] + "/" + result;
-    if (newResult.length > maxLength) {
-      return ".../" + result;
-    }
-    result = newResult;
-  }
-
-  return result;
+  // Truncate from the left, always showing the end of the path
+  return "..." + path.slice(-(maxLength - 3));
 }
