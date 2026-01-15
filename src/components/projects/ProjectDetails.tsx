@@ -11,8 +11,9 @@ import {
   Loader2,
   Server,
 } from "lucide-react";
+import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   useProject,
   useStartProject,
@@ -24,16 +25,72 @@ import {
 import { useAppStore } from "@/stores/appStore";
 import { cn, getStatusBgColor, formatProjectType } from "@/lib/utils";
 
+interface CommandStatus {
+  command: string;
+  project: string;
+  status: "started" | "finished" | "error";
+  message?: string;
+}
+
+type ProjectOperation = "start" | "stop" | "restart" | null;
+
 export function ProjectDetails() {
   const { selectedProject } = useAppStore();
   const { data: project, isLoading } = useProject(selectedProject);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [currentOperation, setCurrentOperation] = useState<ProjectOperation>(null);
 
   const startProject = useStartProject();
   const stopProject = useStopProject();
   const restartProject = useRestartProject();
   const openUrl = useOpenUrl();
   const openFolder = useOpenFolder();
+
+  // Listen for command completion to clear loading state
+  useEffect(() => {
+    let unlistenFn: (() => void) | null = null;
+
+    listen<CommandStatus>("command-status", (event) => {
+      const { command, project: projectName, status } = event.payload;
+
+      // Only handle events for the currently selected project
+      if (projectName !== selectedProject) return;
+
+      // Clear operation state when command finishes
+      if (
+        (command === "start" || command === "stop" || command === "restart") &&
+        (status === "finished" || status === "error")
+      ) {
+        setCurrentOperation(null);
+      }
+    }).then((fn) => {
+      unlistenFn = fn;
+    });
+
+    return () => {
+      if (unlistenFn) {
+        unlistenFn();
+      }
+    };
+  }, [selectedProject]);
+
+  const handleStart = useCallback(() => {
+    if (!project) return;
+    setCurrentOperation("start");
+    startProject.mutate(project.name);
+  }, [project, startProject]);
+
+  const handleStop = useCallback(() => {
+    if (!project) return;
+    setCurrentOperation("stop");
+    stopProject.mutate(project.name);
+  }, [project, stopProject]);
+
+  const handleRestart = useCallback(() => {
+    if (!project) return;
+    setCurrentOperation("restart");
+    restartProject.mutate(project.name);
+  }, [project, restartProject]);
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -65,7 +122,7 @@ export function ProjectDetails() {
   }
 
   const isRunning = project.status === "running";
-  const isPending = startProject.isPending || stopProject.isPending || restartProject.isPending;
+  const isOperationPending = currentOperation !== null;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -90,30 +147,42 @@ export function ProjectDetails() {
             {isRunning ? (
               <>
                 <button
-                  onClick={() => restartProject.mutate(project.name)}
-                  disabled={isPending}
+                  onClick={handleRestart}
+                  disabled={isOperationPending}
                   className="flex items-center gap-1.5 rounded-lg bg-yellow-100 px-3 py-1.5 text-sm text-yellow-700 transition-colors hover:bg-yellow-200 disabled:opacity-50 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
                 >
-                  <RotateCw className={cn("h-4 w-4", restartProject.isPending && "animate-spin")} />
-                  Restart
+                  {currentOperation === "restart" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RotateCw className="h-4 w-4" />
+                  )}
+                  {currentOperation === "restart" ? "Restarting..." : "Restart"}
                 </button>
                 <button
-                  onClick={() => stopProject.mutate(project.name)}
-                  disabled={isPending}
+                  onClick={handleStop}
+                  disabled={isOperationPending}
                   className="flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-sm text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                 >
-                  <Square className="h-4 w-4" />
-                  Stop
+                  {currentOperation === "stop" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Square className="h-4 w-4" />
+                  )}
+                  {currentOperation === "stop" ? "Stopping..." : "Stop"}
                 </button>
               </>
             ) : (
               <button
-                onClick={() => startProject.mutate(project.name)}
-                disabled={isPending}
+                onClick={handleStart}
+                disabled={isOperationPending}
                 className="flex items-center gap-1.5 rounded-lg bg-green-100 px-3 py-1.5 text-sm text-green-700 transition-colors hover:bg-green-200 disabled:opacity-50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
               >
-                <Play className={cn("h-4 w-4", startProject.isPending && "animate-pulse")} />
-                Start
+                {currentOperation === "start" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                {currentOperation === "start" ? "Starting..." : "Start"}
               </button>
             )}
           </div>
