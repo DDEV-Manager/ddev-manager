@@ -14,10 +14,13 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 
 - View all DDEV projects with real-time status indicators
 - Start, stop, and restart projects with one click
+- Create new projects with optional CMS installation (Drupal, Laravel, Shopware, WordPress)
 - View detailed project information (services, URLs, database credentials)
 - Real-time terminal output for command execution
+- Global status bar showing command progress
 - Open project URLs and folders directly from the app
 - Database snapshot management
+- Add-on management (browse registry, install, remove)
 - Cross-platform support (macOS, Windows, Linux)
 
 ## Screenshots
@@ -85,14 +88,18 @@ See the [Development](#development) section below.
 ddev-manager/
 ├── src/                          # React frontend
 │   ├── components/               # React components
-│   │   ├── layout/              # Layout components (Header)
+│   │   ├── layout/              # Layout components (Header, StatusBar)
 │   │   ├── projects/            # Project-related components
-│   │   └── terminal/            # Terminal component
+│   │   ├── terminal/            # Terminal component
+│   │   └── ui/                  # Reusable UI components (Toaster)
 │   ├── hooks/                   # Custom React hooks
-│   │   └── useDdev.ts           # DDEV command hooks
+│   │   ├── useDdev.ts           # DDEV command hooks
+│   │   └── useCreateProject.ts  # Project creation hooks
 │   ├── stores/                  # Zustand stores
 │   │   ├── appStore.ts          # App state (selection, filters)
-│   │   └── terminalStore.ts     # Terminal state
+│   │   ├── terminalStore.ts     # Terminal state
+│   │   ├── statusStore.ts       # Status bar state
+│   │   └── toastStore.ts        # Toast notifications
 │   ├── lib/                     # Utility functions
 │   ├── types/                   # TypeScript type definitions
 │   ├── test/                    # Test utilities and mocks
@@ -212,11 +219,12 @@ pnpm tauri build
 │                  ▼                                      │
 │  ┌─────────────────────────────────────────────┐       │
 │  │         Tauri Commands (lib.rs)             │       │
-│  │  - list_projects()                          │       │
-│  │  - describe_project()                       │       │
+│  │  - list_projects() / describe_project()     │       │
 │  │  - start_project() / stop_project()         │       │
-│  │  - poweroff()                               │       │
+│  │  - create_project() with CMS install        │       │
+│  │  - delete_project() / poweroff()            │       │
 │  │  - create_snapshot() / restore_snapshot()   │       │
+│  │  - install_addon() / remove_addon()         │       │
 │  └──────────────────┬──────────────────────────┘       │
 │                     │                                   │
 │                     ▼                                   │
@@ -266,7 +274,9 @@ When reporting bugs, please include:
 
 - [x] Add-on management (browse registry, install, remove)
 - [x] Settings (theme toggle, zoom control)
-- [x] Project creation wizard
+- [x] Project creation wizard with CMS installation
+- [x] Global status bar for command progress
+- [x] Delete project functionality
 - [ ] Log viewer with filtering
 - [ ] System tray integration
 - [ ] Configuration editor
