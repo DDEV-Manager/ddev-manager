@@ -127,13 +127,45 @@ export interface DdevSnapshot {
   size?: string;
 }
 
-// Add-on information
-export interface DdevAddon {
+// Installed addon from DDEV CLI
+export interface InstalledAddon {
   name: string;
   repository: string;
   version?: string;
-  installed: boolean;
-  description?: string;
+}
+
+// Addon from registry API
+export interface RegistryAddon {
+  title: string;
+  github_url: string;
+  description: string;
+  user: string;
+  repo: string;
+  repo_id: number;
+  default_branch: string;
+  tag_name: string | null;
+  ddev_version_constraint: string;
+  dependencies: string[];
+  type: "official" | "contrib";
+  created_at: string;
+  updated_at: string;
+  workflow_status: string | null;
+  stars: number;
+}
+
+// Registry response from addons.ddev.com
+export interface AddonRegistry {
+  updated_datetime: string;
+  total_addons_count: number;
+  official_addons_count: number;
+  contrib_addons_count: number;
+  addons: RegistryAddon[];
+}
+
+// Filter options for addon browsing
+export interface AddonFilter {
+  search: string;
+  type: "all" | "official" | "contrib";
 }
 
 // DDEV version information

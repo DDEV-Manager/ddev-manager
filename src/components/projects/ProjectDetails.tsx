@@ -11,6 +11,7 @@ import {
   Loader2,
   Server,
 } from "lucide-react";
+import { AddonsSection } from "@/components/addons/AddonsSection";
 import { useState } from "react";
 import {
   useProject,
@@ -251,6 +252,9 @@ export function ProjectDetails() {
             </div>
           </section>
         )}
+
+        {/* Add-ons */}
+        <AddonsSection projectName={project.name} isProjectRunning={isRunning} />
 
         {/* Path */}
         <section>

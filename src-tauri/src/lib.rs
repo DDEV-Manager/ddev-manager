@@ -236,6 +236,101 @@ struct DdevJsonResponse<T> {
     time: String,
 }
 
+/// Installed addon information from `ddev add-on list`
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InstalledAddon {
+    #[serde(alias = "Name")]
+    pub name: String,
+    #[serde(alias = "Repository")]
+    pub repository: String,
+    #[serde(alias = "Version")]
+    pub version: Option<String>,
+}
+
+/// Helper to deserialize tag_name which can be string, number, or null
+fn deserialize_tag_name<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::{self, Visitor};
+    use std::fmt;
+
+    struct TagNameVisitor;
+
+    impl<'de> Visitor<'de> for TagNameVisitor {
+        type Value = Option<String>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a string, number, or null")
+        }
+
+        fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
+            Ok(Some(v.to_string()))
+        }
+
+        fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
+            Ok(Some(v))
+        }
+
+        fn visit_i64<E: de::Error>(self, v: i64) -> Result<Self::Value, E> {
+            Ok(Some(v.to_string()))
+        }
+
+        fn visit_u64<E: de::Error>(self, v: u64) -> Result<Self::Value, E> {
+            Ok(Some(v.to_string()))
+        }
+
+        fn visit_f64<E: de::Error>(self, v: f64) -> Result<Self::Value, E> {
+            Ok(Some(v.to_string()))
+        }
+
+        fn visit_none<E: de::Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+
+        fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+    }
+
+    deserializer.deserialize_any(TagNameVisitor)
+}
+
+/// Available addon from registry API
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RegistryAddon {
+    pub title: String,
+    pub github_url: String,
+    pub description: String,
+    pub user: String,
+    pub repo: String,
+    pub repo_id: i64,
+    pub default_branch: String,
+    #[serde(default, deserialize_with = "deserialize_tag_name")]
+    pub tag_name: Option<String>,
+    #[serde(default)]
+    pub ddev_version_constraint: String,
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(rename = "type")]
+    pub addon_type: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub workflow_status: Option<String>,
+    #[serde(default)]
+    pub stars: i32,
+}
+
+/// Registry response structure from addons.ddev.com
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddonRegistry {
+    pub updated_datetime: String,
+    pub total_addons_count: i32,
+    pub official_addons_count: i32,
+    pub contrib_addons_count: i32,
+    pub addons: Vec<RegistryAddon>,
+}
+
 /// Run a DDEV command and return the raw output (async version)
 async fn run_ddev_command_async(args: &[&str]) -> Result<String, DdevError> {
     let ddev_cmd = get_ddev_command();
@@ -547,6 +642,77 @@ fn open_project_folder(path: String) -> Result<(), DdevError> {
     Ok(())
 }
 
+/// List installed addons for a project
+#[tauri::command]
+async fn list_installed_addons(project: String) -> Result<Vec<InstalledAddon>, DdevError> {
+    let output = run_ddev_command_async(&[
+        "--json-output",
+        "add-on",
+        "list",
+        "--installed",
+        "--project",
+        &project,
+    ])
+    .await?;
+
+    // Try to parse with the standard wrapper format
+    if let Ok(response) = serde_json::from_str::<DdevJsonResponse<Vec<InstalledAddon>>>(&output) {
+        return Ok(response.raw);
+    }
+
+    // If no "raw" field, it means no addons are installed
+    // DDEV returns: {"level":"info","msg":"No registered add-ons were found.","time":"..."}
+    Ok(vec![])
+}
+
+/// Fetch addon registry from addons.ddev.com
+#[tauri::command]
+async fn fetch_addon_registry() -> Result<AddonRegistry, DdevError> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get("https://addons.ddev.com/addons.json")
+        .send()
+        .await
+        .map_err(|e| DdevError::IoError(format!("Failed to fetch registry: {}", e)))?;
+
+    if !response.status().is_success() {
+        return Err(DdevError::CommandFailed(format!(
+            "Registry returned status {}",
+            response.status()
+        )));
+    }
+
+    let text = response
+        .text()
+        .await
+        .map_err(|e| DdevError::IoError(format!("Failed to read response: {}", e)))?;
+
+    serde_json::from_str::<AddonRegistry>(&text)
+        .map_err(|e| DdevError::ParseError(format!("Failed to parse registry JSON: {}", e)))
+}
+
+/// Install an addon (streaming output)
+#[tauri::command]
+fn install_addon(window: Window, project: String, addon: String) -> Result<(), DdevError> {
+    run_ddev_command_streaming(
+        window,
+        "addon-install",
+        &project,
+        &["add-on", "get", &addon, "--project", &project],
+    )
+}
+
+/// Remove an addon (streaming output)
+#[tauri::command]
+fn remove_addon(window: Window, project: String, addon: String) -> Result<(), DdevError> {
+    run_ddev_command_streaming(
+        window,
+        "addon-remove",
+        &project,
+        &["add-on", "remove", &addon, "--project", &project],
+    )
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -565,6 +731,10 @@ pub fn run() {
             get_ddev_version,
             open_project_url,
             open_project_folder,
+            list_installed_addons,
+            fetch_addon_registry,
+            install_addon,
+            remove_addon,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
