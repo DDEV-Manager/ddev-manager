@@ -25,9 +25,7 @@ describe("ProjectCard", () => {
   it("should render project name", () => {
     const project = createMockProjectBasic({ name: "my-awesome-project" });
 
-    render(
-      <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-    );
+    render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
     expect(screen.getByText("my-awesome-project")).toBeInTheDocument();
   });
@@ -35,9 +33,7 @@ describe("ProjectCard", () => {
   it("should render formatted project type", () => {
     const project = createMockProjectBasic({ type: "drupal10" });
 
-    render(
-      <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-    );
+    render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
     expect(screen.getByText("Drupal 10")).toBeInTheDocument();
   });
@@ -47,9 +43,7 @@ describe("ProjectCard", () => {
       shortroot: "~/very/long/path/to/mysite",
     });
 
-    render(
-      <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-    );
+    render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
     // Path should be visible (possibly truncated)
     expect(screen.getByText(/mysite/)).toBeInTheDocument();
@@ -59,9 +53,7 @@ describe("ProjectCard", () => {
     const user = userEvent.setup();
     const project = createMockProjectBasic();
 
-    render(
-      <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-    );
+    render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
     await user.click(screen.getByText(project.name));
 
@@ -84,9 +76,7 @@ describe("ProjectCard", () => {
     it("should show stop and restart buttons", async () => {
       const project = createMockProjectBasic({ status: "running" });
 
-      render(
-        <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-      );
+      render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
       expect(screen.getByTitle("Stop")).toBeInTheDocument();
       expect(screen.getByTitle("Restart")).toBeInTheDocument();
@@ -100,9 +90,7 @@ describe("ProjectCard", () => {
         status: "running",
       });
 
-      render(
-        <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-      );
+      render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
       await user.click(screen.getByTitle("Stop"));
 
@@ -120,9 +108,7 @@ describe("ProjectCard", () => {
         status: "running",
       });
 
-      render(
-        <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-      );
+      render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
       await user.click(screen.getByTitle("Restart"));
 
@@ -140,9 +126,7 @@ describe("ProjectCard", () => {
         primary_url: "https://my-project.ddev.site",
       });
 
-      render(
-        <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-      );
+      render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
       await user.click(screen.getByTitle("Open in browser"));
 
@@ -158,9 +142,7 @@ describe("ProjectCard", () => {
     it("should show start and folder buttons", () => {
       const project = createMockProjectBasic({ status: "stopped" });
 
-      render(
-        <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-      );
+      render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
       expect(screen.getByTitle("Start")).toBeInTheDocument();
       expect(screen.getByTitle("Open folder")).toBeInTheDocument();
@@ -173,9 +155,7 @@ describe("ProjectCard", () => {
         status: "stopped",
       });
 
-      render(
-        <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-      );
+      render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
       await user.click(screen.getByTitle("Start"));
 
@@ -193,9 +173,7 @@ describe("ProjectCard", () => {
         approot: "/home/user/project",
       });
 
-      render(
-        <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-      );
+      render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
       await user.click(screen.getByTitle("Open folder"));
 
@@ -211,9 +189,7 @@ describe("ProjectCard", () => {
     const user = userEvent.setup();
     const project = createMockProjectBasic({ status: "stopped" });
 
-    render(
-      <ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />
-    );
+    render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
     await user.click(screen.getByTitle("Start"));
 

@@ -99,9 +99,7 @@ export function setupInvokeMock(
   invoke.mockImplementation((command: string, args?: unknown) => {
     if (command in handlers) {
       const handler = handlers[command];
-      return typeof handler === "function"
-        ? handler(args)
-        : Promise.resolve(handler);
+      return typeof handler === "function" ? handler(args) : Promise.resolve(handler);
     }
     return Promise.reject(new Error(`Unhandled invoke command: ${command}`));
   });

@@ -198,11 +198,7 @@ describe("filterProjects", () => {
     });
 
     it("should return all when status is 'all'", () => {
-      const result = filterProjects(
-        mockProjects,
-        { ...defaultFilter, status: "all" },
-        defaultSort
-      );
+      const result = filterProjects(mockProjects, { ...defaultFilter, status: "all" }, defaultSort);
       expect(result).toHaveLength(4);
     });
   });
@@ -219,11 +215,7 @@ describe("filterProjects", () => {
     });
 
     it("should return all when type is 'all'", () => {
-      const result = filterProjects(
-        mockProjects,
-        { ...defaultFilter, type: "all" },
-        defaultSort
-      );
+      const result = filterProjects(mockProjects, { ...defaultFilter, type: "all" }, defaultSort);
       expect(result).toHaveLength(4);
     });
   });

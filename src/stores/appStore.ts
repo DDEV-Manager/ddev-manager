@@ -57,8 +57,7 @@ export const useAppStore = create<AppState>()(
 
       // UI state
       sidebarCollapsed: false,
-      toggleSidebar: () =>
-        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
 
       // Theme
       theme: "system",

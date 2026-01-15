@@ -31,9 +31,7 @@ function customRender(ui: ReactElement, options: CustomRenderOptions = {}) {
   const { queryClient = createTestQueryClient(), ...renderOptions } = options;
 
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   }
 
   return {

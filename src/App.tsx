@@ -22,12 +22,10 @@ function AppContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Checking DDEV installation...
-          </p>
+          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Checking DDEV installation...</p>
         </div>
       </div>
     );
@@ -35,22 +33,22 @@ function AppContent() {
 
   if (!isInstalled) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
-        <div className="text-center max-w-md p-6">
-          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="max-w-md p-6 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+            <AlertCircle className="h-8 w-8 text-red-500" />
           </div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
             DDEV Not Found
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
+          <p className="mb-4 text-gray-500 dark:text-gray-400">
             DDEV is not installed or not in your PATH. Please install DDEV to use this application.
           </p>
           <a
             href="https://ddev.readthedocs.io/en/stable/users/install/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
           >
             Install DDEV
           </a>
@@ -60,16 +58,16 @@ function AppContent() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-screen flex-col bg-gray-50 dark:bg-gray-950">
       <Header />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Project List */}
-        <aside className="w-80 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex-shrink-0">
+        <aside className="w-80 flex-shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <ProjectList />
         </aside>
 
         {/* Main content - Project Details */}
-        <main className="flex-1 bg-white dark:bg-gray-900 overflow-hidden flex flex-col">
+        <main className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-gray-900">
           <div className="flex-1 overflow-hidden">
             <ProjectDetails />
           </div>

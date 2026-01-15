@@ -48,10 +48,10 @@ pub struct CommandStatus {
 /// macOS app bundles don't inherit shell PATH, so we need to search common locations
 fn get_common_paths() -> Vec<&'static str> {
     vec![
-        "/opt/homebrew/bin",      // macOS Apple Silicon (Homebrew)
-        "/usr/local/bin",         // macOS Intel (Homebrew) / Linux
+        "/opt/homebrew/bin",              // macOS Apple Silicon (Homebrew)
+        "/usr/local/bin",                 // macOS Intel (Homebrew) / Linux
         "/home/linuxbrew/.linuxbrew/bin", // Linux Homebrew
-        "/usr/bin",               // System paths
+        "/usr/bin",                       // System paths
         "/bin",
         "/usr/sbin",
         "/sbin",

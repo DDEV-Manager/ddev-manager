@@ -91,27 +91,27 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
       <button
         onClick={onToggle}
         className={cn(
-          "fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg transition-all",
+          "fixed right-4 bottom-4 flex items-center gap-2 rounded-lg px-3 py-2 shadow-lg transition-all",
           isRunning
-            ? "bg-blue-500 text-white animate-pulse"
+            ? "animate-pulse bg-blue-500 text-white"
             : "bg-gray-800 text-gray-300 hover:bg-gray-700"
         )}
       >
-        <ChevronUp className="w-4 h-4" />
+        <ChevronUp className="h-4 w-4" />
         {isRunning ? `Running: ${currentCommand}` : "Terminal"}
       </button>
     );
   }
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800 bg-gray-900 flex flex-col">
+    <div className="flex flex-col border-t border-gray-200 bg-gray-900 dark:border-gray-800">
       {/* Terminal header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-gray-800 border-b border-gray-700">
+      <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-300">Terminal</span>
           {isRunning && (
             <span className="flex items-center gap-1 text-xs text-blue-400">
-              <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+              <span className="h-2 w-2 animate-pulse rounded-full bg-blue-400" />
               {currentCommand}
             </span>
           )}
@@ -119,24 +119,24 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
         <div className="flex items-center gap-1">
           <button
             onClick={clearLines}
-            className="p-1.5 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200"
+            className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
             title="Clear terminal"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="h-4 w-4" />
           </button>
           <button
             onClick={onToggle}
-            className="p-1.5 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200"
+            className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
             title="Minimize"
           >
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="h-4 w-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200"
+            className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
             title="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -144,7 +144,7 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
       {/* Terminal content */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-3 font-mono text-sm max-h-64 min-h-32"
+        className="max-h-64 min-h-32 flex-1 overflow-y-auto p-3 font-mono text-sm"
       >
         {lines.length === 0 ? (
           <div className="text-gray-500 italic">
@@ -155,11 +155,11 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
             <div
               key={line.id}
               className={cn(
-                "whitespace-pre-wrap break-all",
+                "break-all whitespace-pre-wrap",
                 line.type === "stdout" && "text-gray-300",
                 line.type === "stderr" && "text-red-400",
-                line.type === "status" && line.text.startsWith("✓") && "text-green-400 font-medium",
-                line.type === "status" && line.text.startsWith("✗") && "text-red-400 font-medium",
+                line.type === "status" && line.text.startsWith("✓") && "font-medium text-green-400",
+                line.type === "status" && line.text.startsWith("✗") && "font-medium text-red-400",
                 line.type === "info" && "text-blue-400"
               )}
             >

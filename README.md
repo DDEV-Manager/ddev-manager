@@ -134,6 +134,14 @@ ddev-manager/
 | `pnpm test:run` | Run all tests once |
 | `pnpm test:coverage` | Run tests with coverage report |
 | `pnpm test:ui` | Open Vitest UI |
+| `pnpm lint` | Run ESLint |
+| `pnpm lint:fix` | Fix ESLint issues |
+| `pnpm format` | Format code with Prettier |
+| `pnpm format:check` | Check code formatting |
+| `pnpm lint:rust` | Run Clippy on Rust code |
+| `pnpm format:rust` | Format Rust code |
+| `pnpm lint:all` | Run all linters |
+| `pnpm format:all` | Format all code |
 
 ### Testing
 
@@ -237,10 +245,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ### Code Style
 
-- Follow existing code patterns
+- **ESLint** and **Prettier** enforce code style automatically
+- **Clippy** and **rustfmt** handle Rust code
+- Pre-commit hooks run linters on staged files
+- Run `pnpm lint:fix && pnpm format` to fix issues
 - Use TypeScript strict mode
 - Write tests for new features
-- Use meaningful commit messages
 
 ### Reporting Issues
 

@@ -160,13 +160,7 @@ export function useCreateSnapshot() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      project,
-      name,
-    }: {
-      project: string;
-      name?: string;
-    }) => {
+    mutationFn: async ({ project, name }: { project: string; name?: string }) => {
       return invoke<string>("create_snapshot", { project, name });
     },
     onSuccess: (_, variables) => {
@@ -182,13 +176,7 @@ export function useRestoreSnapshot() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      project,
-      snapshot,
-    }: {
-      project: string;
-      snapshot: string;
-    }) => {
+    mutationFn: async ({ project, snapshot }: { project: string; snapshot: string }) => {
       return invoke<string>("restore_snapshot", { project, snapshot });
     },
     onSuccess: (_, variables) => {

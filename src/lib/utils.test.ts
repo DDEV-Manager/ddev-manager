@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  cn,
-  getStatusColor,
-  getStatusBgColor,
-  formatProjectType,
-  truncatePath,
-} from "./utils";
+import { cn, getStatusColor, getStatusBgColor, formatProjectType, truncatePath } from "./utils";
 
 describe("cn (class name merger)", () => {
   it("should merge multiple class names", () => {
@@ -13,6 +7,7 @@ describe("cn (class name merger)", () => {
   });
 
   it("should handle conditional classes", () => {
+    // eslint-disable-next-line no-constant-binary-expression -- intentional test pattern
     expect(cn("base", false && "hidden", true && "visible")).toBe("base visible");
   });
 

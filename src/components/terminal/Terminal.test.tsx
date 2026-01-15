@@ -18,9 +18,7 @@ describe("Terminal", () => {
 
   describe("when closed", () => {
     it("should render minimized button", () => {
-      render(
-        <Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       expect(screen.getByText("Terminal")).toBeInTheDocument();
     });
@@ -28,9 +26,7 @@ describe("Terminal", () => {
     it("should call onToggle when minimized button is clicked", async () => {
       const user = userEvent.setup();
 
-      render(
-        <Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       await user.click(screen.getByText("Terminal"));
 
@@ -48,9 +44,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(
-        <Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       // Simulate command started
       await act(async () => {
@@ -70,24 +64,18 @@ describe("Terminal", () => {
 
   describe("when open", () => {
     it("should render terminal panel", () => {
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       expect(screen.getByText("Terminal")).toBeInTheDocument();
       expect(
-        screen.getByText(
-          "Terminal output will appear here when running commands..."
-        )
+        screen.getByText("Terminal output will appear here when running commands...")
       ).toBeInTheDocument();
     });
 
     it("should have close button", async () => {
       const user = userEvent.setup();
 
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       await user.click(screen.getByTitle("Close"));
 
@@ -97,9 +85,7 @@ describe("Terminal", () => {
     it("should have minimize button", async () => {
       const user = userEvent.setup();
 
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       await user.click(screen.getByTitle("Minimize"));
 
@@ -107,9 +93,7 @@ describe("Terminal", () => {
     });
 
     it("should have clear button", () => {
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       expect(screen.getByTitle("Clear terminal")).toBeInTheDocument();
     });
@@ -124,9 +108,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       await act(async () => {
         outputCallback?.({
@@ -151,9 +133,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       await act(async () => {
         outputCallback?.({
@@ -176,9 +156,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       await act(async () => {
         outputCallback?.({
@@ -192,9 +170,7 @@ describe("Terminal", () => {
 
       expect(screen.queryByText("Some output")).not.toBeInTheDocument();
       expect(
-        screen.getByText(
-          "Terminal output will appear here when running commands..."
-        )
+        screen.getByText("Terminal output will appear here when running commands...")
       ).toBeInTheDocument();
     });
 
@@ -208,9 +184,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(
-        <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-      );
+      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
 
       await act(async () => {
         statusCallback?.({
@@ -223,9 +197,7 @@ describe("Terminal", () => {
         });
       });
 
-      expect(
-        screen.getByText(/Project started successfully/)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Project started successfully/)).toBeInTheDocument();
     });
   });
 

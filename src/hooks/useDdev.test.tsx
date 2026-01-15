@@ -18,11 +18,7 @@ import {
   useRestoreSnapshot,
   queryKeys,
 } from "./useDdev";
-import {
-  setupInvokeMock,
-  createMockProjectBasic,
-  createMockProjectDetails,
-} from "@/test/mocks";
+import { setupInvokeMock, createMockProjectBasic, createMockProjectDetails } from "@/test/mocks";
 
 vi.mock("@tauri-apps/api/core");
 
@@ -37,9 +33,7 @@ const createTestQueryClient = () =>
 function createWrapper() {
   const queryClient = createTestQueryClient();
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    );
+    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
   };
 }
 
@@ -54,10 +48,7 @@ describe("useDdev hooks", () => {
       expect(queryKeys.project("test")).toEqual(["project", "test"]);
       expect(queryKeys.ddevInstalled).toEqual(["ddev-installed"]);
       expect(queryKeys.ddevVersion).toEqual(["ddev-version"]);
-      expect(queryKeys.snapshots("my-project")).toEqual([
-        "snapshots",
-        "my-project",
-      ]);
+      expect(queryKeys.snapshots("my-project")).toEqual(["snapshots", "my-project"]);
     });
   });
 

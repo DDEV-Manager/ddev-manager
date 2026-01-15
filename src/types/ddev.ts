@@ -26,7 +26,13 @@ export type ProjectType =
   | string;
 
 // Service status
-export type ServiceStatus = "running" | "stopped" | "starting" | "stopping" | "healthy" | "unhealthy";
+export type ServiceStatus =
+  | "running"
+  | "stopped"
+  | "starting"
+  | "stopping"
+  | "healthy"
+  | "unhealthy";
 
 // Host port mapping
 export interface HostPortMapping {

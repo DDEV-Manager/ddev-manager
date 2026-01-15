@@ -22,18 +22,16 @@ export function Header() {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">D</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600">
+            <span className="text-sm font-bold text-white">D</span>
           </div>
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            DDEV Manager
-          </h1>
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">DDEV Manager</h1>
         </div>
         {runningCount > 0 && (
-          <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 rounded-full">
+          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
             {runningCount} running
           </span>
         )}
@@ -42,31 +40,31 @@ export function Header() {
       <div className="flex items-center gap-2">
         <button
           onClick={handleRefresh}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+          className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           title="Refresh projects"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="h-4 w-4" />
         </button>
 
         <button
           onClick={handlePoweroff}
           disabled={runningCount === 0 || poweroff.isPending}
           className={cn(
-            "p-2 rounded-lg transition-colors",
+            "rounded-lg p-2 transition-colors",
             runningCount > 0
-              ? "hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400"
-              : "text-gray-300 dark:text-gray-700 cursor-not-allowed"
+              ? "text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+              : "cursor-not-allowed text-gray-300 dark:text-gray-700"
           )}
           title="Power off all projects"
         >
-          <Power className="w-4 h-4" />
+          <Power className="h-4 w-4" />
         </button>
 
         <button
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+          className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           title="Settings"
         >
-          <Settings className="w-4 h-4" />
+          <Settings className="h-4 w-4" />
         </button>
       </div>
     </header>

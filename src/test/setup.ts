@@ -47,4 +47,7 @@ Object.defineProperty(navigator, "clipboard", {
 });
 
 // Mock window.confirm
-vi.stubGlobal("confirm", vi.fn(() => true));
+vi.stubGlobal(
+  "confirm",
+  vi.fn(() => true)
+);

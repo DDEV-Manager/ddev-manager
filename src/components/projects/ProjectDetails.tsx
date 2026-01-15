@@ -12,7 +12,14 @@ import {
   Server,
 } from "lucide-react";
 import { useState } from "react";
-import { useProject, useStartProject, useStopProject, useRestartProject, useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
+import {
+  useProject,
+  useStartProject,
+  useStopProject,
+  useRestartProject,
+  useOpenUrl,
+  useOpenFolder,
+} from "@/hooks/useDdev";
 import { useAppStore } from "@/stores/appStore";
 import { cn, getStatusBgColor, formatProjectType } from "@/lib/utils";
 
@@ -35,8 +42,8 @@ export function ProjectDetails() {
 
   if (!selectedProject) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-600">
-        <Server className="w-12 h-12 mb-3 opacity-50" />
+      <div className="flex h-full flex-col items-center justify-center text-gray-400 dark:text-gray-600">
+        <Server className="mb-3 h-12 w-12 opacity-50" />
         <p className="text-sm">Select a project to view details</p>
       </div>
     );
@@ -44,17 +51,15 @@ export function ProjectDetails() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        Project not found
-      </div>
+      <div className="flex h-full items-center justify-center text-gray-500">Project not found</div>
     );
   }
 
@@ -62,24 +67,20 @@ export function ProjectDetails() {
   const isPending = startProject.isPending || stopProject.isPending || restartProject.isPending;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="border-b border-gray-200 p-4 dark:border-gray-800">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <div
-                className={cn(
-                  "w-3 h-3 rounded-full",
-                  getStatusBgColor(project.status)
-                )}
-              />
+              <div className={cn("h-3 w-3 rounded-full", getStatusBgColor(project.status))} />
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 {project.name}
               </h2>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {formatProjectType(project.type)} • PHP {project.php_version ?? "N/A"} • Node.js {project.nodejs_version}
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {formatProjectType(project.type)} • PHP {project.php_version ?? "N/A"} • Node.js{" "}
+              {project.nodejs_version}
             </p>
           </div>
 
@@ -90,17 +91,17 @@ export function ProjectDetails() {
                 <button
                   onClick={() => restartProject.mutate(project.name)}
                   disabled={isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg bg-yellow-100 px-3 py-1.5 text-sm text-yellow-700 transition-colors hover:bg-yellow-200 disabled:opacity-50 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
                 >
-                  <RotateCw className={cn("w-4 h-4", restartProject.isPending && "animate-spin")} />
+                  <RotateCw className={cn("h-4 w-4", restartProject.isPending && "animate-spin")} />
                   Restart
                 </button>
                 <button
                   onClick={() => stopProject.mutate(project.name)}
                   disabled={isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-sm text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                 >
-                  <Square className="w-4 h-4" />
+                  <Square className="h-4 w-4" />
                   Stop
                 </button>
               </>
@@ -108,9 +109,9 @@ export function ProjectDetails() {
               <button
                 onClick={() => startProject.mutate(project.name)}
                 disabled={isPending}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg bg-green-100 px-3 py-1.5 text-sm text-green-700 transition-colors hover:bg-green-200 disabled:opacity-50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
               >
-                <Play className={cn("w-4 h-4", startProject.isPending && "animate-pulse")} />
+                <Play className={cn("h-4 w-4", startProject.isPending && "animate-pulse")} />
                 Start
               </button>
             )}
@@ -119,29 +120,29 @@ export function ProjectDetails() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 space-y-6 overflow-y-auto p-4">
         {/* Quick actions */}
         {isRunning && (
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => openUrl.mutate(project.primary_url)}
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="h-4 w-4" />
               Open Site
             </button>
             <button
               onClick={() => openFolder.mutate(project.approot)}
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
-              <Folder className="w-4 h-4" />
+              <Folder className="h-4 w-4" />
               Open Folder
             </button>
             <button
               onClick={() => openUrl.mutate(project.mailpit_https_url)}
-              className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
-              <Mail className="w-4 h-4" />
+              <Mail className="h-4 w-4" />
               Mailpit
             </button>
           </div>
@@ -149,7 +150,7 @@ export function ProjectDetails() {
 
         {/* URLs */}
         <section>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">URLs</h3>
+          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">URLs</h3>
           <div className="space-y-2">
             <UrlRow
               label="Primary"
@@ -174,11 +175,11 @@ export function ProjectDetails() {
         {/* Database info */}
         {project.dbinfo && (
           <section>
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <Database className="w-4 h-4 inline mr-1" />
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Database className="mr-1 inline h-4 w-4" />
               Database
             </h3>
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-2 text-sm font-mono">
+            <div className="space-y-2 rounded-lg bg-gray-50 p-3 font-mono text-sm dark:bg-gray-900">
               <div className="flex justify-between">
                 <span className="text-gray-500">Type:</span>
                 <span className="text-gray-900 dark:text-gray-100">
@@ -197,19 +198,21 @@ export function ProjectDetails() {
                 <span className="text-gray-500">User:</span>
                 <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.username}</span>
               </div>
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <span className="text-gray-500">Password:</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.password}</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {project.dbinfo.password}
+                  </span>
                   <button
                     onClick={() => copyToClipboard(project.dbinfo!.password, "password")}
-                    className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                    className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
                     title="Copy password"
                   >
                     {copiedField === "password" ? (
-                      <Check className="w-3 h-3 text-green-500" />
+                      <Check className="h-3 w-3 text-green-500" />
                     ) : (
-                      <Copy className="w-3 h-3 text-gray-400" />
+                      <Copy className="h-3 w-3 text-gray-400" />
                     )}
                   </button>
                 </div>
@@ -217,7 +220,9 @@ export function ProjectDetails() {
               {isRunning && project.dbinfo.published_port > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-500">Port (host):</span>
-                  <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.published_port}</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {project.dbinfo.published_port}
+                  </span>
                 </div>
               )}
             </div>
@@ -227,16 +232,16 @@ export function ProjectDetails() {
         {/* Services */}
         {project.services && Object.keys(project.services).length > 0 && (
           <section>
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Services</h3>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Services</h3>
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(project.services).map(([name, service]) => (
                 <div
                   key={name}
-                  className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg"
+                  className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900"
                 >
                   <div
                     className={cn(
-                      "w-2 h-2 rounded-full",
+                      "h-2 w-2 rounded-full",
                       service.status === "running" ? "bg-green-500" : "bg-gray-400"
                     )}
                   />
@@ -249,17 +254,17 @@ export function ProjectDetails() {
 
         {/* Path */}
         <section>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</h3>
-          <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
-            <code className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
+          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Location</h3>
+          <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
+            <code className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">
               {project.approot}
             </code>
             <button
               onClick={() => openFolder.mutate(project.approot)}
-              className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+              className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
               title="Open folder"
             >
-              <Folder className="w-4 h-4 text-gray-500" />
+              <Folder className="h-4 w-4 text-gray-500" />
             </button>
           </div>
         </section>
@@ -284,27 +289,27 @@ function UrlRow({
   const openUrl = useOpenUrl();
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
-      <span className="text-xs text-gray-500 w-16">{label}</span>
-      <code className="text-sm text-blue-600 dark:text-blue-400 flex-1 truncate">{url}</code>
+    <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
+      <span className="w-16 text-xs text-gray-500">{label}</span>
+      <code className="flex-1 truncate text-sm text-blue-600 dark:text-blue-400">{url}</code>
       <button
         onClick={onCopy}
-        className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+        className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
         title="Copy URL"
       >
         {copied ? (
-          <Check className="w-4 h-4 text-green-500" />
+          <Check className="h-4 w-4 text-green-500" />
         ) : (
-          <Copy className="w-4 h-4 text-gray-400" />
+          <Copy className="h-4 w-4 text-gray-400" />
         )}
       </button>
       {isActive && (
         <button
           onClick={() => openUrl.mutate(url)}
-          className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+          className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
           title="Open URL"
         >
-          <ExternalLink className="w-4 h-4 text-gray-400" />
+          <ExternalLink className="h-4 w-4 text-gray-400" />
         </button>
       )}
     </div>

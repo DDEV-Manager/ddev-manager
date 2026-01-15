@@ -98,7 +98,10 @@ describe("Header", () => {
       poweroff: undefined,
     });
 
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true)
+    );
 
     render(<Header />);
 
@@ -120,7 +123,10 @@ describe("Header", () => {
       list_projects: [createMockProjectBasic({ status: "running" })],
     });
 
-    vi.stubGlobal("confirm", vi.fn(() => false));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => false)
+    );
 
     render(<Header />);
 
