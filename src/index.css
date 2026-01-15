@@ -39,7 +39,7 @@
 /* Base styles */
 html {
   font-family: var(--font-sans);
-  font-size: calc(14px * var(--zoom, 1));
+  font-size: calc(17.5px * var(--zoom, 1));
   line-height: 1.5;
 }
 
