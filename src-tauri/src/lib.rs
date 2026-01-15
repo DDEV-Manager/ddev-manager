@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::thread;
 use tauri::{Emitter, Window};
@@ -40,6 +42,66 @@ pub struct CommandStatus {
     pub project: String,
     pub status: String, // "started", "finished", "error"
     pub message: Option<String>,
+}
+
+/// Common paths where DDEV might be installed
+/// macOS app bundles don't inherit shell PATH, so we need to search common locations
+fn get_common_paths() -> Vec<&'static str> {
+    vec![
+        "/opt/homebrew/bin",      // macOS Apple Silicon (Homebrew)
+        "/usr/local/bin",         // macOS Intel (Homebrew) / Linux
+        "/home/linuxbrew/.linuxbrew/bin", // Linux Homebrew
+        "/usr/bin",               // System paths
+        "/bin",
+        "/usr/sbin",
+        "/sbin",
+    ]
+}
+
+/// Find the DDEV executable by searching common installation paths
+fn find_ddev_path() -> Option<PathBuf> {
+    // First, try to find ddev in common paths
+    for dir in get_common_paths() {
+        let path = PathBuf::from(dir).join("ddev");
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    // On Windows, also check .exe extension
+    #[cfg(target_os = "windows")]
+    {
+        for dir in get_common_paths() {
+            let path = PathBuf::from(dir).join("ddev.exe");
+            if path.exists() {
+                return Some(path);
+            }
+        }
+    }
+
+    // Fall back to hoping it's in PATH
+    None
+}
+
+/// Get an enhanced PATH that includes common installation directories
+fn get_enhanced_path() -> String {
+    let common_paths = get_common_paths();
+    let current_path = env::var("PATH").unwrap_or_default();
+
+    // Prepend common paths to existing PATH
+    let mut paths: Vec<&str> = common_paths.clone();
+    if !current_path.is_empty() {
+        paths.push(&current_path);
+    }
+
+    paths.join(":")
+}
+
+/// Get the DDEV command - either the full path or just "ddev"
+fn get_ddev_command() -> String {
+    find_ddev_path()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| "ddev".to_string())
 }
 
 /// Basic project info from `ddev list`
@@ -175,10 +237,20 @@ struct DdevJsonResponse<T> {
 
 /// Run a DDEV command and return the raw output
 fn run_ddev_command(args: &[&str]) -> Result<String, DdevError> {
-    let output = Command::new("ddev")
+    let ddev_cmd = get_ddev_command();
+    let enhanced_path = get_enhanced_path();
+
+    let output = Command::new(&ddev_cmd)
         .args(args)
+        .env("PATH", &enhanced_path)
         .output()
-        .map_err(|e| DdevError::IoError(e.to_string()))?;
+        .map_err(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                DdevError::NotInstalled
+            } else {
+                DdevError::IoError(e.to_string())
+            }
+        })?;
 
     if output.status.success() {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
@@ -198,6 +270,8 @@ fn run_ddev_command_streaming(
     let command_name = command_name.to_string();
     let project_name = project_name.to_string();
     let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+    let ddev_cmd = get_ddev_command();
+    let enhanced_path = get_enhanced_path();
 
     // Emit start status
     let _ = window.emit(
@@ -212,8 +286,9 @@ fn run_ddev_command_streaming(
 
     // Spawn the command in a background thread
     thread::spawn(move || {
-        let result = Command::new("ddev")
+        let result = Command::new(&ddev_cmd)
             .args(&args)
+            .env("PATH", &enhanced_path)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn();
@@ -392,7 +467,14 @@ fn restore_snapshot(project: String, snapshot: String) -> Result<String, DdevErr
 /// Check if DDEV is installed
 #[tauri::command]
 fn check_ddev_installed() -> Result<bool, DdevError> {
-    match Command::new("ddev").arg("version").output() {
+    let ddev_cmd = get_ddev_command();
+    let enhanced_path = get_enhanced_path();
+
+    match Command::new(&ddev_cmd)
+        .arg("version")
+        .env("PATH", &enhanced_path)
+        .output()
+    {
         Ok(output) => Ok(output.status.success()),
         Err(_) => Ok(false),
     }
