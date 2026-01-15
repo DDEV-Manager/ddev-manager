@@ -91,7 +91,7 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
       <button
         onClick={onToggle}
         className={cn(
-          "fixed right-4 bottom-4 flex items-center gap-2 rounded-lg px-3 py-2 shadow-lg transition-all",
+          "fixed right-4 bottom-4 z-30 flex items-center gap-2 rounded-lg px-3 py-2 shadow-lg transition-all",
           isRunning
             ? "animate-pulse bg-blue-500 text-white"
             : "bg-gray-800 text-gray-300 hover:bg-gray-700"

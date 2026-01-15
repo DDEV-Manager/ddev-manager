@@ -238,7 +238,7 @@ export function ProjectDetails() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 space-y-6 overflow-y-auto p-4">
+      <div className="flex-1 space-y-6 overflow-y-auto p-4 pb-16">
         {/* Quick actions */}
         {isRunning && (
           <div className="flex flex-wrap gap-2">
