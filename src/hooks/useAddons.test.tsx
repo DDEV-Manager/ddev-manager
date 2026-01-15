@@ -40,32 +40,61 @@ const mockInstalledAddons: InstalledAddon[] = [
 ];
 
 const mockAddonRegistry: AddonRegistry = {
-  official: [
+  updated_datetime: "2024-01-01T00:00:00Z",
+  total_addons_count: 3,
+  official_addons_count: 2,
+  contrib_addons_count: 1,
+  addons: [
     {
-      name: "redis",
+      title: "Redis",
+      github_url: "https://github.com/ddev/ddev-redis",
       description: "Redis in-memory data store",
-      repository: "ddev/ddev-redis",
-      maintainer: "DDEV",
+      user: "ddev",
+      repo: "ddev-redis",
+      repo_id: 12345,
+      default_branch: "main",
+      tag_name: "v1.0.0",
+      ddev_version_constraint: ">=1.21.0",
+      dependencies: [],
+      type: "official",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
+      workflow_status: null,
       stars: 100,
-      last_updated: "2024-01-01",
     },
     {
-      name: "elasticsearch",
+      title: "Elasticsearch",
+      github_url: "https://github.com/ddev/ddev-elasticsearch",
       description: "Elasticsearch service",
-      repository: "ddev/ddev-elasticsearch",
-      maintainer: "DDEV",
+      user: "ddev",
+      repo: "ddev-elasticsearch",
+      repo_id: 12346,
+      default_branch: "main",
+      tag_name: "v1.0.0",
+      ddev_version_constraint: ">=1.21.0",
+      dependencies: [],
+      type: "official",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
+      workflow_status: null,
       stars: 80,
-      last_updated: "2024-01-01",
     },
-  ],
-  community: [
     {
-      name: "varnish",
+      title: "Varnish",
+      github_url: "https://github.com/community/ddev-varnish",
       description: "Varnish cache",
-      repository: "community/ddev-varnish",
-      maintainer: "Community",
+      user: "community",
+      repo: "ddev-varnish",
+      repo_id: 12347,
+      default_branch: "main",
+      tag_name: null,
+      ddev_version_constraint: ">=1.21.0",
+      dependencies: [],
+      type: "contrib",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z",
+      workflow_status: null,
       stars: 20,
-      last_updated: "2024-01-01",
     },
   ],
 };
@@ -149,8 +178,9 @@ describe("useAddons hooks", () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(invoke).toHaveBeenCalledWith("fetch_addon_registry");
-      expect(result.current.data?.official).toHaveLength(2);
-      expect(result.current.data?.community).toHaveLength(1);
+      expect(result.current.data?.addons).toHaveLength(3);
+      expect(result.current.data?.official_addons_count).toBe(2);
+      expect(result.current.data?.contrib_addons_count).toBe(1);
     });
 
     it("should handle registry fetch error", async () => {
