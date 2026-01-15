@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { X, Folder, ChevronRight, ChevronLeft, Loader2, Check } from "lucide-react";
-import { useSelectFolder, useCreateProject } from "@/hooks/useCreateProject";
+import { X, Folder, ChevronRight, ChevronLeft, Loader2, Check, Download } from "lucide-react";
+import {
+  useSelectFolder,
+  useCreateProject,
+  useCheckFolderEmpty,
+  useCheckComposerInstalled,
+  useCheckWpCliInstalled,
+  type CmsInstallConfig,
+} from "@/hooks/useCreateProject";
 import { cn } from "@/lib/utils";
 import { toast } from "@/stores/toastStore";
 
@@ -19,7 +26,26 @@ interface FormData {
   webserver: string;
   docroot: string;
   autoStart: boolean;
+  cmsInstall: CmsInstallConfig | null;
 }
+
+// CMS installation options per project type
+interface CmsOption {
+  label: string;
+  type: "composer" | "wordpress";
+  package?: string;
+}
+
+const CMS_INSTALLERS: Record<string, CmsOption[]> = {
+  drupal11: [
+    { label: "Drupal CMS", type: "composer", package: "drupal/cms" },
+    { label: "Drupal Core", type: "composer", package: "drupal/recommended-project" },
+  ],
+  drupal10: [{ label: "Drupal Core", type: "composer", package: "drupal/recommended-project:^10" }],
+  laravel: [{ label: "Laravel", type: "composer", package: "laravel/laravel" }],
+  shopware6: [{ label: "Shopware 6", type: "composer", package: "shopware/production" }],
+  wordpress: [{ label: "WordPress", type: "wordpress" }],
+};
 
 interface CommandStatus {
   command: string;
@@ -77,6 +103,7 @@ export function CreateProjectWizard({ isOpen, onClose }: CreateProjectWizardProp
 function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCreating, setIsCreating] = useState(false);
+  const [isFolderEmpty, setIsFolderEmpty] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     path: "",
     name: "",
@@ -86,11 +113,15 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
     webserver: "",
     docroot: "",
     autoStart: true,
+    cmsInstall: null,
   });
 
   const modalRef = useRef<HTMLDivElement>(null);
   const selectFolder = useSelectFolder();
   const createProject = useCreateProject();
+  const checkFolderEmpty = useCheckFolderEmpty();
+  const { data: hasComposer = false } = useCheckComposerInstalled();
+  const { data: hasWpCli = false } = useCheckWpCliInstalled();
 
   // Listen for command completion
   useEffect(() => {
@@ -166,9 +197,28 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
         ...prev,
         path: result,
         name: prev.name || folderName.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+        cmsInstall: null, // Reset CMS install when folder changes
       }));
+      // Check if folder is empty
+      const isEmpty = await checkFolderEmpty.mutateAsync(result);
+      setIsFolderEmpty(isEmpty);
     }
   };
+
+  // Check folder empty when path changes manually
+  useEffect(() => {
+    if (formData.path) {
+      checkFolderEmpty
+        .mutateAsync(formData.path)
+        .then(setIsFolderEmpty)
+        .catch(() => setIsFolderEmpty(false));
+    } else {
+      setIsFolderEmpty(false);
+    }
+    // Reset CMS install when path changes
+    setFormData((prev) => ({ ...prev, cmsInstall: null }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.path]);
 
   const handleCreate = () => {
     setIsCreating(true);
@@ -181,7 +231,24 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
       webserver: formData.webserver || undefined,
       docroot: formData.docroot || undefined,
       autoStart: formData.autoStart,
+      cmsInstall: formData.cmsInstall || undefined,
     });
+  };
+
+  // Get CMS options for current project type
+  const cmsOptions = CMS_INSTALLERS[formData.projectType] || [];
+  const hasCmsOptions = isFolderEmpty && cmsOptions.length > 0;
+
+  // Check if installation is available (composer for most, always for wordpress)
+  const canInstallCms = (option: CmsOption) => {
+    if (option.type === "wordpress") return true;
+    if (option.type === "composer") return hasComposer;
+    return false;
+  };
+
+  // Get installation method description for WordPress
+  const getWordPressMethodLabel = () => {
+    return hasWpCli ? "(via WP-CLI)" : "(via download)";
   };
 
   const canProceed = () => {
@@ -266,7 +333,9 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                 {PROJECT_TYPES.map((type) => (
                   <button
                     key={type.value}
-                    onClick={() => setFormData({ ...formData, projectType: type.value })}
+                    onClick={() =>
+                      setFormData({ ...formData, projectType: type.value, cmsInstall: null })
+                    }
                     className={cn(
                       "rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors",
                       formData.projectType === type.value
@@ -279,6 +348,111 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                 ))}
               </div>
             </div>
+
+            {/* CMS Installation Options */}
+            {hasCmsOptions && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                <div className="mb-3 flex items-center gap-2">
+                  <Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Install {PROJECT_TYPES.find((t) => t.value === formData.projectType)?.label}
+                  </span>
+                </div>
+                <p className="mb-3 text-xs text-blue-600 dark:text-blue-400">
+                  The folder is empty. You can optionally install the CMS files.
+                </p>
+
+                {cmsOptions.length === 1 ? (
+                  // Single option - checkbox
+                  <label
+                    className={cn(
+                      "flex items-center gap-2",
+                      !canInstallCms(cmsOptions[0]) && "cursor-not-allowed opacity-50"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.cmsInstall !== null}
+                      disabled={!canInstallCms(cmsOptions[0])}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData({
+                            ...formData,
+                            cmsInstall: {
+                              type: cmsOptions[0].type,
+                              package: cmsOptions[0].package,
+                            },
+                          });
+                        } else {
+                          setFormData({ ...formData, cmsInstall: null });
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Install {cmsOptions[0].label}
+                      {cmsOptions[0].type === "wordpress" && (
+                        <span className="ml-1 text-xs text-gray-500">
+                          {getWordPressMethodLabel()}
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                ) : (
+                  // Multiple options - radio buttons
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="cmsInstall"
+                        checked={formData.cmsInstall === null}
+                        onChange={() => setFormData({ ...formData, cmsInstall: null })}
+                        className="h-4 w-4 border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        Don&apos;t install (configure only)
+                      </span>
+                    </label>
+                    {cmsOptions.map((option, index) => (
+                      <label
+                        key={index}
+                        className={cn(
+                          "flex items-center gap-2",
+                          !canInstallCms(option) && "cursor-not-allowed opacity-50"
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="cmsInstall"
+                          disabled={!canInstallCms(option)}
+                          checked={
+                            formData.cmsInstall?.type === option.type &&
+                            formData.cmsInstall?.package === option.package
+                          }
+                          onChange={() =>
+                            setFormData({
+                              ...formData,
+                              cmsInstall: { type: option.type, package: option.package },
+                            })
+                          }
+                          className="h-4 w-4 border-gray-300"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          Install {option.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* Show warning if composer not available */}
+                {cmsOptions.some((o) => o.type === "composer") && !hasComposer && (
+                  <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                    Composer not found. Install Composer to enable CMS installation.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -352,7 +526,24 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
           </div>
         );
 
-      case 3:
+      case 3: {
+        // Find CMS install label for display
+        const getCmsInstallLabel = () => {
+          if (!formData.cmsInstall) return null;
+          const options = CMS_INSTALLERS[formData.projectType] || [];
+          const option = options.find(
+            (o) =>
+              o.type === formData.cmsInstall?.type && o.package === formData.cmsInstall?.package
+          );
+          if (option) {
+            if (option.type === "wordpress") {
+              return `${option.label} ${hasWpCli ? "(via WP-CLI)" : "(via download)"}`;
+            }
+            return option.label;
+          }
+          return formData.cmsInstall.package || "WordPress";
+        };
+
         return (
           <div className="space-y-4">
             <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
@@ -372,6 +563,12 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                     {PROJECT_TYPES.find((t) => t.value === formData.projectType)?.label}
                   </dd>
                 </div>
+                {formData.cmsInstall && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Install:</dt>
+                    <dd className="text-green-600 dark:text-green-400">{getCmsInstallLabel()}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <dt className="text-gray-500">PHP:</dt>
                   <dd className="text-gray-900 dark:text-gray-100">
@@ -412,6 +609,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
             </label>
           </div>
         );
+      }
 
       default:
         return null;

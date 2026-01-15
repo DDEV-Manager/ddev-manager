@@ -724,6 +724,61 @@ fn remove_addon(window: Window, project: String, addon: String) -> Result<(), Dd
     )
 }
 
+/// Check if a folder is empty (completely empty, no files at all)
+/// Composer create-project requires a truly empty folder
+#[tauri::command]
+async fn check_folder_empty(path: String) -> Result<bool, DdevError> {
+    let path = std::path::Path::new(&path);
+
+    if !path.exists() {
+        // Non-existent folder is considered "empty" (will be created)
+        return Ok(true);
+    }
+
+    if !path.is_dir() {
+        return Err(DdevError::CommandFailed(
+            "Path is not a directory".to_string(),
+        ));
+    }
+
+    let mut entries = std::fs::read_dir(path).map_err(|e| DdevError::IoError(e.to_string()))?;
+
+    // Folder is empty only if there are no entries at all
+    Ok(entries.next().is_none())
+}
+
+/// Check if composer is installed
+#[tauri::command]
+async fn check_composer_installed() -> Result<bool, DdevError> {
+    let enhanced_path = get_enhanced_path();
+
+    match AsyncCommand::new("composer")
+        .arg("--version")
+        .env("PATH", &enhanced_path)
+        .output()
+        .await
+    {
+        Ok(output) => Ok(output.status.success()),
+        Err(_) => Ok(false),
+    }
+}
+
+/// Check if WP-CLI is installed
+#[tauri::command]
+async fn check_wpcli_installed() -> Result<bool, DdevError> {
+    let enhanced_path = get_enhanced_path();
+
+    match AsyncCommand::new("wp")
+        .arg("--version")
+        .env("PATH", &enhanced_path)
+        .output()
+        .await
+    {
+        Ok(output) => Ok(output.status.success()),
+        Err(_) => Ok(false),
+    }
+}
+
 /// Open folder picker dialog
 #[tauri::command]
 async fn select_folder(app: tauri::AppHandle) -> Result<Option<String>, DdevError> {
@@ -743,6 +798,231 @@ async fn select_folder(app: tauri::AppHandle) -> Result<Option<String>, DdevErro
         .map_err(|e| DdevError::CommandFailed(format!("Dialog channel error: {}", e)))
 }
 
+/// CMS installation instruction
+#[derive(Debug, Deserialize)]
+struct CmsInstall {
+    #[serde(rename = "type")]
+    install_type: String, // "composer" or "wordpress"
+    package: Option<String>, // composer package name
+}
+
+/// Helper to run a command with streaming output
+fn run_streaming_command(
+    window: &Window,
+    cmd: &str,
+    args: &[&str],
+    cwd: &str,
+    enhanced_path: &str,
+) -> bool {
+    let result = Command::new(cmd)
+        .args(args)
+        .current_dir(cwd)
+        .env("PATH", enhanced_path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn();
+
+    let mut child = match result {
+        Ok(child) => child,
+        Err(e) => {
+            let _ = window.emit(
+                "command-output",
+                CommandOutput {
+                    line: format!("Failed to start {}: {}", cmd, e),
+                    stream: "stderr".to_string(),
+                },
+            );
+            return false;
+        }
+    };
+
+    let stdout = child.stdout.take();
+    let stderr = child.stderr.take();
+    let window_clone = window.clone();
+
+    let stdout_handle = stdout.map(|stdout| {
+        let window = window.clone();
+        thread::spawn(move || {
+            let reader = BufReader::new(stdout);
+            for line in reader.lines().map_while(Result::ok) {
+                let _ = window.emit(
+                    "command-output",
+                    CommandOutput {
+                        line,
+                        stream: "stdout".to_string(),
+                    },
+                );
+            }
+        })
+    });
+
+    let stderr_handle = stderr.map(|stderr| {
+        thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines().map_while(Result::ok) {
+                let _ = window_clone.emit(
+                    "command-output",
+                    CommandOutput {
+                        line,
+                        stream: "stderr".to_string(),
+                    },
+                );
+            }
+        })
+    });
+
+    if let Some(handle) = stdout_handle {
+        let _ = handle.join();
+    }
+    if let Some(handle) = stderr_handle {
+        let _ = handle.join();
+    }
+
+    match child.wait() {
+        Ok(status) => status.success(),
+        Err(_) => false,
+    }
+}
+
+/// Install CMS via composer or WP-CLI/download
+fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &str) -> bool {
+    match cms.install_type.as_str() {
+        "composer" => {
+            if let Some(package) = &cms.package {
+                let _ = window.emit(
+                    "command-output",
+                    CommandOutput {
+                        line: format!("Installing {} via Composer...", package),
+                        stream: "stdout".to_string(),
+                    },
+                );
+                run_streaming_command(
+                    window,
+                    "composer",
+                    &["create-project", package, "."],
+                    path,
+                    enhanced_path,
+                )
+            } else {
+                let _ = window.emit(
+                    "command-output",
+                    CommandOutput {
+                        line: "Error: No composer package specified".to_string(),
+                        stream: "stderr".to_string(),
+                    },
+                );
+                false
+            }
+        }
+        "wordpress" => {
+            // Try WP-CLI first
+            let wp_available = Command::new("wp")
+                .arg("--version")
+                .env("PATH", enhanced_path)
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false);
+
+            if wp_available {
+                let _ = window.emit(
+                    "command-output",
+                    CommandOutput {
+                        line: "Installing WordPress via WP-CLI...".to_string(),
+                        stream: "stdout".to_string(),
+                    },
+                );
+                run_streaming_command(window, "wp", &["core", "download"], path, enhanced_path)
+            } else {
+                // Download from wordpress.org
+                let _ = window.emit(
+                    "command-output",
+                    CommandOutput {
+                        line: "Downloading WordPress from wordpress.org...".to_string(),
+                        stream: "stdout".to_string(),
+                    },
+                );
+
+                // Download latest.zip
+                let zip_path = format!("{}/wordpress-latest.zip", path);
+                let download_success = run_streaming_command(
+                    window,
+                    "curl",
+                    &["-L", "-o", &zip_path, "https://wordpress.org/latest.zip"],
+                    path,
+                    enhanced_path,
+                );
+
+                if !download_success {
+                    return false;
+                }
+
+                // Extract zip
+                let _ = window.emit(
+                    "command-output",
+                    CommandOutput {
+                        line: "Extracting WordPress...".to_string(),
+                        stream: "stdout".to_string(),
+                    },
+                );
+
+                let unzip_success =
+                    run_streaming_command(window, "unzip", &["-q", &zip_path], path, enhanced_path);
+
+                if !unzip_success {
+                    return false;
+                }
+
+                // Move files from wordpress/ subdirectory to project root
+                let wp_subdir = format!("{}/wordpress", path);
+                if std::path::Path::new(&wp_subdir).exists() {
+                    // Move all files from wordpress/ to current directory
+                    let _ = window.emit(
+                        "command-output",
+                        CommandOutput {
+                            line: "Moving WordPress files to project root...".to_string(),
+                            stream: "stdout".to_string(),
+                        },
+                    );
+
+                    // Use shell to move files including hidden ones
+                    let move_success = run_streaming_command(
+                        window,
+                        "sh",
+                        &["-c", "mv wordpress/* . && mv wordpress/.[!.]* . 2>/dev/null; rmdir wordpress"],
+                        path,
+                        enhanced_path,
+                    );
+
+                    if !move_success {
+                        let _ = window.emit(
+                            "command-output",
+                            CommandOutput {
+                                line: "Warning: Could not move some WordPress files".to_string(),
+                                stream: "stderr".to_string(),
+                            },
+                        );
+                    }
+                }
+
+                // Clean up zip file
+                let _ = std::fs::remove_file(&zip_path);
+
+                true
+            }
+        }
+        _ => {
+            let _ = window.emit(
+                "command-output",
+                CommandOutput {
+                    line: format!("Unknown installation type: {}", cms.install_type),
+                    stream: "stderr".to_string(),
+                },
+            );
+            false
+        }
+    }
+}
+
 /// Create a new DDEV project (streaming output)
 #[tauri::command]
 fn create_project(
@@ -755,11 +1035,17 @@ fn create_project(
     webserver: Option<String>,
     docroot: Option<String>,
     auto_start: bool,
+    cms_install: Option<String>,
 ) -> Result<(), DdevError> {
     let command_name = "config".to_string();
     let project_name = name.clone();
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
+
+    // Parse CMS install instruction if provided
+    let cms_install_parsed: Option<CmsInstall> = cms_install
+        .as_ref()
+        .and_then(|json| serde_json::from_str(json).ok());
 
     // Build the ddev config arguments
     let mut args = vec![
@@ -806,6 +1092,38 @@ fn create_project(
 
     // Spawn the command in a background thread
     thread::spawn(move || {
+        // Create directory if it doesn't exist
+        if !std::path::Path::new(&path).exists() {
+            if let Err(e) = std::fs::create_dir_all(&path) {
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "error".to_string(),
+                        message: Some(format!("Failed to create directory: {}", e)),
+                    },
+                );
+                return;
+            }
+        }
+
+        // Install CMS if requested (before ddev config)
+        if let Some(cms) = cms_install_parsed {
+            if !install_cms(&window, &cms, &path, &enhanced_path) {
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "error".to_string(),
+                        message: Some("CMS installation failed".to_string()),
+                    },
+                );
+                return;
+            }
+        }
+
         // Run ddev config in the project directory
         let result = Command::new(&ddev_cmd)
             .args(&args)
@@ -999,6 +1317,9 @@ pub fn run() {
             remove_addon,
             select_folder,
             create_project,
+            check_folder_empty,
+            check_composer_installed,
+            check_wpcli_installed,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

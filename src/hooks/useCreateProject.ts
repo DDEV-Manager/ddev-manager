@@ -1,7 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "./useDdev";
 import { useTerminalStore } from "@/stores/terminalStore";
+
+export interface CmsInstallConfig {
+  type: "composer" | "wordpress";
+  package?: string;
+}
 
 export interface CreateProjectConfig {
   path: string;
@@ -12,6 +17,7 @@ export interface CreateProjectConfig {
   webserver?: string;
   docroot?: string;
   autoStart: boolean;
+  cmsInstall?: CmsInstallConfig;
 }
 
 /**
@@ -22,6 +28,43 @@ export function useSelectFolder() {
     mutationFn: async () => {
       return invoke<string | null>("select_folder");
     },
+  });
+}
+
+/**
+ * Hook to check if a folder is empty (or only contains .ddev)
+ */
+export function useCheckFolderEmpty() {
+  return useMutation({
+    mutationFn: async (path: string) => {
+      return invoke<boolean>("check_folder_empty", { path });
+    },
+  });
+}
+
+/**
+ * Hook to check if composer is installed
+ */
+export function useCheckComposerInstalled() {
+  return useQuery({
+    queryKey: ["composer-installed"],
+    queryFn: async () => {
+      return invoke<boolean>("check_composer_installed");
+    },
+    staleTime: Infinity,
+  });
+}
+
+/**
+ * Hook to check if WP-CLI is installed
+ */
+export function useCheckWpCliInstalled() {
+  return useQuery({
+    queryKey: ["wpcli-installed"],
+    queryFn: async () => {
+      return invoke<boolean>("check_wpcli_installed");
+    },
+    staleTime: Infinity,
   });
 }
 
@@ -44,6 +87,7 @@ export function useCreateProject() {
         webserver: config.webserver || null,
         docroot: config.docroot || null,
         autoStart: config.autoStart,
+        cmsInstall: config.cmsInstall ? JSON.stringify(config.cmsInstall) : null,
       });
     },
     onSuccess: () => {
