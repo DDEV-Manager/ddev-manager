@@ -11,7 +11,7 @@ interface TerminalState {
 
 export const useTerminalStore = create<TerminalState>((set) => ({
   isOpen: false,
-  autoOpen: true,
+  autoOpen: false,
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
   toggle: () => set((state) => ({ isOpen: !state.isOpen })),
