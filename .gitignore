@@ -28,3 +28,6 @@ coverage/
 
 # Rust/Tauri
 src-tauri/target/
+
+# Claude Code
+.claude/
