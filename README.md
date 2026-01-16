@@ -25,6 +25,8 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 - Add-on management (browse registry, install, remove - works even when project is stopped)
 - Container log viewer with filtering and real-time streaming
 - Dark mode and zoom controls
+- Keyboard shortcuts for common actions
+- **Experimental**: AI Chat for natural language commands ("start myproject", "stop all")
 - Cross-platform support (macOS, Windows, Linux)
 
 ## Screenshots
@@ -59,6 +61,25 @@ See the [Development](#development) section below.
 4. Use the action buttons to start, stop, or restart projects
 5. The terminal panel shows real-time output from DDEV commands
 
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+I` (Mac) / `Ctrl+I` (Win/Linux) | Toggle AI Chat panel |
+
+More shortcuts will be added in future releases.
+
+### Experimental: AI Chat
+
+Enable AI Chat in Settings > Experimental Features to control DDEV with natural language:
+
+- "start myproject" - Start a specific project
+- "stop all" - Stop all running projects
+- "list projects" - Show all projects
+- "what is ddev?" - Ask questions about DDEV
+
+The AI Chat uses keyword-based intent classification and fuzzy project name matching. An optional SmolLM2 model can be loaded for more advanced understanding.
+
 ## Development
 
 ### Prerequisites
@@ -92,19 +113,27 @@ See the [Development](#development) section below.
 ddev-manager/
 ├── src/                          # React frontend
 │   ├── components/               # React components
+│   │   ├── chat/                # AI Chat components
 │   │   ├── layout/              # Layout components (Header, StatusBar)
+│   │   ├── logs/                # Log viewer components
 │   │   ├── projects/            # Project-related components
+│   │   ├── settings/            # Settings modal
 │   │   ├── terminal/            # Terminal component
 │   │   └── ui/                  # Reusable UI components (Toaster)
 │   ├── hooks/                   # Custom React hooks
 │   │   ├── useDdev.ts           # DDEV command hooks
-│   │   └── useCreateProject.ts  # Project creation hooks
+│   │   ├── useCreateProject.ts  # Project creation hooks
+│   │   ├── useKeyboardShortcuts.ts # Keyboard shortcut handler
+│   │   └── useAIChat.ts         # AI Chat orchestration
 │   ├── stores/                  # Zustand stores
-│   │   ├── appStore.ts          # App state (selection, filters)
+│   │   ├── appStore.ts          # App state (selection, filters, theme)
+│   │   ├── chatStore.ts         # AI Chat state
 │   │   ├── terminalStore.ts     # Terminal state
 │   │   ├── statusStore.ts       # Status bar state
 │   │   └── toastStore.ts        # Toast notifications
 │   ├── lib/                     # Utility functions
+│   │   ├── ai/                  # AI utilities (intents, matching)
+│   │   └── shortcuts/           # Keyboard shortcuts system
 │   ├── types/                   # TypeScript type definitions
 │   ├── test/                    # Test utilities and mocks
 │   └── App.tsx                  # Main app component
@@ -284,6 +313,8 @@ When reporting bugs, please include:
 - [x] Cancel running commands
 - [x] Auto-detect project type for existing folders
 - [x] Log viewer with filtering
+- [x] Keyboard shortcuts system
+- [x] AI Chat (experimental) for natural language commands
 - [ ] System tray integration
 - [ ] Configuration editor
 - [ ] Multiple project selection

@@ -12,6 +12,8 @@ import { useDdevInstalled } from "@/hooks/useDdev";
 import { useTerminalStore } from "@/stores/terminalStore";
 import { useAppStore } from "@/stores/appStore";
 import { useTheme } from "@/hooks/useTheme";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { initializeDefaultShortcuts } from "@/lib/shortcuts";
 import { toast } from "@/stores/toastStore";
 import { AlertCircle, Loader2 } from "lucide-react";
 
@@ -39,6 +41,12 @@ function AppContent() {
 
   // Initialize theme and zoom settings
   useTheme();
+
+  // Initialize keyboard shortcuts
+  useKeyboardShortcuts();
+  useEffect(() => {
+    initializeDefaultShortcuts();
+  }, []);
 
   // Global listener for project creation completion
   useEffect(() => {

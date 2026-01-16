@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { X, MessageCircle, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { useChatStore } from "@/stores/chatStore";
 import { useAIChat } from "@/hooks/useAIChat";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { cn } from "@/lib/utils";
+import { getModifierDisplay } from "@/lib/shortcuts";
 
 interface ChatPanelProps {
   enabled?: boolean;
@@ -13,6 +14,7 @@ interface ChatPanelProps {
 export function ChatPanel({ enabled = true }: ChatPanelProps) {
   const { isOpen, toggle, messages, isLoading, modelStatus, modelLoadProgress } = useChatStore();
   const { sendMessage, loadModel, initializeChat } = useAIChat();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Initialize chat with welcome message when opened
   useEffect(() => {
@@ -20,6 +22,17 @@ export function ChatPanel({ enabled = true }: ChatPanelProps) {
       initializeChat();
     }
   }, [isOpen, initializeChat]);
+
+  // Focus input when chat opens
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to ensure the panel has rendered
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   // Optionally load model when chat is opened
   useEffect(() => {
@@ -39,7 +52,7 @@ export function ChatPanel({ enabled = true }: ChatPanelProps) {
       <button
         onClick={toggle}
         className="fixed right-4 bottom-16 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-blue-700"
-        title="Open AI Chat (Experimental)"
+        title={`Open AI Chat (${getModifierDisplay()}+I)`}
       >
         <MessageCircle className="h-5 w-5" />
       </button>
@@ -66,7 +79,7 @@ export function ChatPanel({ enabled = true }: ChatPanelProps) {
         <button
           onClick={toggle}
           className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-          title="Close chat"
+          title={`Close chat (${getModifierDisplay()}+I)`}
         >
           <X className="h-5 w-5" />
         </button>
@@ -92,6 +105,7 @@ export function ChatPanel({ enabled = true }: ChatPanelProps) {
 
       {/* Input */}
       <ChatInput
+        ref={inputRef}
         onSend={sendMessage}
         disabled={isLoading}
         placeholder="Try 'start myproject' or 'list projects'"

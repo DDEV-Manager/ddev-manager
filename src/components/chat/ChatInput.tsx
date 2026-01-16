@@ -1,4 +1,4 @@
-import { useState, useCallback, type KeyboardEvent } from "react";
+import { useState, useCallback, forwardRef, type KeyboardEvent } from "react";
 import { Send } from "lucide-react";
 
 interface ChatInputProps {
@@ -7,11 +7,10 @@ interface ChatInputProps {
   placeholder?: string;
 }
 
-export function ChatInput({
-  onSend,
-  disabled = false,
-  placeholder = "Type a message...",
-}: ChatInputProps) {
+export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(function ChatInput(
+  { onSend, disabled = false, placeholder = "Type a message..." },
+  ref
+) {
   const [message, setMessage] = useState("");
 
   const handleSend = useCallback(() => {
@@ -34,6 +33,7 @@ export function ChatInput({
   return (
     <div className="flex items-center gap-2 border-t border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
       <input
+        ref={ref}
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -52,4 +52,4 @@ export function ChatInput({
       </button>
     </div>
   );
-}
+});
