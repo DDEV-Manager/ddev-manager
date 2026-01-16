@@ -20,7 +20,8 @@
     "format:rust": "cd src-tauri && cargo fmt",
     "lint:all": "pnpm lint && pnpm lint:rust",
     "format:all": "pnpm format && pnpm format:rust",
-    "prepare": "husky"
+    "prepare": "husky",
+    "generate:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.17",
