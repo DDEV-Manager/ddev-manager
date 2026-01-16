@@ -102,7 +102,7 @@ export function ConfirmDialog({
           <div className="p-6">
             {/* Icon and title */}
             <div className="flex items-start gap-4">
-              <div className={cn("flex-shrink-0 rounded-full p-2", iconColors[variant])}>
+              <div className={cn("shrink-0 rounded-full p-2", iconColors[variant])}>
                 <AlertTriangle className="h-6 w-6" />
               </div>
               <div className="flex-1">

@@ -68,7 +68,7 @@ function AppContent() {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Project List */}
-        <aside className="w-80 flex-shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <aside className="w-80 shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
           <ProjectList />
         </aside>
 
