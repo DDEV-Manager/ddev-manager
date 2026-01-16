@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useState, useEffect, useCallback } from "react";
 import {
   useProject,
@@ -47,6 +48,7 @@ export function ProjectDetails() {
   const { data: project, isLoading } = useProject(selectedProject);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [operation, setOperation] = useState<OperationState>({ type: null, projectName: null });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const startProject = useStartProject();
   const stopProject = useStopProject();
@@ -127,14 +129,14 @@ export function ProjectDetails() {
 
   const handleDelete = useCallback(() => {
     if (!project) return;
-    if (
-      confirm(
-        `Are you sure you want to remove "${project.name}" from DDEV?\n\nThis will remove all DDEV configuration and Docker resources but keep your project files.`
-      )
-    ) {
-      setOperation({ type: "delete", projectName: project.name });
-      deleteProject.mutate(project.name);
-    }
+    setShowDeleteConfirm(true);
+  }, [project]);
+
+  const confirmDelete = useCallback(() => {
+    if (!project) return;
+    setShowDeleteConfirm(false);
+    setOperation({ type: "delete", projectName: project.name });
+    deleteProject.mutate(project.name);
   }, [project, deleteProject]);
 
   const copyToClipboard = (text: string, field: string) => {
@@ -417,6 +419,18 @@ export function ProjectDetails() {
           </div>
         </section>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Remove Project"
+        message={`Are you sure you want to remove "${project.name}" from DDEV? This will remove all DDEV configuration and Docker resources but keep your project files.`}
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 }
