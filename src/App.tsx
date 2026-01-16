@@ -7,8 +7,10 @@ import { ProjectDetails } from "@/components/projects/ProjectDetails";
 import { Terminal } from "@/components/terminal/Terminal";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { Toaster } from "@/components/ui/Toaster";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import { useDdevInstalled } from "@/hooks/useDdev";
 import { useTerminalStore } from "@/stores/terminalStore";
+import { useAppStore } from "@/stores/appStore";
 import { useTheme } from "@/hooks/useTheme";
 import { toast } from "@/stores/toastStore";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -33,6 +35,7 @@ const queryClient = new QueryClient({
 function AppContent() {
   const { data: isInstalled, isLoading } = useDdevInstalled();
   const { isOpen, close, toggle } = useTerminalStore();
+  const { experimentalChat } = useAppStore();
 
   // Initialize theme and zoom settings
   useTheme();
@@ -115,6 +118,9 @@ function AppContent() {
 
       {/* Terminal Panel */}
       <Terminal isOpen={isOpen} onClose={close} onToggle={toggle} />
+
+      {/* AI Chat Panel (Experimental) */}
+      <ChatPanel enabled={experimentalChat} />
     </div>
   );
 }

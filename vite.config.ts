@@ -15,6 +15,12 @@ export default defineConfig(async () => ({
     },
   },
 
+  // Transformers.js configuration
+  optimizeDeps: {
+    exclude: ["@xenova/transformers"],
+  },
+  assetsInclude: ["**/*.onnx", "**/*.wasm"],
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent Vite from obscuring rust errors

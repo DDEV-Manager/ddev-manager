@@ -27,6 +27,10 @@ interface AppState {
   // Zoom (percentage: 50-200)
   zoom: number;
   setZoom: (zoom: number) => void;
+
+  // Experimental features
+  experimentalChat: boolean;
+  setExperimentalChat: (enabled: boolean) => void;
 }
 
 const defaultFilter: ProjectFilter = {
@@ -70,6 +74,10 @@ export const useAppStore = create<AppState>()(
       // Zoom
       zoom: 100,
       setZoom: (zoom) => set({ zoom: Math.min(200, Math.max(50, zoom)) }),
+
+      // Experimental features
+      experimentalChat: false,
+      setExperimentalChat: (enabled) => set({ experimentalChat: enabled }),
     }),
     {
       name: "ddev-manager-storage",
@@ -78,6 +86,7 @@ export const useAppStore = create<AppState>()(
         zoom: state.zoom,
         sidebarCollapsed: state.sidebarCollapsed,
         sort: state.sort,
+        experimentalChat: state.experimentalChat,
       }),
     }
   )
