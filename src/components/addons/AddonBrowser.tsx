@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Star, Download, Check, Loader2, ExternalLink } from "lucide-react";
+import { Search, Star, Download, Check, Loader2, ExternalLink, ChevronDown } from "lucide-react";
 import type { InstalledAddon, AddonFilter } from "@/types/ddev";
 import { useAddonRegistry } from "@/hooks/useAddons";
 import { useOpenUrl } from "@/hooks/useDdev";
@@ -19,6 +19,7 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
     search: "",
     type: "all",
   });
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
 
   // Create a set of installed addon repositories for quick lookup
   // Installed addons have repository like "ddev/ddev-opensearch"
@@ -51,42 +52,74 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
   }, [registry, filter]);
 
   return (
-    <div className="space-y-3">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700">
       {/* Search and filters */}
-      <div className="sticky top-0 z-10 flex gap-2 bg-white pb-3 dark:bg-gray-800">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+      <div className="sticky top-0 z-10 flex items-center gap-2 rounded-t-lg border-b border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
+        {/* Type dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
+            className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700"
+          >
+            <span className="min-w-[70px]">
+              {filter.type === "all"
+                ? "All"
+                : filter.type === "official"
+                  ? "Official"
+                  : "Community"}
+            </span>
+            <ChevronDown className="h-3 w-3" />
+          </button>
+          {isTypeDropdownOpen && (
+            <div className="absolute top-full left-0 z-10 mt-1 rounded border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+              {(["all", "official", "contrib"] as const).map((type) => (
+                <button
+                  key={type}
+                  onClick={() => {
+                    setFilter({ ...filter, type });
+                    setIsTypeDropdownOpen(false);
+                  }}
+                  className={cn(
+                    "block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600",
+                    filter.type === type && "bg-blue-50 dark:bg-blue-900/30"
+                  )}
+                >
+                  {type === "all" ? "All" : type === "official" ? "Official" : "Community"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Search input */}
+        <div className="relative min-w-[120px] flex-1">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+            style={{ left: "8px" }}
+          />
           <input
             type="text"
             placeholder="Search add-ons..."
             value={filter.search}
             onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-9 text-sm dark:border-gray-700 dark:bg-gray-800"
+            className="w-full rounded border border-gray-300 bg-white py-1 text-sm dark:border-gray-600 dark:bg-gray-700"
+            style={{ paddingLeft: "28px", paddingRight: "8px" }}
           />
         </div>
-        <select
-          value={filter.type}
-          onChange={(e) => setFilter({ ...filter, type: e.target.value as AddonFilter["type"] })}
-          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
-        >
-          <option value="all">All</option>
-          <option value="official">Official</option>
-          <option value="contrib">Community</option>
-        </select>
       </div>
 
       {/* Addons list */}
-      <div className="space-y-2">
+      <div className="space-y-2 p-2">
         {isLoading ? (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center py-6">
             <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
           </div>
         ) : error ? (
-          <div className="py-8 text-center text-red-500">
+          <div className="py-6 text-center text-sm text-red-500">
             Failed to load registry: {error instanceof Error ? error.message : String(error)}
           </div>
         ) : filteredAddons.length === 0 ? (
-          <div className="py-8 text-center text-gray-500">No add-ons found</div>
+          <div className="py-6 text-center text-sm text-gray-500">No add-ons found</div>
         ) : (
           filteredAddons.map((addon) => {
             const repoPath = `${addon.user}/${addon.repo}`.toLowerCase();
@@ -167,7 +200,7 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
 
       {/* Registry stats */}
       {registry && (
-        <div className="text-center text-xs text-gray-400">
+        <div className="border-t border-gray-200 px-2 py-1.5 text-center text-xs text-gray-400 dark:border-gray-700">
           {registry.total_addons_count} add-ons available ({registry.official_addons_count}{" "}
           official)
         </div>
