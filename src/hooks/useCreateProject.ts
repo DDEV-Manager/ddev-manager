@@ -81,7 +81,8 @@ export function useCreateProject() {
       return invoke<void>("create_project", {
         path: config.path,
         name: config.name,
-        projectType: config.projectType,
+        // Empty string means auto-detect, pass null to backend
+        projectType: config.projectType || null,
         phpVersion: config.phpVersion || null,
         database: config.database || null,
         webserver: config.webserver || null,

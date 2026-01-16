@@ -47,6 +47,7 @@ const CMS_INSTALLERS: Record<string, CmsOption[]> = {
 };
 
 const PROJECT_TYPES = [
+  { value: "", label: "Auto-detect" },
   { value: "php", label: "PHP (Generic)" },
   { value: "wordpress", label: "WordPress" },
   { value: "drupal", label: "Drupal" },
@@ -147,15 +148,17 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
     const result = await selectFolder.mutateAsync();
     if (result) {
       const folderName = result.split("/").pop() || result.split("\\").pop() || "";
+      // Check if folder is empty
+      const isEmpty = await checkFolderEmpty.mutateAsync(result);
+      setIsFolderEmpty(isEmpty);
       setFormData((prev) => ({
         ...prev,
         path: result,
         name: prev.name || folderName.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+        // Auto-detect for non-empty folders, php for empty folders
+        projectType: isEmpty ? "php" : "",
         cmsInstall: null, // Reset CMS install when folder changes
       }));
-      // Check if folder is empty
-      const isEmpty = await checkFolderEmpty.mutateAsync(result);
-      setIsFolderEmpty(isEmpty);
     }
   };
 
@@ -164,13 +167,23 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
     if (formData.path) {
       checkFolderEmpty
         .mutateAsync(formData.path)
-        .then(setIsFolderEmpty)
-        .catch(() => setIsFolderEmpty(false));
+        .then((isEmpty) => {
+          setIsFolderEmpty(isEmpty);
+          // Auto-detect for non-empty folders, keep current type for empty folders
+          setFormData((prev) => ({
+            ...prev,
+            projectType: isEmpty ? prev.projectType || "php" : "",
+            cmsInstall: null, // Reset CMS install when path changes
+          }));
+        })
+        .catch(() => {
+          setIsFolderEmpty(false);
+          setFormData((prev) => ({ ...prev, cmsInstall: null }));
+        });
     } else {
       setIsFolderEmpty(false);
+      setFormData((prev) => ({ ...prev, cmsInstall: null }));
     }
-    // Reset CMS install when path changes
-    setFormData((prev) => ({ ...prev, cmsInstall: null }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.path]);
 
@@ -215,7 +228,8 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
       case 0:
         return formData.path.length > 0;
       case 1:
-        return formData.name.length > 0 && formData.projectType.length > 0;
+        // projectType can be empty (auto-detect)
+        return formData.name.length > 0;
       case 2:
         return true;
       default:

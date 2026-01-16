@@ -1274,7 +1274,7 @@ fn create_project(
     window: Window,
     path: String,
     name: String,
-    project_type: String,
+    project_type: Option<String>,
     php_version: Option<String>,
     database: Option<String>,
     webserver: Option<String>,
@@ -1298,9 +1298,15 @@ fn create_project(
     let mut args = vec![
         "config".to_string(),
         format!("--project-name={}", name),
-        format!("--project-type={}", project_type),
         "--create-docroot".to_string(),
     ];
+
+    // Only specify project type if provided (otherwise DDEV will auto-detect)
+    if let Some(pt) = project_type {
+        if !pt.is_empty() {
+            args.push(format!("--project-type={}", pt));
+        }
+    }
 
     if let Some(php) = php_version {
         if !php.is_empty() {
