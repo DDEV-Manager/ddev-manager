@@ -11,8 +11,10 @@ use tauri::{Emitter, Window};
 use tokio::process::Command as AsyncCommand;
 
 /// Entry in the process registry containing the child process and metadata
+/// The child is Option because between sequential commands in a multi-step task,
+/// the entry remains but there's no active process to kill.
 struct ProcessEntry {
-    child: Child,
+    child: Option<Child>,
     command: String,
     project: String,
 }
@@ -439,12 +441,13 @@ fn run_ddev_command_streaming(
         let stderr = child.stderr.take();
 
         // Store child in registry BEFORE starting output threads
+        // Use Some(child) since this is a single-command task
         {
             let mut registry = PROCESS_REGISTRY.lock().unwrap();
             registry.insert(
                 process_id_clone.clone(),
                 ProcessEntry {
-                    child,
+                    child: Some(child),
                     command: command_name.clone(),
                     project: project_name.clone(),
                 },
@@ -496,10 +499,17 @@ fn run_ddev_command_streaming(
         }
 
         // Retrieve child from registry and wait for completion
+        // For single-command tasks, we remove the entry entirely when done
         let status = {
             let mut registry = PROCESS_REGISTRY.lock().unwrap();
-            if let Some(mut entry) = registry.remove(&process_id_clone) {
-                Some(entry.child.wait())
+            if let Some(entry) = registry.remove(&process_id_clone) {
+                // Entry exists - take child and wait on it
+                if let Some(mut child) = entry.child {
+                    Some(child.wait())
+                } else {
+                    // Child was already taken (shouldn't happen for single-command tasks)
+                    None
+                }
             } else {
                 // Process was cancelled and removed from registry
                 None
@@ -791,14 +801,14 @@ fn remove_addon(window: Window, project: String, addon: String) -> Result<String
 fn cancel_command(window: Window, process_id: String) -> Result<(), DdevError> {
     let mut registry = PROCESS_REGISTRY.lock().unwrap();
 
-    if let Some(mut entry) = registry.remove(&process_id) {
-        // Kill the process
-        if let Err(e) = entry.child.kill() {
-            return Err(DdevError::IoError(format!("Failed to kill process: {}", e)));
+    if let Some(entry) = registry.remove(&process_id) {
+        // Kill the process if there's an active one
+        if let Some(mut child) = entry.child {
+            // Ignore errors - process might have already exited
+            let _ = child.kill();
+            // Wait for process to actually terminate (cleanup)
+            let _ = child.wait();
         }
-
-        // Wait for process to actually terminate (cleanup)
-        let _ = entry.child.wait();
 
         // Emit cancelled status with the original command and project info
         let _ = window.emit(
@@ -904,13 +914,24 @@ struct CmsInstall {
 }
 
 /// Helper to run a command with streaming output
+/// If process_id is provided, registers the child process for cancellation support
 fn run_streaming_command(
     window: &Window,
     cmd: &str,
     args: &[&str],
     cwd: &str,
     enhanced_path: &str,
-) -> bool {
+    process_id: Option<&str>,
+    command_name: &str,
+    project_name: &str,
+) -> Result<bool, &'static str> {
+    // Check if already cancelled before starting
+    if let Some(pid) = process_id {
+        if is_process_cancelled(pid) {
+            return Err("cancelled");
+        }
+    }
+
     let result = Command::new(cmd)
         .args(args)
         .current_dir(cwd)
@@ -929,12 +950,18 @@ fn run_streaming_command(
                     stream: "stderr".to_string(),
                 },
             );
-            return false;
+            return Ok(false);
         }
     };
 
     let stdout = child.stdout.take();
     let stderr = child.stderr.take();
+
+    // Register the child process for cancellation support
+    if let Some(pid) = process_id {
+        register_child_process(pid, child, command_name, project_name);
+    }
+
     let window_clone = window.clone();
 
     let stdout_handle = stdout.map(|stdout| {
@@ -975,14 +1002,47 @@ fn run_streaming_command(
         let _ = handle.join();
     }
 
-    match child.wait() {
-        Ok(status) => status.success(),
-        Err(_) => false,
+    // Get the child back from registry and wait for it
+    // The entry remains in the registry (with child=None) so is_process_cancelled still works
+    if let Some(pid) = process_id {
+        if let Some(mut child) = take_child_process(pid) {
+            match child.wait() {
+                Ok(status) => Ok(status.success()),
+                Err(_) => Ok(false),
+            }
+        } else {
+            // Either the entry was removed (cancelled) or child was already taken
+            // Check if the entry still exists to determine which case
+            if is_process_cancelled(pid) {
+                Err("cancelled")
+            } else {
+                // Entry exists but child was already taken - shouldn't happen normally
+                Ok(true)
+            }
+        }
+    } else {
+        // No process_id, this shouldn't happen in our usage but handle it
+        Ok(true)
     }
 }
 
+/// Result of install_cms - can be success, failure, or cancelled
+enum CmsInstallResult {
+    Success,
+    Failed,
+    Cancelled,
+}
+
 /// Install CMS via composer or WP-CLI/download
-fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &str) -> bool {
+/// Returns CmsInstallResult indicating success, failure, or cancellation
+fn install_cms(
+    window: &Window,
+    cms: &CmsInstall,
+    path: &str,
+    enhanced_path: &str,
+    process_id: &str,
+    project_name: &str,
+) -> CmsInstallResult {
     match cms.install_type.as_str() {
         "composer" => {
             if let Some(package) = &cms.package {
@@ -993,13 +1053,20 @@ fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &st
                         stream: "stdout".to_string(),
                     },
                 );
-                run_streaming_command(
+                match run_streaming_command(
                     window,
                     "composer",
                     &["create-project", package, "."],
                     path,
                     enhanced_path,
-                )
+                    Some(process_id),
+                    "config",
+                    project_name,
+                ) {
+                    Ok(true) => CmsInstallResult::Success,
+                    Ok(false) => CmsInstallResult::Failed,
+                    Err(_) => CmsInstallResult::Cancelled,
+                }
             } else {
                 let _ = window.emit(
                     "command-output",
@@ -1008,7 +1075,7 @@ fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &st
                         stream: "stderr".to_string(),
                     },
                 );
-                false
+                CmsInstallResult::Failed
             }
         }
         "wordpress" => {
@@ -1028,7 +1095,20 @@ fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &st
                         stream: "stdout".to_string(),
                     },
                 );
-                run_streaming_command(window, "wp", &["core", "download"], path, enhanced_path)
+                match run_streaming_command(
+                    window,
+                    "wp",
+                    &["core", "download"],
+                    path,
+                    enhanced_path,
+                    Some(process_id),
+                    "config",
+                    project_name,
+                ) {
+                    Ok(true) => CmsInstallResult::Success,
+                    Ok(false) => CmsInstallResult::Failed,
+                    Err(_) => CmsInstallResult::Cancelled,
+                }
             } else {
                 // Download from wordpress.org
                 let _ = window.emit(
@@ -1041,16 +1121,19 @@ fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &st
 
                 // Download latest.zip
                 let zip_path = format!("{}/wordpress-latest.zip", path);
-                let download_success = run_streaming_command(
+                match run_streaming_command(
                     window,
                     "curl",
                     &["-L", "-o", &zip_path, "https://wordpress.org/latest.zip"],
                     path,
                     enhanced_path,
-                );
-
-                if !download_success {
-                    return false;
+                    Some(process_id),
+                    "config",
+                    project_name,
+                ) {
+                    Ok(true) => {}
+                    Ok(false) => return CmsInstallResult::Failed,
+                    Err(_) => return CmsInstallResult::Cancelled,
                 }
 
                 // Extract zip
@@ -1062,11 +1145,19 @@ fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &st
                     },
                 );
 
-                let unzip_success =
-                    run_streaming_command(window, "unzip", &["-q", &zip_path], path, enhanced_path);
-
-                if !unzip_success {
-                    return false;
+                match run_streaming_command(
+                    window,
+                    "unzip",
+                    &["-q", &zip_path],
+                    path,
+                    enhanced_path,
+                    Some(process_id),
+                    "config",
+                    project_name,
+                ) {
+                    Ok(true) => {}
+                    Ok(false) => return CmsInstallResult::Failed,
+                    Err(_) => return CmsInstallResult::Cancelled,
                 }
 
                 // Move files from wordpress/ subdirectory to project root
@@ -1082,29 +1173,34 @@ fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &st
                     );
 
                     // Use shell to move files including hidden ones
-                    let move_success = run_streaming_command(
+                    match run_streaming_command(
                         window,
                         "sh",
                         &["-c", "mv wordpress/* . && mv wordpress/.[!.]* . 2>/dev/null; rmdir wordpress"],
                         path,
                         enhanced_path,
-                    );
-
-                    if !move_success {
-                        let _ = window.emit(
-                            "command-output",
-                            CommandOutput {
-                                line: "Warning: Could not move some WordPress files".to_string(),
-                                stream: "stderr".to_string(),
-                            },
-                        );
+                        Some(process_id),
+                        "config",
+                        project_name,
+                    ) {
+                        Ok(true) => {}
+                        Ok(false) => {
+                            let _ = window.emit(
+                                "command-output",
+                                CommandOutput {
+                                    line: "Warning: Could not move some WordPress files".to_string(),
+                                    stream: "stderr".to_string(),
+                                },
+                            );
+                        }
+                        Err(_) => return CmsInstallResult::Cancelled,
                     }
                 }
 
                 // Clean up zip file
                 let _ = std::fs::remove_file(&zip_path);
 
-                true
+                CmsInstallResult::Success
             }
         }
         _ => {
@@ -1115,9 +1211,61 @@ fn install_cms(window: &Window, cms: &CmsInstall, path: &str, enhanced_path: &st
                     stream: "stderr".to_string(),
                 },
             );
-            false
+            CmsInstallResult::Failed
         }
     }
+}
+
+/// Check if a process/task has been cancelled (removed from registry by cancel_command)
+fn is_process_cancelled(process_id: &str) -> bool {
+    let registry = PROCESS_REGISTRY.lock().unwrap();
+    !registry.contains_key(process_id)
+}
+
+/// Create an entry in the registry for a multi-step task (no active child yet)
+fn create_task_entry(process_id: &str, command: &str, project: &str) {
+    let mut registry = PROCESS_REGISTRY.lock().unwrap();
+    registry.insert(
+        process_id.to_string(),
+        ProcessEntry {
+            child: None,
+            command: command.to_string(),
+            project: project.to_string(),
+        },
+    );
+}
+
+/// Store a child process in the registry for cancellation support
+/// Updates an existing entry or creates a new one
+fn register_child_process(process_id: &str, child: Child, command: &str, project: &str) {
+    let mut registry = PROCESS_REGISTRY.lock().unwrap();
+    registry.insert(
+        process_id.to_string(),
+        ProcessEntry {
+            child: Some(child),
+            command: command.to_string(),
+            project: project.to_string(),
+        },
+    );
+}
+
+/// Take the child process out of the registry entry (for waiting on it)
+/// The entry remains in the registry with child=None
+/// Returns None if entry doesn't exist (was cancelled) or if child was already taken
+fn take_child_process(process_id: &str) -> Option<Child> {
+    let mut registry = PROCESS_REGISTRY.lock().unwrap();
+    if let Some(entry) = registry.get_mut(process_id) {
+        entry.child.take()
+    } else {
+        None
+    }
+}
+
+/// Completely remove a task entry from the registry
+/// Call this when a multi-step task completes (success or error)
+fn remove_task_entry(process_id: &str) {
+    let mut registry = PROCESS_REGISTRY.lock().unwrap();
+    registry.remove(process_id);
 }
 
 /// Create a new DDEV project (streaming output)
@@ -1133,11 +1281,13 @@ fn create_project(
     docroot: Option<String>,
     auto_start: bool,
     cms_install: Option<String>,
-) -> Result<(), DdevError> {
+) -> Result<String, DdevError> {
+    let process_id = generate_process_id();
     let command_name = "config".to_string();
     let project_name = name.clone();
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
+    let process_id_clone = process_id.clone();
 
     // Parse CMS install instruction if provided
     let cms_install_parsed: Option<CmsInstall> = cms_install
@@ -1176,7 +1326,11 @@ fn create_project(
         }
     }
 
-    // Emit start status
+    // Create an entry in the registry for this multi-step task
+    // Individual commands will register their child processes for cancellation support
+    create_task_entry(&process_id, &command_name, &project_name);
+
+    // Emit start status with process_id
     let _ = window.emit(
         "command-status",
         CommandStatus {
@@ -1184,15 +1338,20 @@ fn create_project(
             project: project_name.clone(),
             status: "started".to_string(),
             message: Some(format!("Creating project: ddev {}", args.join(" "))),
-            process_id: None,
+            process_id: Some(process_id.clone()),
         },
     );
 
     // Spawn the command in a background thread
     thread::spawn(move || {
+        // Helper to clean up and check if cancelled
+        let check_cancelled = || -> bool { is_process_cancelled(&process_id_clone) };
+
         // Create directory if it doesn't exist
         if !std::path::Path::new(&path).exists() {
             if let Err(e) = std::fs::create_dir_all(&path) {
+                // Clean up registry entry
+                remove_task_entry(&process_id_clone);
                 let _ = window.emit(
                     "command-status",
                     CommandStatus {
@@ -1207,101 +1366,68 @@ fn create_project(
             }
         }
 
+        // Check if cancelled before CMS install
+        if check_cancelled() {
+            return; // cancel_command already emitted the cancelled status
+        }
+
         // Install CMS if requested (before ddev config)
         if let Some(cms) = cms_install_parsed {
-            if !install_cms(&window, &cms, &path, &enhanced_path) {
-                let _ = window.emit(
-                    "command-status",
-                    CommandStatus {
-                        command: command_name,
-                        project: project_name,
-                        status: "error".to_string(),
-                        message: Some("CMS installation failed".to_string()),
-                        process_id: None,
-                    },
-                );
-                return;
-            }
-        }
-
-        // Run ddev config in the project directory
-        let result = Command::new(&ddev_cmd)
-            .args(&args)
-            .current_dir(&path)
-            .env("PATH", &enhanced_path)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn();
-
-        let mut child = match result {
-            Ok(child) => child,
-            Err(e) => {
-                let _ = window.emit(
-                    "command-status",
-                    CommandStatus {
-                        command: command_name,
-                        project: project_name,
-                        status: "error".to_string(),
-                        message: Some(format!("Failed to start command: {}", e)),
-                        process_id: None,
-                    },
-                );
-                return;
-            }
-        };
-
-        let stdout = child.stdout.take();
-        let stderr = child.stderr.take();
-        let window_clone = window.clone();
-
-        // Spawn thread for stdout
-        let stdout_handle = stdout.map(|stdout| {
-            let window = window.clone();
-            thread::spawn(move || {
-                let reader = BufReader::new(stdout);
-                for line in reader.lines().map_while(Result::ok) {
+            match install_cms(
+                &window,
+                &cms,
+                &path,
+                &enhanced_path,
+                &process_id_clone,
+                &project_name,
+            ) {
+                CmsInstallResult::Success => {}
+                CmsInstallResult::Failed => {
+                    // Clean up registry entry
+                    remove_task_entry(&process_id_clone);
                     let _ = window.emit(
-                        "command-output",
-                        CommandOutput {
-                            line,
-                            stream: "stdout".to_string(),
+                        "command-status",
+                        CommandStatus {
+                            command: command_name,
+                            project: project_name,
+                            status: "error".to_string(),
+                            message: Some("CMS installation failed".to_string()),
+                            process_id: None,
                         },
                     );
+                    return;
                 }
-            })
-        });
-
-        // Spawn thread for stderr
-        let stderr_handle = stderr.map(|stderr| {
-            thread::spawn(move || {
-                let reader = BufReader::new(stderr);
-                for line in reader.lines().map_while(Result::ok) {
-                    let _ = window_clone.emit(
-                        "command-output",
-                        CommandOutput {
-                            line,
-                            stream: "stderr".to_string(),
-                        },
-                    );
+                CmsInstallResult::Cancelled => {
+                    return; // cancel_command already emitted the cancelled status
                 }
-            })
-        });
-
-        // Wait for output threads
-        if let Some(handle) = stdout_handle {
-            let _ = handle.join();
-        }
-        if let Some(handle) = stderr_handle {
-            let _ = handle.join();
+            }
         }
 
-        // Wait for process to complete
-        let status = child.wait();
+        // Check if cancelled before ddev config
+        if check_cancelled() {
+            return;
+        }
 
-        match status {
-            Ok(exit_status) if exit_status.success() => {
-                // If auto_start is enabled, start the project
+        // Run ddev config using run_streaming_command for proper cancellation support
+        let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+        match run_streaming_command(
+            &window,
+            &ddev_cmd,
+            &args_refs,
+            &path,
+            &enhanced_path,
+            Some(&process_id_clone),
+            &command_name,
+            &project_name,
+        ) {
+            Ok(true) => {
+                // Config succeeded, check if we need to auto-start
                 if auto_start {
+                    // Check if cancelled before starting
+                    if check_cancelled() {
+                        return;
+                    }
+
                     let _ = window.emit(
                         "command-output",
                         CommandOutput {
@@ -1310,61 +1436,26 @@ fn create_project(
                         },
                     );
 
-                    let start_result = Command::new(&ddev_cmd)
-                        .args(["start"])
-                        .current_dir(&path)
-                        .env("PATH", &enhanced_path)
-                        .stdout(Stdio::piped())
-                        .stderr(Stdio::piped())
-                        .spawn();
-
-                    if let Ok(mut start_child) = start_result {
-                        let stdout = start_child.stdout.take();
-                        let stderr = start_child.stderr.take();
-                        let window_clone2 = window.clone();
-
-                        let stdout_handle = stdout.map(|stdout| {
-                            let window = window.clone();
-                            thread::spawn(move || {
-                                let reader = BufReader::new(stdout);
-                                for line in reader.lines().map_while(Result::ok) {
-                                    let _ = window.emit(
-                                        "command-output",
-                                        CommandOutput {
-                                            line,
-                                            stream: "stdout".to_string(),
-                                        },
-                                    );
-                                }
-                            })
-                        });
-
-                        let stderr_handle = stderr.map(|stderr| {
-                            thread::spawn(move || {
-                                let reader = BufReader::new(stderr);
-                                for line in reader.lines().map_while(Result::ok) {
-                                    let _ = window_clone2.emit(
-                                        "command-output",
-                                        CommandOutput {
-                                            line,
-                                            stream: "stderr".to_string(),
-                                        },
-                                    );
-                                }
-                            })
-                        });
-
-                        if let Some(handle) = stdout_handle {
-                            let _ = handle.join();
+                    // Run ddev start using run_streaming_command
+                    match run_streaming_command(
+                        &window,
+                        &ddev_cmd,
+                        &["start"],
+                        &path,
+                        &enhanced_path,
+                        Some(&process_id_clone),
+                        &command_name,
+                        &project_name,
+                    ) {
+                        Ok(_) => {}
+                        Err(_) => {
+                            return; // Cancelled
                         }
-                        if let Some(handle) = stderr_handle {
-                            let _ = handle.join();
-                        }
-
-                        let _ = start_child.wait();
                     }
                 }
 
+                // Clean up registry entry
+                remove_task_entry(&process_id_clone);
                 let _ = window.emit(
                     "command-status",
                     CommandStatus {
@@ -1376,7 +1467,9 @@ fn create_project(
                     },
                 );
             }
-            _ => {
+            Ok(false) => {
+                // Clean up registry entry
+                remove_task_entry(&process_id_clone);
                 let _ = window.emit(
                     "command-status",
                     CommandStatus {
@@ -1388,10 +1481,14 @@ fn create_project(
                     },
                 );
             }
+            Err(_) => {
+                // Cancelled - cancel_command already emitted the status
+                return;
+            }
         }
     });
 
-    Ok(())
+    Ok(process_id)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

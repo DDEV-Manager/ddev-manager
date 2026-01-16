@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { listen } from "@tauri-apps/api/event";
-import { X, Folder, ChevronRight, ChevronLeft, Loader2, Check, Download } from "lucide-react";
+import { X, Folder, ChevronRight, ChevronLeft, Check, Download, Loader2 } from "lucide-react";
 import {
   useSelectFolder,
   useCreateProject,
@@ -46,14 +45,6 @@ const CMS_INSTALLERS: Record<string, CmsOption[]> = {
   shopware6: [{ label: "Shopware 6", type: "composer", package: "shopware/production" }],
   wordpress: [{ label: "WordPress", type: "wordpress" }],
 };
-
-interface CommandStatus {
-  command: string;
-  project: string;
-  status: "started" | "finished" | "error" | "cancelled";
-  message?: string;
-  process_id?: string;
-}
 
 const PROJECT_TYPES = [
   { value: "php", label: "PHP (Generic)" },
@@ -103,7 +94,6 @@ export function CreateProjectWizard({ isOpen, onClose }: CreateProjectWizardProp
 
 function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isCreating, setIsCreating] = useState(false);
   const [isFolderEmpty, setIsFolderEmpty] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     path: "",
@@ -124,64 +114,22 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
   const { data: hasComposer = false } = useCheckComposerInstalled();
   const { data: hasWpCli = false } = useCheckWpCliInstalled();
 
-  // Listen for command completion
-  useEffect(() => {
-    if (!isCreating) return;
-
-    let mounted = true;
-    let unlistenFn: (() => void) | null = null;
-
-    listen<CommandStatus>("command-status", (event) => {
-      if (!mounted) return;
-
-      const { command, status } = event.payload;
-
-      if (
-        command === "config" &&
-        (status === "finished" || status === "error" || status === "cancelled")
-      ) {
-        setIsCreating(false);
-        if (status === "finished") {
-          toast.success("Project created", `${formData.name} has been created successfully`);
-          onClose();
-        } else if (status === "cancelled") {
-          toast.info("Project creation cancelled", "The operation was cancelled");
-        } else {
-          toast.error("Project creation failed", "Check the terminal for details");
-        }
-      }
-    }).then((fn) => {
-      if (mounted) {
-        unlistenFn = fn;
-      } else {
-        fn();
-      }
-    });
-
-    return () => {
-      mounted = false;
-      if (unlistenFn) {
-        unlistenFn();
-      }
-    };
-  }, [isCreating, onClose, formData.name]);
-
   // Close on escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isCreating) {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isCreating, onClose]);
+  }, [onClose]);
 
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node) && !isCreating) {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
     };
@@ -193,7 +141,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
       clearTimeout(timer);
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isCreating, onClose]);
+  }, [onClose]);
 
   const handleSelectFolder = async () => {
     const result = await selectFolder.mutateAsync();
@@ -227,7 +175,11 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
   }, [formData.path]);
 
   const handleCreate = () => {
-    setIsCreating(true);
+    // Show info toast and close modal - process runs in background
+    toast.info(
+      "Creating project",
+      `${formData.name} is being created. You can cancel via the status bar.`
+    );
     createProject.mutate({
       path: formData.path,
       name: formData.name,
@@ -239,6 +191,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
       autoStart: formData.autoStart,
       cmsInstall: formData.cmsInstall || undefined,
     });
+    onClose();
   };
 
   // Get CMS options for current project type
@@ -635,8 +588,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
           </h2>
           <button
             onClick={onClose}
-            disabled={isCreating}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800"
+            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
           >
             <X className="h-5 w-5" />
           </button>
@@ -680,7 +632,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
         <div className="flex justify-between">
           <button
             onClick={() => setCurrentStep((s) => s - 1)}
-            disabled={currentStep === 0 || isCreating}
+            disabled={currentStep === 0}
             className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -699,20 +651,10 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
           ) : (
             <button
               onClick={handleCreate}
-              disabled={isCreating}
-              className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm text-white hover:bg-green-600 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm text-white hover:bg-green-600"
             >
-              {isCreating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Check className="h-4 w-4" />
-                  Create Project
-                </>
-              )}
+              <Check className="h-4 w-4" />
+              Create Project
             </button>
           )}
         </div>

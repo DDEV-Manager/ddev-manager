@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { listen } from "@tauri-apps/api/event";
 import { Header } from "@/components/layout/Header";
 import { ProjectList } from "@/components/projects/ProjectList";
 import { ProjectDetails } from "@/components/projects/ProjectDetails";
@@ -8,7 +10,16 @@ import { Toaster } from "@/components/ui/Toaster";
 import { useDdevInstalled } from "@/hooks/useDdev";
 import { useTerminalStore } from "@/stores/terminalStore";
 import { useTheme } from "@/hooks/useTheme";
+import { toast } from "@/stores/toastStore";
 import { AlertCircle, Loader2 } from "lucide-react";
+
+interface CommandStatus {
+  command: string;
+  project: string;
+  status: "started" | "finished" | "error" | "cancelled";
+  message?: string;
+  process_id?: string;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,6 +36,28 @@ function AppContent() {
 
   // Initialize theme and zoom settings
   useTheme();
+
+  // Global listener for project creation completion
+  useEffect(() => {
+    const unlisten = listen<CommandStatus>("command-status", (event) => {
+      const { command, project, status } = event.payload;
+
+      // Handle project creation (config command) completion
+      if (command === "config") {
+        if (status === "finished") {
+          toast.success("Project created", `${project} has been created successfully`);
+        } else if (status === "error") {
+          toast.error("Project creation failed", "Check the terminal for details");
+        } else if (status === "cancelled") {
+          toast.info("Project creation cancelled", "The operation was cancelled");
+        }
+      }
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   if (isLoading) {
     return (
