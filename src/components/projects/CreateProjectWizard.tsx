@@ -50,8 +50,9 @@ const CMS_INSTALLERS: Record<string, CmsOption[]> = {
 interface CommandStatus {
   command: string;
   project: string;
-  status: "started" | "finished" | "error";
+  status: "started" | "finished" | "error" | "cancelled";
   message?: string;
+  process_id?: string;
 }
 
 const PROJECT_TYPES = [
@@ -135,11 +136,16 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
 
       const { command, status } = event.payload;
 
-      if (command === "config" && (status === "finished" || status === "error")) {
+      if (
+        command === "config" &&
+        (status === "finished" || status === "error" || status === "cancelled")
+      ) {
         setIsCreating(false);
         if (status === "finished") {
           toast.success("Project created", `${formData.name} has been created successfully`);
           onClose();
+        } else if (status === "cancelled") {
+          toast.info("Project creation cancelled", "The operation was cancelled");
         } else {
           toast.error("Project creation failed", "Check the terminal for details");
         }

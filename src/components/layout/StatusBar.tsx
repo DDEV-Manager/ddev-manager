@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { Loader2 } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
+import { Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStatusStore } from "@/stores/statusStore";
 
@@ -12,13 +13,24 @@ interface CommandOutput {
 interface CommandStatus {
   command: string;
   project: string;
-  status: "started" | "finished" | "error";
+  status: "started" | "finished" | "error" | "cancelled";
   message?: string;
+  process_id?: string;
 }
 
 export function StatusBar() {
-  const { isRunning, command, project, lastLine, exiting, setRunning, setLastLine, setFinished } =
-    useStatusStore();
+  const {
+    isRunning,
+    command,
+    project,
+    lastLine,
+    exiting,
+    processId,
+    setRunning,
+    setLastLine,
+    setFinished,
+    setCancelled,
+  } = useStatusStore();
 
   // Listen for command events
   useEffect(() => {
@@ -31,12 +43,14 @@ export function StatusBar() {
     });
 
     const unlistenStatus = listen<CommandStatus>("command-status", (event) => {
-      const { command, project, status } = event.payload;
+      const { command, project, status, process_id } = event.payload;
 
       if (status === "started") {
-        setRunning(command, project);
+        setRunning(command, project, process_id);
       } else if (status === "finished" || status === "error") {
         setFinished();
+      } else if (status === "cancelled") {
+        setCancelled();
       }
     });
 
@@ -44,7 +58,17 @@ export function StatusBar() {
       unlistenOutput.then((fn) => fn());
       unlistenStatus.then((fn) => fn());
     };
-  }, [setRunning, setLastLine, setFinished]);
+  }, [setRunning, setLastLine, setFinished, setCancelled]);
+
+  const handleCancel = async () => {
+    if (!processId) return;
+
+    try {
+      await invoke("cancel_command", { processId });
+    } catch (error) {
+      console.error("Failed to cancel command:", error);
+    }
+  };
 
   // Don't render if not running and not exiting
   if (!isRunning && !exiting) {
@@ -95,6 +119,18 @@ export function StatusBar() {
         <div className="min-w-0 flex-1 truncate font-mono text-sm text-gray-600 dark:text-gray-400">
           {lastLine || "Starting..."}
         </div>
+
+        {/* Cancel button */}
+        {processId && !exiting && (
+          <button
+            onClick={handleCancel}
+            className="flex shrink-0 items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+            title="Cancel command"
+          >
+            <X className="h-3.5 w-3.5" />
+            Cancel
+          </button>
+        )}
       </div>
     </div>
   );

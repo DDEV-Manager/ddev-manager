@@ -32,8 +32,9 @@ import { toast } from "@/stores/toastStore";
 interface CommandStatus {
   command: string;
   project: string;
-  status: "started" | "finished" | "error";
+  status: "started" | "finished" | "error" | "cancelled";
   message?: string;
+  process_id?: string;
 }
 
 type ProjectOperation = "start" | "stop" | "restart" | "delete" | null;
@@ -90,6 +91,9 @@ export function ProjectDetails() {
           setOperation({ type: null, projectName: null });
         } else if (status === "error") {
           toast.error(`Failed to ${command}`, "Check the terminal for details");
+          setOperation({ type: null, projectName: null });
+        } else if (status === "cancelled") {
+          toast.info("Command cancelled", "The operation was cancelled");
           setOperation({ type: null, projectName: null });
         }
       }

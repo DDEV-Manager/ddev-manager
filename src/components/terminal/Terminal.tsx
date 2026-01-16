@@ -11,8 +11,9 @@ interface CommandOutput {
 interface CommandStatus {
   command: string;
   project: string;
-  status: "started" | "finished" | "error";
+  status: "started" | "finished" | "error" | "cancelled";
   message?: string;
+  process_id?: string;
 }
 
 interface TerminalLine {
@@ -77,6 +78,10 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
         setIsRunning(false);
         setCurrentCommand(null);
         addLine(`✗ ${message || "Command failed"}`, "status");
+      } else if (status === "cancelled") {
+        setIsRunning(false);
+        setCurrentCommand(null);
+        addLine(`⊘ ${message || "Command was cancelled"}`, "status");
       }
     });
 
@@ -160,6 +165,9 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
                 line.type === "stderr" && "text-red-400",
                 line.type === "status" && line.text.startsWith("✓") && "font-medium text-green-400",
                 line.type === "status" && line.text.startsWith("✗") && "font-medium text-red-400",
+                line.type === "status" &&
+                  line.text.startsWith("⊘") &&
+                  "font-medium text-yellow-400",
                 line.type === "info" && "text-blue-400"
               )}
             >

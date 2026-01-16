@@ -15,8 +15,9 @@ import { toast } from "@/stores/toastStore";
 interface CommandStatus {
   command: string;
   project: string;
-  status: "started" | "finished" | "error";
+  status: "started" | "finished" | "error" | "cancelled";
   message?: string;
+  process_id?: string;
 }
 
 interface AddonsSectionProps {
@@ -55,6 +56,9 @@ export function AddonsSection({ projectName, isProjectRunning }: AddonsSectionPr
         } else if (status === "error") {
           toast.error("Installation failed", "Check the terminal for details");
           setInstallingAddon(null);
+        } else if (status === "cancelled") {
+          toast.info("Installation cancelled", "The operation was cancelled");
+          setInstallingAddon(null);
         }
       } else if (command === "addon-remove") {
         if (status === "finished") {
@@ -62,6 +66,9 @@ export function AddonsSection({ projectName, isProjectRunning }: AddonsSectionPr
           setRemovingAddon(null);
         } else if (status === "error") {
           toast.error("Removal failed", "Check the terminal for details");
+          setRemovingAddon(null);
+        } else if (status === "cancelled") {
+          toast.info("Removal cancelled", "The operation was cancelled");
           setRemovingAddon(null);
         }
       }

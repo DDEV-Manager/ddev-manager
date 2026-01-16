@@ -1,11 +1,34 @@
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::env;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
+use std::sync::Mutex;
 use std::thread;
 use tauri::{Emitter, Window};
 use tokio::process::Command as AsyncCommand;
+
+/// Entry in the process registry containing the child process and metadata
+struct ProcessEntry {
+    child: Child,
+    command: String,
+    project: String,
+}
+
+// Global process registry - stores active child processes by ID
+static PROCESS_REGISTRY: Lazy<Mutex<HashMap<String, ProcessEntry>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
+
+// Counter for generating unique process IDs
+static PROCESS_COUNTER: Lazy<Mutex<u64>> = Lazy::new(|| Mutex::new(0));
+
+fn generate_process_id() -> String {
+    let mut counter = PROCESS_COUNTER.lock().unwrap();
+    *counter += 1;
+    format!("proc_{}", *counter)
+}
 
 /// Error type for DDEV operations
 #[derive(Debug, thiserror::Error)]
@@ -41,8 +64,9 @@ pub struct CommandOutput {
 pub struct CommandStatus {
     pub command: String,
     pub project: String,
-    pub status: String, // "started", "finished", "error"
+    pub status: String, // "started", "finished", "error", "cancelled"
     pub message: Option<String>,
+    pub process_id: Option<String>, // Present when status="started"
 }
 
 /// Common paths where DDEV might be installed
@@ -358,19 +382,22 @@ async fn run_ddev_command_async(args: &[&str]) -> Result<String, DdevError> {
 }
 
 /// Run a DDEV command with streaming output to the frontend (non-blocking)
+/// Returns a process ID that can be used to cancel the command
 fn run_ddev_command_streaming(
     window: Window,
     command_name: &str,
     project_name: &str,
     args: &[&str],
-) -> Result<(), DdevError> {
+) -> Result<String, DdevError> {
+    let process_id = generate_process_id();
     let command_name = command_name.to_string();
     let project_name = project_name.to_string();
     let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
+    let process_id_clone = process_id.clone();
 
-    // Emit start status
+    // Emit start status with process_id
     let _ = window.emit(
         "command-status",
         CommandStatus {
@@ -378,6 +405,7 @@ fn run_ddev_command_streaming(
             project: project_name.clone(),
             status: "started".to_string(),
             message: Some(format!("Running: ddev {}", args.join(" "))),
+            process_id: Some(process_id.clone()),
         },
     );
 
@@ -400,6 +428,7 @@ fn run_ddev_command_streaming(
                         project: project_name,
                         status: "error".to_string(),
                         message: Some(format!("Failed to start command: {}", e)),
+                        process_id: None,
                     },
                 );
                 return;
@@ -408,6 +437,19 @@ fn run_ddev_command_streaming(
 
         let stdout = child.stdout.take();
         let stderr = child.stderr.take();
+
+        // Store child in registry BEFORE starting output threads
+        {
+            let mut registry = PROCESS_REGISTRY.lock().unwrap();
+            registry.insert(
+                process_id_clone.clone(),
+                ProcessEntry {
+                    child,
+                    command: command_name.clone(),
+                    project: project_name.clone(),
+                },
+            );
+        }
 
         // Clone window for stderr thread
         let window_clone = window.clone();
@@ -453,11 +495,19 @@ fn run_ddev_command_streaming(
             let _ = handle.join();
         }
 
-        // Wait for process to complete
-        let status = child.wait();
+        // Retrieve child from registry and wait for completion
+        let status = {
+            let mut registry = PROCESS_REGISTRY.lock().unwrap();
+            if let Some(mut entry) = registry.remove(&process_id_clone) {
+                Some(entry.child.wait())
+            } else {
+                // Process was cancelled and removed from registry
+                None
+            }
+        };
 
         match status {
-            Ok(exit_status) if exit_status.success() => {
+            Some(Ok(exit_status)) if exit_status.success() => {
                 let _ = window.emit(
                     "command-status",
                     CommandStatus {
@@ -465,8 +515,12 @@ fn run_ddev_command_streaming(
                         project: project_name,
                         status: "finished".to_string(),
                         message: Some("Command completed successfully".to_string()),
+                        process_id: None,
                     },
                 );
+            }
+            None => {
+                // Process was cancelled - don't emit anything, cancel_command handles it
             }
             _ => {
                 let _ = window.emit(
@@ -476,13 +530,14 @@ fn run_ddev_command_streaming(
                         project: project_name,
                         status: "error".to_string(),
                         message: Some("Command failed".to_string()),
+                        process_id: None,
                     },
                 );
             }
         }
     });
 
-    Ok(())
+    Ok(process_id)
 }
 
 /// Run a DDEV command with JSON output (async version)
@@ -514,32 +569,37 @@ async fn describe_project(name: String) -> Result<DdevProjectDetails, DdevError>
 }
 
 /// Start a DDEV project (non-blocking, streams output via events)
+/// Returns a process ID that can be used to cancel the command
 #[tauri::command]
-fn start_project(window: Window, name: String) -> Result<(), DdevError> {
+fn start_project(window: Window, name: String) -> Result<String, DdevError> {
     run_ddev_command_streaming(window, "start", &name, &["start", &name])
 }
 
 /// Stop a DDEV project (non-blocking, streams output via events)
+/// Returns a process ID that can be used to cancel the command
 #[tauri::command]
-fn stop_project(window: Window, name: String) -> Result<(), DdevError> {
+fn stop_project(window: Window, name: String) -> Result<String, DdevError> {
     run_ddev_command_streaming(window, "stop", &name, &["stop", &name])
 }
 
 /// Restart a DDEV project (non-blocking, streams output via events)
+/// Returns a process ID that can be used to cancel the command
 #[tauri::command]
-fn restart_project(window: Window, name: String) -> Result<(), DdevError> {
+fn restart_project(window: Window, name: String) -> Result<String, DdevError> {
     run_ddev_command_streaming(window, "restart", &name, &["restart", &name])
 }
 
 /// Power off all DDEV projects (non-blocking, streams output via events)
+/// Returns a process ID that can be used to cancel the command
 #[tauri::command]
-fn poweroff(window: Window) -> Result<(), DdevError> {
+fn poweroff(window: Window) -> Result<String, DdevError> {
     run_ddev_command_streaming(window, "poweroff", "all", &["poweroff"])
 }
 
 /// Delete a DDEV project (removes containers and config, keeps files)
+/// Returns a process ID that can be used to cancel the command
 #[tauri::command]
-fn delete_project(window: Window, name: String) -> Result<(), DdevError> {
+fn delete_project(window: Window, name: String) -> Result<String, DdevError> {
     run_ddev_command_streaming(
         window,
         "delete",
@@ -703,8 +763,9 @@ async fn fetch_addon_registry() -> Result<AddonRegistry, DdevError> {
 }
 
 /// Install an addon (streaming output)
+/// Returns a process ID that can be used to cancel the command
 #[tauri::command]
-fn install_addon(window: Window, project: String, addon: String) -> Result<(), DdevError> {
+fn install_addon(window: Window, project: String, addon: String) -> Result<String, DdevError> {
     run_ddev_command_streaming(
         window,
         "addon-install",
@@ -714,14 +775,50 @@ fn install_addon(window: Window, project: String, addon: String) -> Result<(), D
 }
 
 /// Remove an addon (streaming output)
+/// Returns a process ID that can be used to cancel the command
 #[tauri::command]
-fn remove_addon(window: Window, project: String, addon: String) -> Result<(), DdevError> {
+fn remove_addon(window: Window, project: String, addon: String) -> Result<String, DdevError> {
     run_ddev_command_streaming(
         window,
         "addon-remove",
         &project,
         &["add-on", "remove", &addon, "--project", &project],
     )
+}
+
+/// Cancel a running DDEV command by its process ID
+#[tauri::command]
+fn cancel_command(window: Window, process_id: String) -> Result<(), DdevError> {
+    let mut registry = PROCESS_REGISTRY.lock().unwrap();
+
+    if let Some(mut entry) = registry.remove(&process_id) {
+        // Kill the process
+        if let Err(e) = entry.child.kill() {
+            return Err(DdevError::IoError(format!("Failed to kill process: {}", e)));
+        }
+
+        // Wait for process to actually terminate (cleanup)
+        let _ = entry.child.wait();
+
+        // Emit cancelled status with the original command and project info
+        let _ = window.emit(
+            "command-status",
+            CommandStatus {
+                command: entry.command,
+                project: entry.project,
+                status: "cancelled".to_string(),
+                message: Some("Command was cancelled by user".to_string()),
+                process_id: Some(process_id),
+            },
+        );
+
+        Ok(())
+    } else {
+        Err(DdevError::CommandFailed(format!(
+            "Process {} not found or already completed",
+            process_id
+        )))
+    }
 }
 
 /// Check if a folder is empty (completely empty, no files at all)
@@ -1087,6 +1184,7 @@ fn create_project(
             project: project_name.clone(),
             status: "started".to_string(),
             message: Some(format!("Creating project: ddev {}", args.join(" "))),
+            process_id: None,
         },
     );
 
@@ -1102,6 +1200,7 @@ fn create_project(
                         project: project_name,
                         status: "error".to_string(),
                         message: Some(format!("Failed to create directory: {}", e)),
+                        process_id: None,
                     },
                 );
                 return;
@@ -1118,6 +1217,7 @@ fn create_project(
                         project: project_name,
                         status: "error".to_string(),
                         message: Some("CMS installation failed".to_string()),
+                        process_id: None,
                     },
                 );
                 return;
@@ -1143,6 +1243,7 @@ fn create_project(
                         project: project_name,
                         status: "error".to_string(),
                         message: Some(format!("Failed to start command: {}", e)),
+                        process_id: None,
                     },
                 );
                 return;
@@ -1271,6 +1372,7 @@ fn create_project(
                         project: project_name,
                         status: "finished".to_string(),
                         message: Some("Project created successfully".to_string()),
+                        process_id: None,
                     },
                 );
             }
@@ -1282,6 +1384,7 @@ fn create_project(
                         project: project_name,
                         status: "error".to_string(),
                         message: Some("Failed to create project".to_string()),
+                        process_id: None,
                     },
                 );
             }
@@ -1315,6 +1418,7 @@ pub fn run() {
             fetch_addon_registry,
             install_addon,
             remove_addon,
+            cancel_command,
             select_folder,
             create_project,
             check_folder_empty,
