@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
+import { LogsSection } from "@/components/logs/LogsSection";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -378,6 +379,13 @@ export function ProjectDetails() {
 
         {/* Add-ons */}
         <AddonsSection projectName={project.name} />
+
+        {/* Logs */}
+        <LogsSection
+          projectName={project.name}
+          services={Object.keys(project.services || {})}
+          isProjectRunning={isRunning}
+        />
 
         {/* Path */}
         <section>

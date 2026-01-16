@@ -23,6 +23,7 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 - Open project URLs and folders directly from the app
 - Database snapshot management
 - Add-on management (browse registry, install, remove - works even when project is stopped)
+- Container log viewer with filtering and real-time streaming
 - Dark mode and zoom controls
 - Cross-platform support (macOS, Windows, Linux)
 
@@ -282,7 +283,7 @@ When reporting bugs, please include:
 - [x] Delete project functionality
 - [x] Cancel running commands
 - [x] Auto-detect project type for existing folders
-- [ ] Log viewer with filtering
+- [x] Log viewer with filtering
 - [ ] System tray integration
 - [ ] Configuration editor
 - [ ] Multiple project selection
