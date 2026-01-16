@@ -182,6 +182,7 @@ ddev-manager/
 | `pnpm format:rust` | Format Rust code |
 | `pnpm lint:all` | Run all linters |
 | `pnpm format:all` | Format all code |
+| `pnpm version:bump <type>` | Bump version (patch/minor/major/x.x.x) |
 
 ### Testing
 

@@ -21,7 +21,8 @@
     "lint:all": "pnpm lint && pnpm lint:rust",
     "format:all": "pnpm format && pnpm format:rust",
     "prepare": "husky",
-    "generate:icons": "node scripts/generate-icons.mjs"
+    "generate:icons": "node scripts/generate-icons.mjs",
+    "version:bump": "node scripts/bump-version.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.17",
