@@ -92,7 +92,7 @@ export function StatusBar() {
         <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
 
         {/* Last line of output */}
-        <div className="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-400">
+        <div className="min-w-0 flex-1 truncate font-mono text-sm text-gray-600 dark:text-gray-400">
           {lastLine || "Starting..."}
         </div>
       </div>
