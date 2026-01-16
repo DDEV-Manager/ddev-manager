@@ -22,12 +22,11 @@ interface CommandStatus {
 
 interface AddonsSectionProps {
   projectName: string;
-  isProjectRunning: boolean;
 }
 
 type TabType = "installed" | "browse";
 
-export function AddonsSection({ projectName, isProjectRunning }: AddonsSectionProps) {
+export function AddonsSection({ projectName }: AddonsSectionProps) {
   const [activeTab, setActiveTab] = useState<TabType>("installed");
   const [installingAddon, setInstallingAddon] = useState<string | null>(null);
   const [removingAddon, setRemovingAddon] = useState<string | null>(null);
@@ -146,14 +145,12 @@ export function AddonsSection({ projectName, isProjectRunning }: AddonsSectionPr
       ) : activeTab === "installed" ? (
         <InstalledAddonsList
           addons={installedAddons ?? []}
-          isProjectRunning={isProjectRunning}
           removingAddon={removingAddon}
           onRemove={handleRemove}
         />
       ) : (
         <AddonBrowser
           installedAddons={installedAddons ?? []}
-          isProjectRunning={isProjectRunning}
           installingAddon={installingAddon}
           onInstall={handleInstall}
         />

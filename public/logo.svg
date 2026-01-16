@@ -1,0 +1,24 @@
+<svg viewBox="15 21 65 65" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon: Layered panels with circuit connections representing management/organization -->
+  <g id="icon">
+    <!-- Back layer -->
+    <rect x="15" y="35" width="50" height="50" rx="4" fill="#1e40af" opacity="0.3"/>
+    <!-- Middle layer -->
+    <rect x="22" y="28" width="50" height="50" rx="4" fill="#2563eb" opacity="0.6"/>
+    <!-- Front layer -->
+    <rect x="29" y="21" width="50" height="50" rx="4" fill="#3b82f6" stroke="#60a5fa" stroke-width="2"/>
+    
+    <!-- Circuit lines connecting layers -->
+    <path d="M 40 46 L 47 46 M 54 46 L 61 46" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 47 53 L 54 53 M 61 53 L 68 53" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 40 60 L 47 60 M 54 60 L 61 60" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Connection nodes -->
+    <circle cx="47" cy="46" r="2" fill="#60a5fa"/>
+    <circle cx="54" cy="46" r="2" fill="#60a5fa"/>
+    <circle cx="47" cy="53" r="2" fill="#60a5fa"/>
+    <circle cx="54" cy="53" r="2" fill="#60a5fa"/>
+    <circle cx="47" cy="60" r="2" fill="#60a5fa"/>
+    <circle cx="54" cy="60" r="2" fill="#60a5fa"/>
+  </g>
+</svg>

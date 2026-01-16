@@ -7,17 +7,11 @@ import { cn } from "@/lib/utils";
 
 interface AddonBrowserProps {
   installedAddons: InstalledAddon[];
-  isProjectRunning: boolean;
   installingAddon: string | null;
   onInstall: (addon: string) => void;
 }
 
-export function AddonBrowser({
-  installedAddons,
-  isProjectRunning,
-  installingAddon,
-  onInstall,
-}: AddonBrowserProps) {
+export function AddonBrowser({ installedAddons, installingAddon, onInstall }: AddonBrowserProps) {
   const { data: registry, isLoading, error } = useAddonRegistry();
   const openUrl = useOpenUrl();
 
@@ -139,14 +133,13 @@ export function AddonBrowser({
                   </button>
                   <button
                     onClick={() => onInstall(addonFullName)}
-                    disabled={isInstalled || installingAddon !== null || !isProjectRunning}
+                    disabled={isInstalled || installingAddon !== null}
                     className={cn(
                       "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors",
                       isInstalled
                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                         : "bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     )}
-                    title={!isProjectRunning ? "Start project to install add-ons" : undefined}
                   >
                     {isInstalled ? (
                       <>

@@ -377,7 +377,7 @@ export function ProjectDetails() {
         )}
 
         {/* Add-ons */}
-        <AddonsSection projectName={project.name} isProjectRunning={isRunning} />
+        <AddonsSection projectName={project.name} />
 
         {/* Path */}
         <section>

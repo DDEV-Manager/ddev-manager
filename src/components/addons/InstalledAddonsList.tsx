@@ -9,17 +9,11 @@ function getGitHubUrl(repository: string): string {
 
 interface InstalledAddonsListProps {
   addons: InstalledAddon[];
-  isProjectRunning: boolean;
   removingAddon: string | null;
   onRemove: (addon: string) => void;
 }
 
-export function InstalledAddonsList({
-  addons,
-  isProjectRunning,
-  removingAddon,
-  onRemove,
-}: InstalledAddonsListProps) {
+export function InstalledAddonsList({ addons, removingAddon, onRemove }: InstalledAddonsListProps) {
   const openUrl = useOpenUrl();
 
   if (addons.length === 0) {
@@ -54,9 +48,9 @@ export function InstalledAddonsList({
             </button>
             <button
               onClick={() => onRemove(addon.name)}
-              disabled={removingAddon !== null || !isProjectRunning}
+              disabled={removingAddon !== null}
               className="rounded p-1.5 text-red-500 hover:bg-red-100 disabled:opacity-50 dark:hover:bg-red-900/30"
-              title={isProjectRunning ? "Remove add-on" : "Start project to remove add-ons"}
+              title="Remove add-on"
             >
               {removingAddon === addon.name ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
