@@ -225,10 +225,20 @@ beforeEach(() => {
 
 ### Formatting
 
-The project doesn't use Prettier/ESLint yet, but please:
-- Use 2-space indentation
-- Use double quotes for strings in TypeScript
-- Keep lines under 100 characters when possible
+The project uses ESLint, Prettier, Clippy, and rustfmt with pre-commit hooks:
+
+```bash
+# Fix all linting and formatting issues
+pnpm lint:fix && pnpm format
+
+# Check without fixing
+pnpm lint && pnpm format:check
+
+# Rust linting
+pnpm lint:rust && pnpm format:rust
+```
+
+Pre-commit hooks automatically run linters on staged files.
 
 ## Project Architecture
 

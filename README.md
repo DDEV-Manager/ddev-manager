@@ -15,12 +15,15 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 - View all DDEV projects with real-time status indicators
 - Start, stop, and restart projects with one click
 - Create new projects with optional CMS installation (Drupal, Laravel, Shopware, WordPress)
+- Auto-detect project type for existing codebases
 - View detailed project information (services, URLs, database credentials)
 - Real-time terminal output for command execution
-- Global status bar showing command progress
+- Global status bar showing command progress with cancel support
+- Cancel running commands (useful for stuck operations)
 - Open project URLs and folders directly from the app
 - Database snapshot management
-- Add-on management (browse registry, install, remove)
+- Add-on management (browse registry, install, remove - works even when project is stopped)
+- Dark mode and zoom controls
 - Cross-platform support (macOS, Windows, Linux)
 
 ## Screenshots
@@ -277,6 +280,8 @@ When reporting bugs, please include:
 - [x] Project creation wizard with CMS installation
 - [x] Global status bar for command progress
 - [x] Delete project functionality
+- [x] Cancel running commands
+- [x] Auto-detect project type for existing folders
 - [ ] Log viewer with filtering
 - [ ] System tray integration
 - [ ] Configuration editor
