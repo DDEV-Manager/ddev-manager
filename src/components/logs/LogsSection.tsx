@@ -206,7 +206,7 @@ export function LogsSection({ projectName, services, isProjectRunning }: LogsSec
       ) : (
         <div className="rounded-lg border border-gray-200 dark:border-gray-700">
           {/* Toolbar */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
+          <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
             {/* Service dropdown */}
             <div className="relative">
               <button
@@ -323,7 +323,7 @@ export function LogsSection({ projectName, services, isProjectRunning }: LogsSec
           {/* Log content */}
           <div
             ref={logContainerRef}
-            className="h-64 overflow-auto bg-gray-900 p-2 font-mono text-xs"
+            className="min-h-48 overflow-auto bg-gray-900 p-2 font-mono text-xs"
           >
             {filteredLogs.length === 0 ? (
               <div className="flex h-full items-center justify-center text-gray-500">

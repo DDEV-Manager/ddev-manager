@@ -53,7 +53,7 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
   return (
     <div className="space-y-3">
       {/* Search and filters */}
-      <div className="flex gap-2">
+      <div className="sticky top-0 z-10 flex gap-2 bg-white pb-3 dark:bg-gray-800">
         <div className="relative flex-1">
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
@@ -76,7 +76,7 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
       </div>
 
       {/* Addons list */}
-      <div className="max-h-64 space-y-2 overflow-y-auto">
+      <div className="space-y-2">
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
