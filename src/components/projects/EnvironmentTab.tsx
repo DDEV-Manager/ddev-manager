@@ -1,6 +1,7 @@
 import { Database, Copy, Check, Folder, Loader2, Trash2, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
+import { ProjectScreenshot } from "./ProjectScreenshot";
 import { cn } from "@/lib/utils";
 import type { DdevProjectDetails } from "@/types/ddev";
 
@@ -30,29 +31,42 @@ export function EnvironmentTab({
 
   return (
     <div className="space-y-6 p-4">
-      {/* URLs */}
-      <section>
-        <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">URLs</h3>
-        <div className="space-y-2">
-          <UrlRow
-            label="Primary"
-            url={project.primary_url}
-            onCopy={() => copyToClipboard(project.primary_url, "primary")}
-            copied={copiedField === "primary"}
-            isActive={isRunning}
-          />
-          {project.urls?.slice(1).map((url, i) => (
+      {/* URLs and Screenshot - side by side */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* URLs */}
+        <section>
+          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">URLs</h3>
+          <div className="space-y-2">
             <UrlRow
-              key={url}
-              label={`URL ${i + 2}`}
-              url={url}
-              onCopy={() => copyToClipboard(url, `url-${i}`)}
-              copied={copiedField === `url-${i}`}
+              label="Primary"
+              url={project.primary_url}
+              onCopy={() => copyToClipboard(project.primary_url, "primary")}
+              copied={copiedField === "primary"}
               isActive={isRunning}
             />
-          ))}
-        </div>
-      </section>
+            {project.urls?.slice(1).map((url, i) => (
+              <UrlRow
+                key={url}
+                label={`URL ${i + 2}`}
+                url={url}
+                onCopy={() => copyToClipboard(url, `url-${i}`)}
+                copied={copiedField === `url-${i}`}
+                isActive={isRunning}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Screenshot */}
+        <section>
+          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Preview</h3>
+          <ProjectScreenshot
+            projectName={project.name}
+            primaryUrl={project.primary_url}
+            isRunning={isRunning}
+          />
+        </section>
+      </div>
 
       {/* Database info */}
       {project.dbinfo && (

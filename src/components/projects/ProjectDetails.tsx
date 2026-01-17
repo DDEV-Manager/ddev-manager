@@ -26,6 +26,7 @@ import {
   useOpenUrl,
   useOpenFolder,
 } from "@/hooks/useDdev";
+import { useCaptureScreenshot } from "@/hooks/useScreenshot";
 import { useAppStore } from "@/stores/appStore";
 import { cn, getStatusBgColor, formatProjectType } from "@/lib/utils";
 import { toast } from "@/stores/toastStore";
@@ -60,6 +61,7 @@ export function ProjectDetails() {
   const deleteProject = useDeleteProject();
   const openUrl = useOpenUrl();
   const openFolder = useOpenFolder();
+  const captureScreenshot = useCaptureScreenshot();
 
   // Listen for command completion to clear loading state and show toasts
   useEffect(() => {
@@ -90,6 +92,17 @@ export function ProjectDetails() {
             const actionPast =
               command === "start" ? "started" : command === "stop" ? "stopped" : "restarted";
             toast.success(`Project ${actionPast}`, `${projectName} has been ${actionPast}`);
+
+            // Auto-capture screenshot after project starts or restarts
+            if ((command === "start" || command === "restart") && project?.primary_url) {
+              // Small delay to ensure the project is fully ready
+              setTimeout(() => {
+                captureScreenshot.mutate({
+                  projectName: projectName,
+                  url: project.primary_url,
+                });
+              }, 2000);
+            }
           }
           setOperation({ type: null, projectName: null });
         } else if (status === "error") {
@@ -114,7 +127,7 @@ export function ProjectDetails() {
         unlistenFn();
       }
     };
-  }, [operation]);
+  }, [operation, project, captureScreenshot]);
 
   const handleStart = useCallback(() => {
     if (!project) return;
