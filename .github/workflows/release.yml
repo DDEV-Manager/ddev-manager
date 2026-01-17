@@ -6,7 +6,26 @@ on:
       - 'v*'
 
 jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.content }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+        env:
+          OUTPUT: CHANGELOG.md
+
   release:
+    needs: changelog
     permissions:
       contents: write
     strategy:
@@ -61,15 +80,18 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'DDEV Manager ${{ github.ref_name }}'
           releaseBody: |
+            ${{ needs.changelog.outputs.changelog }}
+
             ## Download
 
             | Platform | Download |
             |----------|----------|
-            | macOS (Universal) | .dmg |
-            | Windows | .msi or .exe |
-            | Linux | .deb or .AppImage |
+            | macOS (Universal) | `.dmg` |
+            | Windows | `.msi` or `.exe` |
+            | Linux | `.deb` or `.AppImage` |
 
-            See commits since last release for changes.
+            ---
+            **macOS users**: Run `xattr -cr "/Applications/DDEV Manager.app"` if blocked by Gatekeeper.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
