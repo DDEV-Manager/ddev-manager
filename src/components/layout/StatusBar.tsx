@@ -94,7 +94,7 @@ export function StatusBar() {
   return (
     <div
       className={cn(
-        "fixed right-0 bottom-0 left-0 z-40 border-t border-gray-200 bg-gray-100 px-4 py-2 dark:border-gray-700 dark:bg-gray-800",
+        "fixed right-0 bottom-0 left-0 z-40 border-t border-gray-200/50 bg-gray-100/80 px-4 py-2 backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80",
         exiting
           ? "animate-out slide-out-to-bottom fade-out duration-300"
           : "animate-in slide-in-from-bottom fade-in duration-300"

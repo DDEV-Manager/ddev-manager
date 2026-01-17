@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { X, Folder, ChevronRight, ChevronLeft, Check, Download, Loader2 } from "lucide-react";
 import {
   useSelectFolder,
@@ -8,6 +8,7 @@ import {
   useCheckWpCliInstalled,
   type CmsInstallConfig,
 } from "@/hooks/useCreateProject";
+import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { toast } from "@/stores/toastStore";
 
@@ -108,41 +109,11 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
     cmsInstall: null,
   });
 
-  const modalRef = useRef<HTMLDivElement>(null);
   const selectFolder = useSelectFolder();
   const createProject = useCreateProject();
   const checkFolderEmpty = useCheckFolderEmpty();
   const { data: hasComposer = false } = useCheckComposerInstalled();
   const { data: hasWpCli = false } = useCheckWpCliInstalled();
-
-  // Close on escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
-  // Close on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-
-    const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleClickOutside);
-    }, 0);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onClose]);
 
   const handleSelectFolder = async () => {
     const result = await selectFolder.mutateAsync();
@@ -590,89 +561,84 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div
-        ref={modalRef}
-        className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900"
-      >
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Create New Project
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <Modal isOpen={true} onClose={onClose} maxWidth="lg" scrollable>
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Create New Project
+        </h2>
+        <button
+          onClick={onClose}
+          className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-        {/* Step Indicator */}
-        <div className="mb-6 flex items-center justify-between">
-          {STEPS.map((step, index) => (
-            <div key={step} className="flex items-center">
+      {/* Step Indicator */}
+      <div className="mb-6 flex items-center justify-between">
+        {STEPS.map((step, index) => (
+          <div key={step} className="flex items-center">
+            <div
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium",
+                index < currentStep
+                  ? "bg-green-500 text-white"
+                  : index === currentStep
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-500 dark:bg-gray-700"
+              )}
+            >
+              {index < currentStep ? <Check className="h-4 w-4" /> : index + 1}
+            </div>
+            {index < STEPS.length - 1 && (
               <div
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium",
-                  index < currentStep
-                    ? "bg-green-500 text-white"
-                    : index === currentStep
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-500 dark:bg-gray-700"
+                  "mx-2 h-0.5 w-24",
+                  index < currentStep ? "bg-green-500" : "bg-gray-200 dark:bg-gray-700"
                 )}
-              >
-                {index < currentStep ? <Check className="h-4 w-4" /> : index + 1}
-              </div>
-              {index < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    "mx-2 h-0.5 w-8",
-                    index < currentStep ? "bg-green-500" : "bg-gray-200 dark:bg-gray-700"
-                  )}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Step Title */}
-        <h3 className="mb-4 text-sm font-medium text-gray-500">{STEPS[currentStep]}</h3>
-
-        {/* Step Content */}
-        <div className="mb-6 min-h-[280px]">{renderStep()}</div>
-
-        {/* Navigation */}
-        <div className="flex justify-between">
-          <button
-            onClick={() => setCurrentStep((s) => s - 1)}
-            disabled={currentStep === 0}
-            className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back
-          </button>
-
-          {currentStep < STEPS.length - 1 ? (
-            <button
-              onClick={() => setCurrentStep((s) => s + 1)}
-              disabled={!canProceed()}
-              className="flex items-center gap-1 rounded-lg bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          ) : (
-            <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm text-white hover:bg-green-600"
-            >
-              <Check className="h-4 w-4" />
-              Create Project
-            </button>
-          )}
-        </div>
+              />
+            )}
+          </div>
+        ))}
       </div>
-    </div>
+
+      {/* Step Title */}
+      <h3 className="mb-4 text-sm font-medium text-gray-500">{STEPS[currentStep]}</h3>
+
+      {/* Step Content */}
+      <div className="mb-6 min-h-[280px]">{renderStep()}</div>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <button
+          onClick={() => setCurrentStep((s) => s - 1)}
+          disabled={currentStep === 0}
+          className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </button>
+
+        {currentStep < STEPS.length - 1 ? (
+          <button
+            onClick={() => setCurrentStep((s) => s + 1)}
+            disabled={!canProceed()}
+            className="flex items-center gap-1 rounded-lg bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        ) : (
+          <button
+            onClick={handleCreate}
+            className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm text-white hover:bg-green-600"
+          >
+            <Check className="h-4 w-4" />
+            Create Project
+          </button>
+        )}
+      </div>
+    </Modal>
   );
 }

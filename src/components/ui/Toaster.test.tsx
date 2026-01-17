@@ -39,7 +39,8 @@ describe("Toaster", () => {
       render(<Toaster />);
 
       const toast = screen.getByText("Success!").closest("div[class*='rounded-lg']");
-      expect(toast).toHaveClass("bg-green-50");
+      expect(toast).toHaveClass("bg-green-50/90");
+      expect(toast).toHaveClass("backdrop-blur-sm");
     });
 
     it("should render error toast with correct styling", () => {
@@ -52,7 +53,8 @@ describe("Toaster", () => {
       render(<Toaster />);
 
       const toast = screen.getByText("Error!").closest("div[class*='rounded-lg']");
-      expect(toast).toHaveClass("bg-red-50");
+      expect(toast).toHaveClass("bg-red-50/90");
+      expect(toast).toHaveClass("backdrop-blur-sm");
     });
 
     it("should render info toast with correct styling", () => {
@@ -65,7 +67,8 @@ describe("Toaster", () => {
       render(<Toaster />);
 
       const toast = screen.getByText("Info").closest("div[class*='rounded-lg']");
-      expect(toast).toHaveClass("bg-blue-50");
+      expect(toast).toHaveClass("bg-blue-50/90");
+      expect(toast).toHaveClass("backdrop-blur-sm");
     });
 
     it("should render warning toast with correct styling", () => {
@@ -78,7 +81,8 @@ describe("Toaster", () => {
       render(<Toaster />);
 
       const toast = screen.getByText("Warning").closest("div[class*='rounded-lg']");
-      expect(toast).toHaveClass("bg-amber-50");
+      expect(toast).toHaveClass("bg-amber-50/90");
+      expect(toast).toHaveClass("backdrop-blur-sm");
     });
   });
 

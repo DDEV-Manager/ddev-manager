@@ -11,25 +11,29 @@ const icons = {
 
 const styles = {
   success: {
-    container: "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800",
+    container:
+      "bg-green-50/90 border-green-200/50 backdrop-blur-sm dark:bg-green-900/30 dark:border-green-800/50",
     icon: "text-green-500 dark:text-green-400",
     title: "text-green-800 dark:text-green-200",
     message: "text-green-700 dark:text-green-300",
   },
   error: {
-    container: "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800",
+    container:
+      "bg-red-50/90 border-red-200/50 backdrop-blur-sm dark:bg-red-900/30 dark:border-red-800/50",
     icon: "text-red-500 dark:text-red-400",
     title: "text-red-800 dark:text-red-200",
     message: "text-red-700 dark:text-red-300",
   },
   info: {
-    container: "bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800",
+    container:
+      "bg-blue-50/90 border-blue-200/50 backdrop-blur-sm dark:bg-blue-900/30 dark:border-blue-800/50",
     icon: "text-blue-500 dark:text-blue-400",
     title: "text-blue-800 dark:text-blue-200",
     message: "text-blue-700 dark:text-blue-300",
   },
   warning: {
-    container: "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800",
+    container:
+      "bg-amber-50/90 border-amber-200/50 backdrop-blur-sm dark:bg-amber-900/30 dark:border-amber-800/50",
     icon: "text-amber-500 dark:text-amber-400",
     title: "text-amber-800 dark:text-amber-200",
     message: "text-amber-700 dark:text-amber-300",
