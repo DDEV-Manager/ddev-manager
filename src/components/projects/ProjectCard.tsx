@@ -1,4 +1,5 @@
 import { Play, Square, RotateCw, ExternalLink, Folder } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { cn, getStatusBgColor, formatProjectType, truncatePath } from "@/lib/utils";
 import {
   useStartProject,
@@ -73,49 +74,58 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
         <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           {isRunning ? (
             <>
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleOpenUrl}
-                className="rounded-md p-1.5 text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                icon={<ExternalLink className="h-3.5 w-3.5" />}
                 title="Open in browser"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </button>
-              <button
+                className="rounded-md"
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleRestart}
                 disabled={isPending}
-                className="rounded-md p-1.5 text-yellow-600 hover:bg-yellow-100 disabled:opacity-50 dark:text-yellow-400 dark:hover:bg-yellow-900/30"
+                icon={
+                  <RotateCw
+                    className={cn("h-3.5 w-3.5", restartProject.isPending && "animate-spin")}
+                  />
+                }
                 title="Restart"
-              >
-                <RotateCw
-                  className={cn("h-3.5 w-3.5", restartProject.isPending && "animate-spin")}
-                />
-              </button>
-              <button
+                className="rounded-md text-yellow-600 hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-900/30"
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleStop}
                 disabled={isPending}
-                className="rounded-md p-1.5 text-red-600 hover:bg-red-100 disabled:opacity-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                icon={<Square className="h-3.5 w-3.5" />}
                 title="Stop"
-              >
-                <Square className="h-3.5 w-3.5" />
-              </button>
+                className="rounded-md text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+              />
             </>
           ) : (
             <>
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleOpenFolder}
-                className="rounded-md p-1.5 text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                icon={<Folder className="h-3.5 w-3.5" />}
                 title="Open folder"
-              >
-                <Folder className="h-3.5 w-3.5" />
-              </button>
-              <button
+                className="rounded-md"
+              />
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleStart}
                 disabled={isPending}
-                className="rounded-md p-1.5 text-green-600 hover:bg-green-100 disabled:opacity-50 dark:text-green-400 dark:hover:bg-green-900/30"
+                icon={
+                  <Play className={cn("h-3.5 w-3.5", startProject.isPending && "animate-pulse")} />
+                }
                 title="Start"
-              >
-                <Play className={cn("h-3.5 w-3.5", startProject.isPending && "animate-pulse")} />
-              </button>
+                className="rounded-md text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/30"
+              />
             </>
           )}
         </div>

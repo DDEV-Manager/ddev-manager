@@ -1,8 +1,12 @@
 import { useState, useMemo } from "react";
-import { Search, Star, Download, Check, Loader2, ExternalLink, ChevronDown } from "lucide-react";
+import { Star, Download, Check, Loader2, ExternalLink } from "lucide-react";
 import type { InstalledAddon, AddonFilter } from "@/types/ddev";
 import { useAddonRegistry } from "@/hooks/useAddons";
 import { useOpenUrl } from "@/hooks/useDdev";
+import { Button } from "@/components/ui/Button";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
 interface AddonBrowserProps {
@@ -19,7 +23,6 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
     search: "",
     type: "all",
   });
-  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
 
   // Create a set of installed addon repositories for quick lookup
   // Installed addons have repository like "ddev/ddev-opensearch"
@@ -56,56 +59,22 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
       {/* Search and filters */}
       <div className="sticky top-0 z-10 flex items-center gap-2 rounded-t-lg border-b border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
         {/* Type dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-            className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700"
-          >
-            <span className="min-w-[70px]">
-              {filter.type === "all"
-                ? "All"
-                : filter.type === "official"
-                  ? "Official"
-                  : "Community"}
-            </span>
-            <ChevronDown className="h-3 w-3" />
-          </button>
-          {isTypeDropdownOpen && (
-            <div className="absolute top-full left-0 z-10 mt-1 rounded border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
-              {(["all", "official", "contrib"] as const).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => {
-                    setFilter({ ...filter, type });
-                    setIsTypeDropdownOpen(false);
-                  }}
-                  className={cn(
-                    "block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600",
-                    filter.type === type && "bg-blue-50 dark:bg-blue-900/30"
-                  )}
-                >
-                  {type === "all" ? "All" : type === "official" ? "Official" : "Community"}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <Dropdown
+          value={filter.type}
+          onChange={(type) => setFilter({ ...filter, type })}
+          options={[
+            { value: "all", label: "All" },
+            { value: "official", label: "Official" },
+            { value: "contrib", label: "Community" },
+          ]}
+        />
 
         {/* Search input */}
-        <div className="relative min-w-[120px] flex-1">
-          <Search
-            className="pointer-events-none absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-            style={{ left: "8px" }}
-          />
-          <input
-            type="text"
-            placeholder="Search add-ons..."
-            value={filter.search}
-            onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-            className="w-full rounded border border-gray-300 bg-white py-1 text-sm dark:border-gray-600 dark:bg-gray-700"
-            style={{ paddingLeft: "28px", paddingRight: "8px" }}
-          />
-        </div>
+        <SearchInput
+          placeholder="Search add-ons..."
+          value={filter.search}
+          onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+        />
       </div>
 
       {/* Addons list */}
@@ -136,16 +105,8 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
                     <span className="truncate font-medium text-gray-900 dark:text-gray-100">
                       {addon.repo}
                     </span>
-                    {addon.type === "official" && (
-                      <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                        Official
-                      </span>
-                    )}
-                    {isInstalled && (
-                      <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        Installed
-                      </span>
-                    )}
+                    {addon.type === "official" && <Badge variant="blue">Official</Badge>}
+                    {isInstalled && <Badge variant="green">Installed</Badge>}
                   </div>
                   <p className="line-clamp-2 text-xs text-gray-500">{addon.description}</p>
                   <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
@@ -157,40 +118,29 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => openUrl.mutate(addon.github_url)}
-                    className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    icon={<ExternalLink className="h-4 w-4 text-gray-400" />}
                     title="View on GitHub"
-                  >
-                    <ExternalLink className="h-4 w-4 text-gray-400" />
-                  </button>
-                  <button
+                  />
+                  <Button
+                    variant={isInstalled ? "success" : "primary"}
                     onClick={() => onInstall(addonFullName)}
                     disabled={isInstalled || installingAddon !== null}
+                    loading={isInstalling}
+                    icon={
+                      isInstalled ? <Check className="h-4 w-4" /> : <Download className="h-4 w-4" />
+                    }
                     className={cn(
-                      "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm transition-colors",
                       isInstalled
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                        ? ""
+                        : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                     )}
                   >
-                    {isInstalled ? (
-                      <>
-                        <Check className="h-4 w-4" />
-                        Installed
-                      </>
-                    ) : isInstalling ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Installing...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" />
-                        Install
-                      </>
-                    )}
-                  </button>
+                    {isInstalled ? "Installed" : isInstalling ? "Installing..." : "Install"}
+                  </Button>
                 </div>
               </div>
             );

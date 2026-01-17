@@ -3,9 +3,10 @@ import { Power, Settings, RefreshCw, Plus } from "lucide-react";
 import { usePoweroff, useProjects } from "@/hooks/useDdev";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/hooks/useDdev";
-import { cn } from "@/lib/utils";
 import { SettingsModal } from "@/components/settings/SettingsModal";
 import { CreateProjectWizard } from "@/components/projects/CreateProjectWizard";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 export function Header() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -34,51 +35,45 @@ export function Header() {
           <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">DDEV Manager</h1>
         </div>
         {runningCount > 0 && (
-          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+          <Badge variant="green" className="rounded-full">
             {runningCount} running
-          </span>
+          </Badge>
         )}
       </div>
 
       <div className="flex items-center gap-2">
-        <button
+        <Button
           onClick={() => setIsCreateProjectOpen(true)}
-          className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+          icon={<Plus className="h-4 w-4" />}
           title="Create new project"
         >
-          <Plus className="h-4 w-4" />
           New Project
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleRefresh}
-          className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+          icon={<RefreshCw className="h-4 w-4" />}
           title="Refresh projects"
-        >
-          <RefreshCw className="h-4 w-4" />
-        </button>
+        />
 
-        <button
+        <Button
+          variant={runningCount > 0 ? "danger" : "ghost"}
+          size="icon"
           onClick={handlePoweroff}
           disabled={runningCount === 0 || poweroff.isPending}
-          className={cn(
-            "rounded-lg p-2 transition-colors",
-            runningCount > 0
-              ? "text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
-              : "cursor-not-allowed text-gray-300 dark:text-gray-700"
-          )}
+          icon={<Power className="h-4 w-4" />}
           title="Power off all projects"
-        >
-          <Power className="h-4 w-4" />
-        </button>
+        />
 
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setIsSettingsOpen(true)}
-          className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+          icon={<Settings className="h-4 w-4" />}
           title="Settings"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
+        />
       </div>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

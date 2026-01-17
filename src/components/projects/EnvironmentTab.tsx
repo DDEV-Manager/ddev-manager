@@ -1,7 +1,8 @@
-import { Database, Copy, Check, Folder, Loader2, Trash2, ExternalLink } from "lucide-react";
+import { Database, Copy, Check, Folder, Trash2, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
 import { ProjectScreenshot } from "./ProjectScreenshot";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { DdevProjectDetails } from "@/types/ddev";
 
@@ -153,13 +154,13 @@ export function EnvironmentTab({
           <code className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">
             {project.approot}
           </code>
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
             onClick={() => openFolder.mutate(project.approot)}
-            className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
+            icon={<Folder className="h-4 w-4 text-gray-500" />}
             title="Open folder"
-          >
-            <Folder className="h-4 w-4 text-gray-500" />
-          </button>
+          />
         </div>
       </section>
 
@@ -175,18 +176,15 @@ export function EnvironmentTab({
               Removes DDEV configuration and Docker resources. Project files are kept.
             </p>
           </div>
-          <button
+          <Button
+            variant="danger-solid"
             onClick={onDelete}
             disabled={isOperationPending}
-            className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+            loading={currentOp === "delete"}
+            icon={<Trash2 className="h-4 w-4" />}
           >
-            {currentOp === "delete" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Trash2 className="h-4 w-4" />
-            )}
             {currentOp === "delete" ? "Removing..." : "Remove"}
-          </button>
+          </Button>
         </div>
       </section>
     </div>
@@ -212,25 +210,27 @@ function UrlRow({
     <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
       <span className="w-16 text-xs text-gray-500">{label}</span>
       <code className="flex-1 truncate text-sm text-blue-600 dark:text-blue-400">{url}</code>
-      <button
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={onCopy}
-        className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
+        icon={
+          copied ? (
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4 text-gray-400" />
+          )
+        }
         title="Copy URL"
-      >
-        {copied ? (
-          <Check className="h-4 w-4 text-green-500" />
-        ) : (
-          <Copy className="h-4 w-4 text-gray-400" />
-        )}
-      </button>
+      />
       {isActive && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={() => openUrl.mutate(url)}
-          className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
+          icon={<ExternalLink className="h-4 w-4 text-gray-400" />}
           title="Open URL"
-        >
-          <ExternalLink className="h-4 w-4 text-gray-400" />
-        </button>
+        />
       )}
     </div>
   );

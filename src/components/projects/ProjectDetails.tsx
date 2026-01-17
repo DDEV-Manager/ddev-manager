@@ -11,6 +11,7 @@ import {
   Package,
   FileText,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
 import { LogsSection } from "@/components/logs/LogsSection";
@@ -210,44 +211,35 @@ export function ProjectDetails() {
           <div className="flex items-center gap-2">
             {isRunning ? (
               <>
-                <button
+                <Button
+                  variant="warning"
                   onClick={handleRestart}
                   disabled={isOperationPending}
-                  className="flex items-center gap-1.5 rounded-lg bg-yellow-100 px-3 py-1.5 text-sm text-yellow-700 transition-colors hover:bg-yellow-200 disabled:opacity-50 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
+                  loading={currentOp === "restart"}
+                  icon={<RotateCw className="h-4 w-4" />}
                 >
-                  {currentOp === "restart" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RotateCw className="h-4 w-4" />
-                  )}
                   {currentOp === "restart" ? "Restarting..." : "Restart"}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="danger"
                   onClick={handleStop}
                   disabled={isOperationPending}
-                  className="flex items-center gap-1.5 rounded-lg bg-red-100 px-3 py-1.5 text-sm text-red-700 transition-colors hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                  loading={currentOp === "stop"}
+                  icon={<Square className="h-4 w-4" />}
                 >
-                  {currentOp === "stop" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Square className="h-4 w-4" />
-                  )}
                   {currentOp === "stop" ? "Stopping..." : "Stop"}
-                </button>
+                </Button>
               </>
             ) : (
-              <button
+              <Button
+                variant="success"
                 onClick={handleStart}
                 disabled={isOperationPending}
-                className="flex items-center gap-1.5 rounded-lg bg-green-100 px-3 py-1.5 text-sm text-green-700 transition-colors hover:bg-green-200 disabled:opacity-50 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
+                loading={currentOp === "start"}
+                icon={<Play className="h-4 w-4" />}
               >
-                {currentOp === "start" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Play className="h-4 w-4" />
-                )}
                 {currentOp === "start" ? "Starting..." : "Start"}
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -256,27 +248,30 @@ export function ProjectDetails() {
       {/* Quick Actions Bar */}
       {isRunning && (
         <div className="flex flex-wrap gap-2 border-b border-gray-200 bg-gray-50 px-4 py-6 dark:border-gray-800 dark:bg-gray-900/50">
-          <button
+          <Button
+            variant="secondary"
             onClick={() => openUrl.mutate(project.primary_url)}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+            icon={<ExternalLink className="h-4 w-4" />}
+            className="shadow-sm"
           >
-            <ExternalLink className="h-4 w-4" />
             Open Site
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => openFolder.mutate(project.approot)}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+            icon={<Folder className="h-4 w-4" />}
+            className="shadow-sm"
           >
-            <Folder className="h-4 w-4" />
             Open Folder
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => openUrl.mutate(project.mailpit_https_url)}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm shadow-sm transition-colors hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+            icon={<Mail className="h-4 w-4" />}
+            className="shadow-sm"
           >
-            <Mail className="h-4 w-4" />
             Mailpit
-          </button>
+          </Button>
         </div>
       )}
 

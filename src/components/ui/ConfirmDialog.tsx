@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
@@ -39,21 +40,22 @@ export function ConfirmDialog({
     default: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
   };
 
-  const confirmButtonColors = {
-    danger: "bg-red-600 hover:bg-red-700 focus:ring-red-500",
-    warning: "bg-amber-600 hover:bg-amber-700 focus:ring-amber-500",
-    default: "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500",
+  const confirmButtonVariant = {
+    danger: "danger-solid" as const,
+    warning: "warning-solid" as const,
+    default: "primary" as const,
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onCancel} ariaLabelledBy="dialog-title" className="relative">
       {/* Close button */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={onCancel}
-        className="absolute top-4 right-4 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-      >
-        <X className="h-5 w-5" />
-      </button>
+        icon={<X className="h-5 w-5" />}
+        className="absolute top-4 right-4"
+      />
 
       {/* Icon and title */}
       <div className="flex items-start gap-4">
@@ -70,22 +72,17 @@ export function ConfirmDialog({
 
       {/* Actions */}
       <div className="mt-6 flex justify-end gap-3">
-        <button
-          onClick={onCancel}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-        >
+        <Button variant="secondary" size="lg" onClick={onCancel}>
           {cancelLabel}
-        </button>
-        <button
+        </Button>
+        <Button
           ref={confirmButtonRef}
+          variant={confirmButtonVariant[variant]}
+          size="lg"
           onClick={onConfirm}
-          className={cn(
-            "rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none",
-            confirmButtonColors[variant]
-          )}
         >
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </Modal>
   );

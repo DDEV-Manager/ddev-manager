@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { FileText, Search, Play, Square, Clock, Trash2, Loader2, ChevronDown } from "lucide-react";
+import { FileText, Play, Square, Clock, Trash2, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { cn } from "@/lib/utils";
 
 interface LogsSectionProps {
@@ -40,7 +43,6 @@ export function LogsSection({ projectName, services, isProjectRunning }: LogsSec
   const [showTimestamps, setShowTimestamps] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [processId, setProcessId] = useState<string | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const lineIdRef = useRef(0);
 
@@ -182,7 +184,6 @@ export function LogsSection({ projectName, services, isProjectRunning }: LogsSec
       setIsFollowing(false);
       setSelectedService(service);
       setLogs([]);
-      setIsDropdownOpen(false);
     },
     [stopCurrentProcess]
   );
@@ -208,115 +209,87 @@ export function LogsSection({ projectName, services, isProjectRunning }: LogsSec
           {/* Toolbar */}
           <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
             {/* Service dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-1 rounded border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700"
-              >
-                <span className="min-w-[40px]">{selectedService}</span>
-                <ChevronDown className="h-3 w-3" />
-              </button>
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 z-10 mt-1 rounded border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
-                  {availableServices.map((service) => (
-                    <button
-                      key={service}
-                      onClick={() => handleServiceChange(service)}
-                      className={cn(
-                        "block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600",
-                        service === selectedService && "bg-blue-50 dark:bg-blue-900/30"
-                      )}
-                    >
-                      {service}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <Dropdown
+              value={selectedService}
+              onChange={handleServiceChange}
+              options={availableServices.map((s) => ({ value: s, label: s }))}
+              minWidth="40px"
+            />
 
             {/* Search input */}
-            <div className="relative min-w-[120px] flex-1">
-              <Search
-                className="pointer-events-none absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-                style={{ left: "8px" }}
-              />
-              <input
-                type="text"
-                placeholder="Filter logs..."
-                value={searchFilter}
-                onChange={(e) => setSearchFilter(e.target.value)}
-                className="w-full rounded border border-gray-300 bg-white py-1 text-sm dark:border-gray-600 dark:bg-gray-700"
-                style={{ paddingLeft: "28px", paddingRight: "8px" }}
-              />
-            </div>
+            <SearchInput
+              placeholder="Filter logs..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+            />
 
             {/* Action buttons */}
             <div className="flex items-center gap-1">
               {/* Fetch/Follow toggle */}
               {isFollowing ? (
-                <button
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={handleStopFollowing}
                   disabled={isLoading}
-                  className="flex items-center gap-1 rounded bg-red-100 px-2 py-1 text-sm text-red-700 hover:bg-red-200 disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                  icon={<Square className="h-3 w-3" />}
                   title="Stop following"
                 >
-                  <Square className="h-3 w-3" />
                   Stop
-                </button>
+                </Button>
               ) : (
                 <>
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => handleFetchLogs(false)}
                     disabled={isLoading}
-                    className="flex items-center gap-1 rounded bg-gray-200 px-2 py-1 text-sm text-gray-700 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
+                    loading={isLoading}
+                    icon={<FileText className="h-3 w-3" />}
                     title="Fetch logs"
+                    className="bg-gray-200 dark:bg-gray-600"
                   >
-                    {isLoading ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <FileText className="h-3 w-3" />
-                    )}
                     Fetch
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => handleFetchLogs(true)}
                     disabled={isLoading}
-                    className="flex items-center gap-1 rounded bg-blue-100 px-2 py-1 text-sm text-blue-700 hover:bg-blue-200 disabled:opacity-50 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                    loading={isLoading}
+                    icon={<Play className="h-3 w-3" />}
                     title="Follow logs (real-time)"
+                    className="bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                   >
-                    {isLoading ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Play className="h-3 w-3" />
-                    )}
                     Follow
-                  </button>
+                  </Button>
                 </>
               )}
 
               {/* Timestamps toggle */}
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setShowTimestamps(!showTimestamps)}
+                icon={<Clock className="h-3.5 w-3.5" />}
+                title="Toggle timestamps"
                 className={cn(
-                  "rounded p-1.5 text-sm",
                   showTimestamps
                     ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                     : "bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
                 )}
-                title="Toggle timestamps"
-              >
-                <Clock className="h-3.5 w-3.5" />
-              </button>
+              />
 
               {/* Clear button */}
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={handleClear}
                 disabled={logs.length === 0}
-                className="rounded bg-gray-200 p-1.5 text-sm text-gray-600 hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
+                icon={<Trash2 className="h-3.5 w-3.5" />}
                 title="Clear logs"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+                className="bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
+              />
             </div>
           </div>
 
