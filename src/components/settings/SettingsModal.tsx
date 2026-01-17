@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { X, Sun, Moon, Monitor, Minus, Plus, Sparkles } from "lucide-react";
+import { X, Sun, Moon, Monitor, Minus, Plus } from "lucide-react";
 import { useAppStore } from "@/stores/appStore";
 import { cn } from "@/lib/utils";
 
@@ -13,9 +13,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const setTheme = useAppStore((state) => state.setTheme);
   const zoom = useAppStore((state) => state.zoom);
   const setZoom = useAppStore((state) => state.setZoom);
-  const experimentalChat = useAppStore((state) => state.experimentalChat);
-  const setExperimentalChat = useAppStore((state) => state.setExperimentalChat);
-
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Close on escape key
@@ -155,40 +152,6 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 {preset}%
               </button>
             ))}
-          </div>
-        </div>
-
-        {/* Experimental Features Section */}
-        <div className="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
-          <label className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            <Sparkles className="h-4 w-4 text-purple-500" />
-            Experimental Features
-          </label>
-          <div className="space-y-3">
-            <label className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800">
-              <div>
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  AI Chat
-                </span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Control DDEV with natural language commands
-                </p>
-              </div>
-              <button
-                onClick={() => setExperimentalChat(!experimentalChat)}
-                className={cn(
-                  "relative h-6 w-11 rounded-full transition-colors",
-                  experimentalChat ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform",
-                    experimentalChat && "translate-x-5"
-                  )}
-                />
-              </button>
-            </label>
           </div>
         </div>
       </div>
