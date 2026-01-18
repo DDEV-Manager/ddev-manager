@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
 import { ProjectScreenshot } from "./ProjectScreenshot";
 import { Button } from "@/components/ui/Button";
+import { Accordion } from "@/components/ui/Accordion";
 import { cn } from "@/lib/utils";
 import type { DdevProjectDetails } from "@/types/ddev";
 
@@ -24,6 +25,10 @@ export function EnvironmentTab({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const openFolder = useOpenFolder();
 
+  // Get additional URLs (excluding primary)
+  const additionalUrls = project.urls?.slice(1) || [];
+  const hasMoreThanTwo = additionalUrls.length > 1;
+
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
@@ -32,33 +37,117 @@ export function EnvironmentTab({
 
   return (
     <div className="space-y-6 p-4 pb-16">
-      {/* URLs and Screenshot - side by side */}
+      {/* URLs + Database and Preview - side by side */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* URLs */}
-        <section>
-          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">URLs</h3>
-          <div className="space-y-2">
-            <UrlRow
-              label="Primary"
-              url={project.primary_url}
-              onCopy={() => copyToClipboard(project.primary_url, "primary")}
-              copied={copiedField === "primary"}
-              isActive={isRunning}
-            />
-            {project.urls?.slice(1).map((url, i) => (
+        {/* Left column: URLs + Database */}
+        <div className="space-y-4">
+          {/* URLs */}
+          <section>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">URLs</h3>
+            <div className="space-y-2">
+              {/* Primary URL - always visible */}
               <UrlRow
-                key={url}
-                label={`URL ${i + 2}`}
-                url={url}
-                onCopy={() => copyToClipboard(url, `url-${i}`)}
-                copied={copiedField === `url-${i}`}
+                label="Primary"
+                url={project.primary_url}
+                onCopy={() => copyToClipboard(project.primary_url, "primary")}
+                copied={copiedField === "primary"}
                 isActive={isRunning}
               />
-            ))}
-          </div>
-        </section>
 
-        {/* Screenshot */}
+              {/* Show first additional URL if exists and total ≤ 2 */}
+              {!hasMoreThanTwo &&
+                additionalUrls.map((url, i) => (
+                  <UrlRow
+                    key={url}
+                    label={`URL ${i + 2}`}
+                    url={url}
+                    onCopy={() => copyToClipboard(url, `url-${i}`)}
+                    copied={copiedField === `url-${i}`}
+                    isActive={isRunning}
+                  />
+                ))}
+
+              {/* Accordion for more than 2 URLs */}
+              {hasMoreThanTwo && (
+                <Accordion title={`${additionalUrls.length} more URLs`}>
+                  <div className="space-y-2">
+                    {additionalUrls.map((url, i) => (
+                      <UrlRow
+                        key={url}
+                        label={`URL ${i + 2}`}
+                        url={url}
+                        onCopy={() => copyToClipboard(url, `url-${i}`)}
+                        copied={copiedField === `url-${i}`}
+                        isActive={isRunning}
+                      />
+                    ))}
+                  </div>
+                </Accordion>
+              )}
+            </div>
+          </section>
+
+          {/* Database info */}
+          {project.dbinfo && (
+            <section>
+              <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <Database className="mr-1 inline h-4 w-4" />
+                Database
+              </h3>
+              <div className="space-y-2 rounded-lg bg-gray-50 p-3 font-mono text-sm dark:bg-gray-900">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Type:</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {project.dbinfo.database_type} {project.dbinfo.database_version}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Host:</span>
+                  <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.host}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Database:</span>
+                  <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.dbname}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">User:</span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {project.dbinfo.username}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Password:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-900 dark:text-gray-100">
+                      {project.dbinfo.password}
+                    </span>
+                    <button
+                      onClick={() => copyToClipboard(project.dbinfo!.password, "password")}
+                      className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      title="Copy password"
+                    >
+                      {copiedField === "password" ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <Copy className="h-3 w-3 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                {isRunning && project.dbinfo.published_port > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Port (host):</span>
+                    <span className="text-gray-900 dark:text-gray-100">
+                      {project.dbinfo.published_port}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Right column: Preview */}
         <section>
           <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Preview</h3>
           <ProjectScreenshot
@@ -68,61 +157,6 @@ export function EnvironmentTab({
           />
         </section>
       </div>
-
-      {/* Database info */}
-      {project.dbinfo && (
-        <section>
-          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-            <Database className="mr-1 inline h-4 w-4" />
-            Database
-          </h3>
-          <div className="space-y-2 rounded-lg bg-gray-50 p-3 font-mono text-sm dark:bg-gray-900">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Type:</span>
-              <span className="text-gray-900 dark:text-gray-100">
-                {project.dbinfo.database_type} {project.dbinfo.database_version}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Host:</span>
-              <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.host}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Database:</span>
-              <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.dbname}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">User:</span>
-              <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.username}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-500">Password:</span>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-900 dark:text-gray-100">{project.dbinfo.password}</span>
-                <button
-                  onClick={() => copyToClipboard(project.dbinfo!.password, "password")}
-                  className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  title="Copy password"
-                >
-                  {copiedField === "password" ? (
-                    <Check className="h-3 w-3 text-green-500" />
-                  ) : (
-                    <Copy className="h-3 w-3 text-gray-400" />
-                  )}
-                </button>
-              </div>
-            </div>
-            {isRunning && project.dbinfo.published_port > 0 && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">Port (host):</span>
-                <span className="text-gray-900 dark:text-gray-100">
-                  {project.dbinfo.published_port}
-                </span>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
 
       {/* Services */}
       {project.services && Object.keys(project.services).length > 0 && (

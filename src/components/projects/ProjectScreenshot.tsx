@@ -129,7 +129,7 @@ export function ProjectScreenshot({ projectName, primaryUrl, isRunning }: Projec
           src={screenshotData}
           alt={`Screenshot of ${projectName}`}
           className="h-auto w-full object-cover object-top"
-          style={{ maxHeight: "200px" }}
+          style={{ maxHeight: "300px" }}
         />
         {isRunning && (
           <button
