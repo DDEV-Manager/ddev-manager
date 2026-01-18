@@ -607,7 +607,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
       <h3 className="mb-4 text-sm font-medium text-gray-500">{STEPS[currentStep]}</h3>
 
       {/* Step Content */}
-      <div className="mb-6 min-h-[280px]">{renderStep()}</div>
+      <div className="mb-6 min-h-70">{renderStep()}</div>
 
       {/* Navigation */}
       <div className="flex justify-between">
