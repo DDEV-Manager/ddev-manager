@@ -220,6 +220,37 @@ pnpm tauri build
 # Linux: src-tauri/target/release/bundle/deb/
 ```
 
+### Auto-Updater
+
+The app includes automatic update checking via Tauri's updater plugin. Updates are signed to ensure authenticity.
+
+**For contributors:**
+- No setup required. The updater won't affect development (`pnpm tauri dev`)
+- The public key in `tauri.conf.json` is safe to keep - it only verifies signatures
+
+**For forking this project:**
+
+If you fork this project and want to enable auto-updates for your own releases:
+
+1. Generate a new signing key pair:
+   ```bash
+   pnpm tauri signer generate -w ~/.tauri/my-app.key --ci --password "your-password"
+   ```
+
+2. Update `src-tauri/tauri.conf.json`:
+   - Replace `pubkey` with your new public key (from `~/.tauri/my-app.key.pub`)
+   - Update `endpoints` URL to point to your GitHub releases
+
+3. Add your private key as a GitHub repository secret:
+   - Name: `TAURI_SIGNING_PRIVATE_KEY`
+   - Value: Contents of `~/.tauri/my-app.key`
+
+4. If you used a password, also add:
+   - Name: `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`
+   - Value: Your password
+
+The release workflow (`.github/workflows/release.yml`) will automatically sign builds using these secrets.
+
 ### Architecture
 
 ```
@@ -305,7 +336,7 @@ When reporting bugs, please include:
 - [ ] Configuration editor
 - [ ] Multiple project selection
 - [ ] Performance monitoring (XHGui integration)
-- [ ] Auto-update mechanism
+- [x] Auto-update mechanism
 
 ## License
 
