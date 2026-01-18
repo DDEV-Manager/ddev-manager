@@ -44,9 +44,19 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 
 Download the latest release for your platform from the [Releases](https://github.com/your-username/ddev-manager/releases) page:
 
-- **macOS**: `DDEV Manager_x.x.x_aarch64.dmg` (Apple Silicon) or `DDEV Manager_x.x.x_x64.dmg` (Intel)
+- **macOS**: `DDEV Manager_x.x.x_universal.dmg` (works on both Apple Silicon and Intel)
 - **Windows**: `DDEV Manager_x.x.x_x64-setup.exe`
 - **Linux**: `DDEV Manager_x.x.x_amd64.deb` or `DDEV Manager_x.x.x_amd64.AppImage`
+
+> **macOS Users:** Since the app is not signed with an Apple Developer certificate, macOS Gatekeeper will block it on first launch. To open the app:
+> 1. Right-click (or Control-click) on the app
+> 2. Select **Open** from the context menu
+> 3. Click **Open** in the dialog that appears
+>
+> Alternatively, you can remove the quarantine attribute via Terminal:
+> ```bash
+> xattr -d com.apple.quarantine /Applications/DDEV\ Manager.app
+> ```
 
 ### Build from Source
 
