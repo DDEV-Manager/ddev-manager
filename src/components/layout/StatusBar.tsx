@@ -94,13 +94,18 @@ export function StatusBar() {
   return (
     <div
       className={cn(
-        "fixed right-0 bottom-0 left-0 z-40 border-t border-gray-200/50 bg-gray-100/80 px-4 py-2 backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80",
+        "fixed right-0 bottom-0 left-0 z-40 border-t border-gray-200/50 bg-gray-100/80 backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80",
         exiting
           ? "animate-out slide-out-to-bottom fade-out duration-300"
           : "animate-in slide-in-from-bottom fade-in duration-300"
       )}
     >
-      <div className="flex items-center gap-3">
+      {/* Progress bar */}
+      <div className="absolute inset-x-0 top-0 h-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30">
+        <div className="animate-progress h-full w-1/3 bg-blue-500" />
+      </div>
+
+      <div className="flex items-center gap-3 px-4 py-2">
         {/* Running indicator */}
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
