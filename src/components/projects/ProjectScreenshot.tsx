@@ -27,6 +27,22 @@ export function ProjectScreenshot({ projectName, primaryUrl, isRunning }: Projec
   const [error, setError] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState(0); // For forcing image refresh
 
+  // Auto-capture screenshot if none exists and project is running
+  useEffect(() => {
+    if (isRunning && !isLoadingData && !screenshotData && !isCapturing && !error) {
+      captureScreenshot.mutate({ projectName, url: primaryUrl });
+    }
+  }, [
+    isRunning,
+    isLoadingData,
+    screenshotData,
+    isCapturing,
+    error,
+    projectName,
+    primaryUrl,
+    captureScreenshot,
+  ]);
+
   // Listen for screenshot status events
   useEffect(() => {
     const unlisten = listen<ScreenshotStatus>("screenshot-status", (event) => {
@@ -112,7 +128,7 @@ export function ProjectScreenshot({ projectName, primaryUrl, isRunning }: Projec
           key={imageKey}
           src={screenshotData}
           alt={`Screenshot of ${projectName}`}
-          className="h-auto w-full object-cover"
+          className="h-auto w-full object-cover object-top"
           style={{ maxHeight: "200px" }}
         />
         {isRunning && (
