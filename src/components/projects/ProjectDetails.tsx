@@ -327,12 +327,12 @@ export function ProjectDetails() {
           />
         )}
         {activeTab === "addons" && (
-          <div className="p-4">
+          <div className="p-4 pb-16">
             <AddonsSection projectName={project.name} />
           </div>
         )}
         {activeTab === "logs" && (
-          <div className="p-4">
+          <div className="p-4 pb-16">
             <LogsSection
               projectName={project.name}
               services={Object.keys(project.services || {})}

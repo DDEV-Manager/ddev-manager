@@ -31,7 +31,7 @@ export function EnvironmentTab({
   };
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 pb-16">
       {/* URLs and Screenshot - side by side */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* URLs */}
