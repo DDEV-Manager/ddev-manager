@@ -224,36 +224,36 @@ pnpm tauri build
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    DDEV Manager App                      │
+│                    DDEV Manager App                     │
 ├─────────────────────────────────────────────────────────┤
 │  Frontend (React + TypeScript)                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
-│  │  Components │  │   Hooks     │  │   Stores    │     │
-│  │  (UI)       │  │  (useDdev)  │  │  (Zustand)  │     │
-│  └──────┬──────┘  └──────┬──────┘  └─────────────┘     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐      │
+│  │  Components │  │   Hooks     │  │   Stores    │      │
+│  │  (UI)       │  │  (useDdev)  │  │  (Zustand)  │      │
+│  └──────┬──────┘  └──────┬──────┘  └─────────────┘      │
 │         │                │                              │
 │         └────────┬───────┘                              │
 │                  │ invoke()                             │
 ├──────────────────┼──────────────────────────────────────┤
 │  Backend (Rust)  │                                      │
 │                  ▼                                      │
-│  ┌─────────────────────────────────────────────┐       │
-│  │         Tauri Commands (lib.rs)             │       │
-│  │  - list_projects() / describe_project()     │       │
-│  │  - start_project() / stop_project()         │       │
-│  │  - create_project() with CMS install        │       │
-│  │  - delete_project() / poweroff()            │       │
-│  │  - create_snapshot() / restore_snapshot()   │       │
-│  │  - install_addon() / remove_addon()         │       │
-│  └──────────────────┬──────────────────────────┘       │
+│  ┌─────────────────────────────────────────────┐        │
+│  │         Tauri Commands (lib.rs)             │        │
+│  │  - list_projects() / describe_project()     │        │
+│  │  - start_project() / stop_project()         │        │
+│  │  - create_project() with CMS install        │        │
+│  │  - delete_project() / poweroff()            │        │
+│  │  - create_snapshot() / restore_snapshot()   │        │
+│  │  - install_addon() / remove_addon()         │        │
+│  └──────────────────┬──────────────────────────┘        │
 │                     │                                   │
 │                     ▼                                   │
-│  ┌─────────────────────────────────────────────┐       │
-│  │           DDEV CLI (subprocess)             │       │
-│  │  ddev list --json-output                    │       │
-│  │  ddev describe <project> --json-output      │       │
-│  │  ddev start/stop/restart <project>          │       │
-│  └─────────────────────────────────────────────┘       │
+│  ┌─────────────────────────────────────────────┐        │
+│  │           DDEV CLI (subprocess)             │        │
+│  │  ddev list --json-output                    │        │
+│  │  ddev describe <project> --json-output      │        │
+│  │  ddev start/stop/restart <project>          │        │
+│  └─────────────────────────────────────────────┘        │
 └─────────────────────────────────────────────────────────┘
 ```
 
