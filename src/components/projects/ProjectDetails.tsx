@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Play,
   Square,
@@ -12,6 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Tabs, type Tab } from "@/components/ui/Tabs";
 import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
 import { LogsSection } from "@/components/logs/LogsSection";
@@ -63,6 +65,15 @@ export function ProjectDetails() {
   const openUrl = useOpenUrl();
   const openFolder = useOpenFolder();
   const captureScreenshot = useCaptureScreenshot();
+
+  const projectTabs: Tab[] = useMemo(
+    () => [
+      { id: "environment", label: "Environment", icon: <Settings className="h-4 w-4" /> },
+      { id: "addons", label: "Add-ons", icon: <Package className="h-4 w-4" /> },
+      { id: "logs", label: "Logs", icon: <FileText className="h-4 w-4" /> },
+    ],
+    []
+  );
 
   // Listen for command completion to clear loading state and show toasts
   useEffect(() => {
@@ -276,44 +287,12 @@ export function ProjectDetails() {
       )}
 
       {/* Tab Bar */}
-      <div className="flex gap-1 border-b border-gray-200 px-4 dark:border-gray-800">
-        <button
-          onClick={() => setActiveTab("environment")}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
-            activeTab === "environment"
-              ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-          )}
-        >
-          <Settings className="h-4 w-4" />
-          Environment
-        </button>
-        <button
-          onClick={() => setActiveTab("addons")}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
-            activeTab === "addons"
-              ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-          )}
-        >
-          <Package className="h-4 w-4" />
-          Add-ons
-        </button>
-        <button
-          onClick={() => setActiveTab("logs")}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
-            activeTab === "logs"
-              ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-          )}
-        >
-          <FileText className="h-4 w-4" />
-          Logs
-        </button>
-      </div>
+      <Tabs
+        tabs={projectTabs}
+        activeTab={activeTab}
+        onChange={(id) => setActiveTab(id as ProjectTab)}
+        className="px-4 dark:border-gray-800"
+      />
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto">

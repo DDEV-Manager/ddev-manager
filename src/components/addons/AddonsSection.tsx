@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { Package, Download, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Tabs, type Tab } from "@/components/ui/Tabs";
 import {
   useInstalledAddons,
   useAddonCommandListener,
@@ -33,6 +33,14 @@ export function AddonsSection({ projectName }: AddonsSectionProps) {
   const { data: installedAddons, isLoading, refetch } = useInstalledAddons(projectName);
   const installAddon = useInstallAddon();
   const removeAddon = useRemoveAddon();
+
+  const addonTabs: Tab[] = useMemo(
+    () => [
+      { id: "installed", label: `Installed (${installedAddons?.length ?? 0})` },
+      { id: "browse", label: "Browse Registry", icon: <Download className="h-4 w-4" /> },
+    ],
+    [installedAddons?.length]
+  );
 
   // Listen for addon command completion to refresh the list and clear loading state
   useAddonCommandListener(refetch);
@@ -111,31 +119,12 @@ export function AddonsSection({ projectName }: AddonsSectionProps) {
       </h3>
 
       {/* Tabs */}
-      <div className="mb-3 flex gap-2 border-b border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => setActiveTab("installed")}
-          className={cn(
-            "px-3 py-2 text-sm font-medium transition-colors",
-            activeTab === "installed"
-              ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
-          )}
-        >
-          Installed ({installedAddons?.length ?? 0})
-        </button>
-        <button
-          onClick={() => setActiveTab("browse")}
-          className={cn(
-            "flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors",
-            activeTab === "browse"
-              ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400"
-              : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
-          )}
-        >
-          <Download className="h-4 w-4" />
-          Browse Registry
-        </button>
-      </div>
+      <Tabs
+        tabs={addonTabs}
+        activeTab={activeTab}
+        onChange={(id) => setActiveTab(id as TabType)}
+        className="mb-3"
+      />
 
       {/* Tab Content */}
       {isLoading ? (
