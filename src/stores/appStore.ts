@@ -27,6 +27,12 @@ interface AppState {
   // Zoom (percentage: 50-200)
   zoom: number;
   setZoom: (zoom: number) => void;
+
+  // Auto-update
+  autoUpdateEnabled: boolean;
+  setAutoUpdateEnabled: (enabled: boolean) => void;
+  lastUpdateCheck: number | null;
+  setLastUpdateCheck: (timestamp: number | null) => void;
 }
 
 const defaultFilter: ProjectFilter = {
@@ -70,6 +76,12 @@ export const useAppStore = create<AppState>()(
       // Zoom
       zoom: 100,
       setZoom: (zoom) => set({ zoom: Math.min(200, Math.max(50, zoom)) }),
+
+      // Auto-update
+      autoUpdateEnabled: true,
+      setAutoUpdateEnabled: (enabled) => set({ autoUpdateEnabled: enabled }),
+      lastUpdateCheck: null,
+      setLastUpdateCheck: (timestamp) => set({ lastUpdateCheck: timestamp }),
     }),
     {
       name: "ddev-manager-storage",
@@ -78,6 +90,7 @@ export const useAppStore = create<AppState>()(
         zoom: state.zoom,
         sidebarCollapsed: state.sidebarCollapsed,
         sort: state.sort,
+        autoUpdateEnabled: state.autoUpdateEnabled,
       }),
     }
   )

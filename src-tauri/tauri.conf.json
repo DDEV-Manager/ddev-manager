@@ -39,5 +39,13 @@
     "category": "DeveloperTool",
     "shortDescription": "A desktop UI for managing DDEV local development environments",
     "longDescription": "DDEV Manager provides a visual interface for managing your DDEV local development environments. View project status, start/stop containers, manage database snapshots, and view logs - all from a beautiful desktop application."
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM3NkE1NUIzMUE3NzI0MEUKUldRT0pIY2FzMVZxeDlJeC9Cb2N5MVVJT0MzbU9ScXF3VFVxRjc4Slg1eTBIMGwrWjdLWXdtZ0YK",
+      "endpoints": [
+        "https://github.com/DDEV-Manager/ddev-manager/releases/latest/download/latest.json"
+      ]
+    }
   }
 }
