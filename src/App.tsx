@@ -44,16 +44,7 @@ function AppContent() {
 
   // Show toast when update is available on startup
   useEffect(() => {
-    console.log(
-      "[App] Update effect, status:",
-      updateStatus,
-      "update:",
-      update,
-      "hasShown:",
-      hasShownUpdateToast.current
-    );
     if (updateStatus === "available" && update && !hasShownUpdateToast.current) {
-      console.log("[App] Showing update toast for version:", update.version);
       hasShownUpdateToast.current = true;
       toast.info(
         "Update available",

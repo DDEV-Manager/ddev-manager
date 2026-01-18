@@ -35,30 +35,25 @@ export function useUpdate(): UseUpdateReturn {
   const setDownloadProgress = useUpdateStore((state) => state.setDownloadProgress);
 
   const checkForUpdate = useCallback(async () => {
-    console.log("[useUpdate] checkForUpdate called");
     setStatus("checking");
     setError(null);
 
     try {
       const updateResult = await check();
-      console.log("[useUpdate] Check result:", updateResult);
       setLastUpdateCheck(Date.now());
 
       if (updateResult) {
-        console.log("[useUpdate] Update available:", updateResult.version);
         setStatus("available");
         setUpdate(updateResult);
         setError(null);
         setDownloadProgress(0);
       } else {
-        console.log("[useUpdate] No update available");
         setStatus("idle");
         setUpdate(null);
         setError(null);
         setDownloadProgress(0);
       }
     } catch (err) {
-      console.error("[useUpdate] Update check failed:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       setStatus("error");
       setUpdate(null);
@@ -107,25 +102,15 @@ export function useUpdate(): UseUpdateReturn {
 
   // Check for updates on startup if enabled
   useEffect(() => {
-    console.log(
-      "[useUpdate] Effect running, autoUpdateEnabled:",
-      autoUpdateEnabled,
-      "startupCheckScheduled:",
-      startupCheckScheduled
-    );
-
     // Skip in non-Tauri environment (e.g., tests)
     if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
-      console.log("[useUpdate] Skipping - not in Tauri environment");
       return;
     }
 
     if (autoUpdateEnabled && !startupCheckScheduled) {
-      console.log("[useUpdate] Scheduling startup check in 3 seconds...");
       startupCheckScheduled = true;
       // Small delay to not block app startup
       setTimeout(() => {
-        console.log("[useUpdate] Running startup check now");
         checkForUpdate();
       }, 3000);
     }
