@@ -1,77 +1,83 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { check, type Update } from "@tauri-apps/plugin-updater";
+import { useCallback, useEffect } from "react";
+import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { useAppStore } from "@/stores/appStore";
+import { useUpdateStore, type UpdateStatus } from "@/stores/updateStore";
+import type { Update } from "@tauri-apps/plugin-updater";
 
-export type UpdateStatus = "idle" | "checking" | "available" | "downloading" | "ready" | "error";
-
-interface UpdateState {
+interface UseUpdateReturn {
   status: UpdateStatus;
   update: Update | null;
   error: string | null;
   downloadProgress: number;
-}
-
-interface UseUpdateReturn extends UpdateState {
   checkForUpdate: () => Promise<void>;
   downloadAndInstall: () => Promise<void>;
   restart: () => Promise<void>;
 }
 
-export function useUpdate(): UseUpdateReturn {
-  const [state, setState] = useState<UpdateState>({
-    status: "idle",
-    update: null,
-    error: null,
-    downloadProgress: 0,
-  });
+export type { UpdateStatus };
 
+// Use a module-level flag to prevent multiple startup checks across component instances
+let startupCheckScheduled = false;
+
+export function useUpdate(): UseUpdateReturn {
   const autoUpdateEnabled = useAppStore((state) => state.autoUpdateEnabled);
   const setLastUpdateCheck = useAppStore((state) => state.setLastUpdateCheck);
-  const hasCheckedOnStartup = useRef(false);
+
+  const status = useUpdateStore((state) => state.status);
+  const update = useUpdateStore((state) => state.update);
+  const error = useUpdateStore((state) => state.error);
+  const downloadProgress = useUpdateStore((state) => state.downloadProgress);
+
+  const setStatus = useUpdateStore((state) => state.setStatus);
+  const setUpdate = useUpdateStore((state) => state.setUpdate);
+  const setError = useUpdateStore((state) => state.setError);
+  const setDownloadProgress = useUpdateStore((state) => state.setDownloadProgress);
 
   const checkForUpdate = useCallback(async () => {
-    setState((prev) => ({ ...prev, status: "checking", error: null }));
+    console.log("[useUpdate] checkForUpdate called");
+    setStatus("checking");
+    setError(null);
 
     try {
-      const update = await check();
+      const updateResult = await check();
+      console.log("[useUpdate] Check result:", updateResult);
       setLastUpdateCheck(Date.now());
 
-      if (update) {
-        setState({
-          status: "available",
-          update,
-          error: null,
-          downloadProgress: 0,
-        });
+      if (updateResult) {
+        console.log("[useUpdate] Update available:", updateResult.version);
+        setStatus("available");
+        setUpdate(updateResult);
+        setError(null);
+        setDownloadProgress(0);
       } else {
-        setState({
-          status: "idle",
-          update: null,
-          error: null,
-          downloadProgress: 0,
-        });
+        console.log("[useUpdate] No update available");
+        setStatus("idle");
+        setUpdate(null);
+        setError(null);
+        setDownloadProgress(0);
       }
     } catch (err) {
-      setState({
-        status: "error",
-        update: null,
-        error: err instanceof Error ? err.message : "Failed to check for updates",
-        downloadProgress: 0,
-      });
+      console.error("[useUpdate] Update check failed:", err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setStatus("error");
+      setUpdate(null);
+      setError(errorMessage || "Failed to check for updates");
+      setDownloadProgress(0);
     }
-  }, [setLastUpdateCheck]);
+  }, [setLastUpdateCheck, setStatus, setUpdate, setError, setDownloadProgress]);
 
   const downloadAndInstall = useCallback(async () => {
-    if (!state.update) return;
+    if (!update) return;
 
-    setState((prev) => ({ ...prev, status: "downloading", downloadProgress: 0 }));
+    setStatus("downloading");
+    setDownloadProgress(0);
 
     try {
       let downloaded = 0;
       let contentLength = 0;
 
-      await state.update.downloadAndInstall((event) => {
+      await update.downloadAndInstall((event) => {
         switch (event.event) {
           case "Started":
             contentLength = event.data.contentLength ?? 0;
@@ -80,22 +86,20 @@ export function useUpdate(): UseUpdateReturn {
             downloaded += event.data.chunkLength;
             if (contentLength > 0) {
               const progress = Math.round((downloaded / contentLength) * 100);
-              setState((prev) => ({ ...prev, downloadProgress: progress }));
+              setDownloadProgress(progress);
             }
             break;
           case "Finished":
-            setState((prev) => ({ ...prev, status: "ready", downloadProgress: 100 }));
+            setStatus("ready");
+            setDownloadProgress(100);
             break;
         }
       });
     } catch (err) {
-      setState((prev) => ({
-        ...prev,
-        status: "error",
-        error: err instanceof Error ? err.message : "Failed to download update",
-      }));
+      setStatus("error");
+      setError(err instanceof Error ? err.message : "Failed to download update");
     }
-  }, [state.update]);
+  }, [update, setStatus, setDownloadProgress, setError]);
 
   const restart = useCallback(async () => {
     await relaunch();
@@ -103,23 +107,36 @@ export function useUpdate(): UseUpdateReturn {
 
   // Check for updates on startup if enabled
   useEffect(() => {
+    console.log(
+      "[useUpdate] Effect running, autoUpdateEnabled:",
+      autoUpdateEnabled,
+      "startupCheckScheduled:",
+      startupCheckScheduled
+    );
+
     // Skip in non-Tauri environment (e.g., tests)
     if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
+      console.log("[useUpdate] Skipping - not in Tauri environment");
       return;
     }
 
-    if (autoUpdateEnabled && !hasCheckedOnStartup.current) {
-      hasCheckedOnStartup.current = true;
+    if (autoUpdateEnabled && !startupCheckScheduled) {
+      console.log("[useUpdate] Scheduling startup check in 3 seconds...");
+      startupCheckScheduled = true;
       // Small delay to not block app startup
-      const timer = setTimeout(() => {
+      setTimeout(() => {
+        console.log("[useUpdate] Running startup check now");
         checkForUpdate();
       }, 3000);
-      return () => clearTimeout(timer);
     }
-  }, [autoUpdateEnabled, checkForUpdate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoUpdateEnabled]);
 
   return {
-    ...state,
+    status,
+    update,
+    error,
+    downloadProgress,
     checkForUpdate,
     downloadAndInstall,
     restart,

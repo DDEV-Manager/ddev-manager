@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { listen } from "@tauri-apps/api/event";
 import { Header } from "@/components/layout/Header";
@@ -8,6 +8,7 @@ import { Terminal } from "@/components/terminal/Terminal";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { Toaster } from "@/components/ui/Toaster";
 import { useDdevInstalled } from "@/hooks/useDdev";
+import { useUpdate } from "@/hooks/useUpdate";
 import { useTerminalStore } from "@/stores/terminalStore";
 import { useTheme } from "@/hooks/useTheme";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -35,9 +36,31 @@ const queryClient = new QueryClient({
 function AppContent() {
   const { data: isInstalled, isLoading } = useDdevInstalled();
   const { isOpen, close, toggle } = useTerminalStore();
+  const { status: updateStatus, update } = useUpdate();
+  const hasShownUpdateToast = useRef(false);
 
   // Initialize theme and zoom settings
   useTheme();
+
+  // Show toast when update is available on startup
+  useEffect(() => {
+    console.log(
+      "[App] Update effect, status:",
+      updateStatus,
+      "update:",
+      update,
+      "hasShown:",
+      hasShownUpdateToast.current
+    );
+    if (updateStatus === "available" && update && !hasShownUpdateToast.current) {
+      console.log("[App] Showing update toast for version:", update.version);
+      hasShownUpdateToast.current = true;
+      toast.info(
+        "Update available",
+        `Version ${update.version} is available. Go to Settings to download.`
+      );
+    }
+  }, [updateStatus, update]);
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts();

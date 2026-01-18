@@ -96,5 +96,5 @@ jobs:
             **macOS users**: Run `xattr -cr "/Applications/DDEV Manager.app"` if blocked by Gatekeeper.
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.args }} --config src-tauri/tauri.release.conf.json
           updaterJsonPreferNsis: true
