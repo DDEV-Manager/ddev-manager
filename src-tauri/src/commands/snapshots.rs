@@ -1,6 +1,8 @@
 use tauri::Window;
 
-use crate::ddev::{run_ddev_command_async, run_ddev_command_streaming};
+use crate::ddev::{
+    run_ddev_command_async, run_ddev_command_streaming, run_ddev_command_streaming_in_dir,
+};
 use crate::error::DdevError;
 
 /// List snapshots for a project (async, returns JSON)
@@ -30,17 +32,20 @@ pub fn create_snapshot(
 }
 
 /// Restore a snapshot for a project (streaming output)
+/// Must run from project directory since `ddev snapshot restore` doesn't accept project name
 #[tauri::command]
 pub fn restore_snapshot(
     window: Window,
     project: String,
     snapshot: String,
+    approot: String,
 ) -> Result<String, DdevError> {
-    run_ddev_command_streaming(
+    run_ddev_command_streaming_in_dir(
         window,
         "snapshot-restore",
         &project,
-        &["snapshot", "restore", &snapshot, &project],
+        &["snapshot", "restore", &snapshot],
+        &approot,
     )
 }
 

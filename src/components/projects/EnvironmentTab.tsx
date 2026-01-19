@@ -1,4 +1,13 @@
-import { Database, Copy, Check, Folder, Trash2, ExternalLink } from "lucide-react";
+import {
+  Database,
+  Copy,
+  Check,
+  Folder,
+  Trash2,
+  ExternalLink,
+  Upload,
+  Download,
+} from "lucide-react";
 import { useState } from "react";
 import { useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
 import { ProjectScreenshot } from "./ProjectScreenshot";
@@ -11,8 +20,10 @@ interface EnvironmentTabProps {
   project: DdevProjectDetails;
   isRunning: boolean;
   isOperationPending: boolean;
-  currentOp: "start" | "stop" | "restart" | "delete" | null;
+  currentOp: "start" | "stop" | "restart" | "delete" | "import-db" | "export-db" | null;
   onDelete: () => void;
+  onImportDb: () => void;
+  onExportDb: () => void;
 }
 
 export function EnvironmentTab({
@@ -21,6 +32,8 @@ export function EnvironmentTab({
   isOperationPending,
   currentOp,
   onDelete,
+  onImportDb,
+  onExportDb,
 }: EnvironmentTabProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const openFolder = useOpenFolder();
@@ -143,6 +156,30 @@ export function EnvironmentTab({
                   </div>
                 )}
               </div>
+              {isRunning && (
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={onImportDb}
+                    disabled={isOperationPending}
+                    loading={currentOp === "import-db"}
+                    icon={<Upload className="h-4 w-4" />}
+                  >
+                    Import
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={onExportDb}
+                    disabled={isOperationPending}
+                    loading={currentOp === "export-db"}
+                    icon={<Download className="h-4 w-4" />}
+                  >
+                    Export
+                  </Button>
+                </div>
+              )}
             </section>
           )}
         </div>

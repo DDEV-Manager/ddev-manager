@@ -30,6 +30,10 @@ import {
   useDeleteProject,
   useOpenUrl,
   useOpenFolder,
+  useSelectDatabaseFile,
+  useSelectExportDestination,
+  useImportDb,
+  useExportDb,
 } from "@/hooks/useDdev";
 import { useCaptureScreenshot } from "@/hooks/useScreenshot";
 import { useAppStore } from "@/stores/appStore";
@@ -44,7 +48,7 @@ interface CommandStatus {
   process_id?: string;
 }
 
-type ProjectOperation = "start" | "stop" | "restart" | "delete" | null;
+type ProjectOperation = "start" | "stop" | "restart" | "delete" | "import-db" | "export-db" | null;
 
 interface OperationState {
   type: ProjectOperation;
@@ -67,6 +71,10 @@ export function ProjectDetails() {
   const openUrl = useOpenUrl();
   const openFolder = useOpenFolder();
   const captureScreenshot = useCaptureScreenshot();
+  const selectDbFile = useSelectDatabaseFile();
+  const selectExportDest = useSelectExportDestination();
+  const importDb = useImportDb();
+  const exportDb = useExportDb();
 
   const projectTabs: Tab[] = useMemo(
     () => [
@@ -128,6 +136,27 @@ export function ProjectDetails() {
           setOperation({ type: null, projectName: null });
         }
       }
+
+      // Handle database import/export commands
+      if (command === "import-db" || command === "export-db") {
+        if (status === "finished") {
+          if (command === "import-db") {
+            toast.success("Database imported", "Database has been imported successfully");
+          } else {
+            toast.success("Database exported", "Database has been exported successfully");
+          }
+          setOperation({ type: null, projectName: null });
+        } else if (status === "error") {
+          toast.error(
+            `Failed to ${command === "import-db" ? "import" : "export"} database`,
+            "Check the terminal for details"
+          );
+          setOperation({ type: null, projectName: null });
+        } else if (status === "cancelled") {
+          toast.info("Operation cancelled", "The database operation was cancelled");
+          setOperation({ type: null, projectName: null });
+        }
+      }
     }).then((fn) => {
       if (mounted) {
         unlistenFn = fn;
@@ -173,6 +202,25 @@ export function ProjectDetails() {
     setOperation({ type: "delete", projectName: project.name });
     deleteProject.mutate(project.name);
   }, [project, deleteProject]);
+
+  const handleImportDb = useCallback(async () => {
+    if (!project) return;
+    const filePath = await selectDbFile.mutateAsync();
+    if (filePath) {
+      setOperation({ type: "import-db", projectName: project.name });
+      importDb.mutate({ project: project.name, filePath });
+    }
+  }, [project, selectDbFile, importDb]);
+
+  const handleExportDb = useCallback(async () => {
+    if (!project) return;
+    const defaultName = `${project.name}-${new Date().toISOString().split("T")[0]}.sql.gz`;
+    const filePath = await selectExportDest.mutateAsync(defaultName);
+    if (filePath) {
+      setOperation({ type: "export-db", projectName: project.name });
+      exportDb.mutate({ project: project.name, filePath });
+    }
+  }, [project, selectExportDest, exportDb]);
 
   if (!selectedProject) {
     return (
@@ -306,6 +354,8 @@ export function ProjectDetails() {
             isOperationPending={isOperationPending}
             currentOp={currentOp}
             onDelete={handleDelete}
+            onImportDb={handleImportDb}
+            onExportDb={handleExportDb}
           />
         )}
         {activeTab === "addons" && (
@@ -324,7 +374,7 @@ export function ProjectDetails() {
         )}
         {activeTab === "snapshots" && (
           <div className="p-4 pb-16">
-            <SnapshotsSection projectName={project.name} />
+            <SnapshotsSection projectName={project.name} approot={project.approot} />
           </div>
         )}
       </div>

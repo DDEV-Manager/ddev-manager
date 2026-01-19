@@ -26,6 +26,7 @@ interface CommandStatus {
 
 interface SnapshotsSectionProps {
   projectName: string;
+  approot: string;
 }
 
 function formatDate(isoString: string): string {
@@ -45,7 +46,7 @@ function formatDate(isoString: string): string {
 
 type SnapshotOperation = "snapshot" | "snapshot-restore" | "snapshot-delete" | "snapshot-cleanup";
 
-export function SnapshotsSection({ projectName }: SnapshotsSectionProps) {
+export function SnapshotsSection({ projectName, approot }: SnapshotsSectionProps) {
   const [snapshotName, setSnapshotName] = useState("");
   const [restoreTarget, setRestoreTarget] = useState<Snapshot | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Snapshot | null>(null);
@@ -122,8 +123,8 @@ export function SnapshotsSection({ projectName }: SnapshotsSectionProps) {
     if (!restoreTarget) return;
     setActiveOperation("snapshot-restore");
     setRestoreTarget(null);
-    restoreSnapshot.mutate({ project: projectName, snapshot: restoreTarget.name });
-  }, [projectName, restoreTarget, restoreSnapshot]);
+    restoreSnapshot.mutate({ project: projectName, snapshot: restoreTarget.name, approot });
+  }, [projectName, approot, restoreTarget, restoreSnapshot]);
 
   const handleDelete = useCallback(() => {
     if (!deleteTarget) return;

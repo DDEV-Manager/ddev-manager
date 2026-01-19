@@ -1,5 +1,6 @@
 mod addons;
 mod create;
+mod database;
 mod logs;
 mod projects;
 mod screenshots;
@@ -8,6 +9,7 @@ mod utils;
 
 pub use addons::*;
 pub use create::*;
+pub use database::*;
 pub use logs::*;
 pub use projects::*;
 pub use screenshots::*;

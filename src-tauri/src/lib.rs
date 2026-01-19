@@ -37,6 +37,11 @@ pub fn run() {
             restore_snapshot,
             delete_snapshot,
             cleanup_snapshots,
+            // Database
+            select_database_file,
+            select_export_destination,
+            import_db,
+            export_db,
             // Logs
             get_logs,
             // Utils

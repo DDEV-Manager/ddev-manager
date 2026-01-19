@@ -235,9 +235,17 @@ export function useRestoreSnapshot() {
   const { open, autoOpen } = useTerminalStore();
 
   return useMutation({
-    mutationFn: async ({ project, snapshot }: { project: string; snapshot: string }) => {
+    mutationFn: async ({
+      project,
+      snapshot,
+      approot,
+    }: {
+      project: string;
+      snapshot: string;
+      approot: string;
+    }) => {
       if (autoOpen) open();
-      return invoke<string>("restore_snapshot", { project, snapshot });
+      return invoke<string>("restore_snapshot", { project, snapshot, approot });
     },
   });
 }
@@ -262,6 +270,45 @@ export function useCleanupSnapshots() {
     mutationFn: async (project: string) => {
       if (autoOpen) open();
       return invoke<string>("cleanup_snapshots", { project });
+    },
+  });
+}
+
+// Select database file for import via native dialog
+export function useSelectDatabaseFile() {
+  return useMutation({
+    mutationFn: () => invoke<string | null>("select_database_file"),
+  });
+}
+
+// Select destination for database export via native dialog
+export function useSelectExportDestination() {
+  return useMutation({
+    mutationFn: (defaultName: string) =>
+      invoke<string | null>("select_export_destination", { defaultName }),
+  });
+}
+
+// Import database (non-blocking, command runs in background)
+export function useImportDb() {
+  const { open, autoOpen } = useTerminalStore();
+
+  return useMutation({
+    mutationFn: async ({ project, filePath }: { project: string; filePath: string }) => {
+      if (autoOpen) open();
+      return invoke<string>("import_db", { project, filePath });
+    },
+  });
+}
+
+// Export database (non-blocking, command runs in background)
+export function useExportDb() {
+  const { open, autoOpen } = useTerminalStore();
+
+  return useMutation({
+    mutationFn: async ({ project, filePath }: { project: string; filePath: string }) => {
+      if (autoOpen) open();
+      return invoke<string>("export_db", { project, filePath });
     },
   });
 }

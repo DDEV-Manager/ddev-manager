@@ -327,13 +327,18 @@ describe("useDdev hooks", () => {
         wrapper: createWrapper(),
       });
 
-      result.current.mutate({ project: "my-project", snapshot: "my-snapshot" });
+      result.current.mutate({
+        project: "my-project",
+        snapshot: "my-snapshot",
+        approot: "/home/user/projects/my-project",
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(invoke).toHaveBeenCalledWith("restore_snapshot", {
         project: "my-project",
         snapshot: "my-snapshot",
+        approot: "/home/user/projects/my-project",
       });
     });
   });

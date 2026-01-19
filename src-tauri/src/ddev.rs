@@ -258,6 +258,160 @@ pub fn run_ddev_command_streaming(
     Ok(process_id)
 }
 
+/// Run a DDEV command with streaming output in a specific directory (non-blocking)
+/// Returns a process ID that can be used to cancel the command
+pub fn run_ddev_command_streaming_in_dir(
+    window: Window,
+    command_name: &str,
+    project_name: &str,
+    args: &[&str],
+    working_dir: &str,
+) -> Result<String, DdevError> {
+    let process_id = generate_process_id();
+    let command_name = command_name.to_string();
+    let project_name = project_name.to_string();
+    let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+    let ddev_cmd = get_ddev_command();
+    let enhanced_path = get_enhanced_path();
+    let process_id_clone = process_id.clone();
+    let working_dir = working_dir.to_string();
+
+    // Emit start status with process_id
+    let _ = window.emit(
+        "command-status",
+        CommandStatus {
+            command: command_name.clone(),
+            project: project_name.clone(),
+            status: "started".to_string(),
+            message: Some(format!("Running: ddev {}", args.join(" "))),
+            process_id: Some(process_id.clone()),
+        },
+    );
+
+    // Spawn the command in a background thread
+    thread::spawn(move || {
+        let result = Command::new(&ddev_cmd)
+            .args(&args)
+            .current_dir(&working_dir)
+            .env("PATH", &enhanced_path)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn();
+
+        let mut child = match result {
+            Ok(child) => child,
+            Err(e) => {
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "error".to_string(),
+                        message: Some(format!("Failed to start command: {}", e)),
+                        process_id: None,
+                    },
+                );
+                return;
+            }
+        };
+
+        let stdout = child.stdout.take();
+        let stderr = child.stderr.take();
+
+        // Store child in registry
+        {
+            let mut registry = PROCESS_REGISTRY.lock().unwrap();
+            registry.insert(
+                process_id_clone.clone(),
+                crate::process::ProcessEntry {
+                    child: Some(child),
+                    command: command_name.clone(),
+                    project: project_name.clone(),
+                },
+            );
+        }
+
+        let window_clone = window.clone();
+
+        let stdout_handle = stdout.map(|stdout| {
+            let window = window.clone();
+            thread::spawn(move || {
+                let reader = BufReader::new(stdout);
+                for line in reader.lines().map_while(Result::ok) {
+                    let _ = window.emit(
+                        "command-output",
+                        CommandOutput {
+                            line,
+                            stream: "stdout".to_string(),
+                        },
+                    );
+                }
+            })
+        });
+
+        let stderr_handle = stderr.map(|stderr| {
+            thread::spawn(move || {
+                let reader = BufReader::new(stderr);
+                for line in reader.lines().map_while(Result::ok) {
+                    let _ = window_clone.emit(
+                        "command-output",
+                        CommandOutput {
+                            line,
+                            stream: "stderr".to_string(),
+                        },
+                    );
+                }
+            })
+        });
+
+        if let Some(handle) = stdout_handle {
+            let _ = handle.join();
+        }
+        if let Some(handle) = stderr_handle {
+            let _ = handle.join();
+        }
+
+        let status = {
+            let mut registry = PROCESS_REGISTRY.lock().unwrap();
+            registry
+                .remove(&process_id_clone)
+                .and_then(|entry| entry.child.map(|mut child| child.wait()))
+        };
+
+        match status {
+            Some(Ok(exit_status)) if exit_status.success() => {
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "finished".to_string(),
+                        message: Some("Command completed successfully".to_string()),
+                        process_id: None,
+                    },
+                );
+            }
+            None => {
+                // Process was cancelled
+            }
+            _ => {
+                let _ = window.emit(
+                    "command-status",
+                    CommandStatus {
+                        command: command_name,
+                        project: project_name,
+                        status: "error".to_string(),
+                        message: Some("Command failed".to_string()),
+                        process_id: None,
+                    },
+                );
+            }
+        }
+    });
+
+    Ok(process_id)
+}
+
 /// Run a DDEV command with JSON output (async version)
 pub async fn run_ddev_json_command_async<T: for<'de> Deserialize<'de>>(
     args: &[&str],

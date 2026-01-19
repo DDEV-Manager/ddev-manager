@@ -11,6 +11,7 @@ vi.mock("@tauri-apps/api/core");
 describe("SnapshotsSection", () => {
   const defaultProps = {
     projectName: "my-project",
+    approot: "/home/user/projects/my-project",
   };
 
   const mockSnapshotsResponse = (snapshots: Array<{ Name: string; Created: string }> | null) =>
@@ -209,6 +210,7 @@ describe("SnapshotsSection", () => {
         expect(invoke).toHaveBeenCalledWith("restore_snapshot", {
           project: "my-project",
           snapshot: "snapshot-1",
+          approot: "/home/user/projects/my-project",
         });
       });
     });
