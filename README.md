@@ -32,8 +32,13 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 
 ## Screenshots
 
-<!-- TODO: Add screenshots -->
-*Screenshots coming soon*
+<p align="center">
+  <img src="docs/screenshot-light.png" alt="DDEV Manager - Light Mode" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshot-dark.png" alt="DDEV Manager - Dark Mode" width="800" />
+</p>
 
 ## Installation
 
