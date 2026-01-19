@@ -21,7 +21,9 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 - Global status bar showing command progress with cancel support
 - Cancel running commands (useful for stuck operations)
 - Open project URLs and folders directly from the app
-- Database snapshot management
+- Database management:
+  - Snapshots: Create, restore, and delete database snapshots
+  - Import/Export: Import and export database files (.sql, .sql.gz, .zip)
 - Add-on management (browse registry, install, remove - works even when project is stopped)
 - Container log viewer with filtering and real-time streaming
 - Dark mode and zoom controls
@@ -275,6 +277,7 @@ The release workflow (`.github/workflows/release.yml`) will automatically sign b
 │  │  - create_project() with CMS install        │        │
 │  │  - delete_project() / poweroff()            │        │
 │  │  - create_snapshot() / restore_snapshot()   │        │
+│  │  - import_db() / export_db()                │        │
 │  │  - install_addon() / remove_addon()         │        │
 │  └──────────────────┬──────────────────────────┘        │
 │                     │                                   │
@@ -332,6 +335,7 @@ When reporting bugs, please include:
 - [x] Auto-detect project type for existing folders
 - [x] Log viewer with filtering
 - [x] Keyboard shortcuts system
+- [x] Database import/export
 - [ ] System tray integration
 - [ ] Configuration editor
 - [ ] Multiple project selection
