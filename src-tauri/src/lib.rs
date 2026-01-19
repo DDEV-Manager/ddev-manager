@@ -35,6 +35,8 @@ pub fn run() {
             list_snapshots,
             create_snapshot,
             restore_snapshot,
+            delete_snapshot,
+            cleanup_snapshots,
             // Logs
             get_logs,
             // Utils

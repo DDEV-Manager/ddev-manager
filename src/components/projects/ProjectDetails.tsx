@@ -11,12 +11,14 @@ import {
   Settings,
   Package,
   FileText,
+  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Tabs, type Tab } from "@/components/ui/Tabs";
 import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
 import { LogsSection } from "@/components/logs/LogsSection";
+import { SnapshotsSection } from "@/components/snapshots/SnapshotsSection";
 import { EnvironmentTab } from "./EnvironmentTab";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useState, useEffect, useCallback } from "react";
@@ -49,7 +51,7 @@ interface OperationState {
   projectName: string | null;
 }
 
-type ProjectTab = "environment" | "addons" | "logs";
+type ProjectTab = "environment" | "addons" | "logs" | "snapshots";
 
 export function ProjectDetails() {
   const { selectedProject } = useAppStore();
@@ -71,6 +73,7 @@ export function ProjectDetails() {
       { id: "environment", label: "Environment", icon: <Settings className="h-4 w-4" /> },
       { id: "addons", label: "Add-ons", icon: <Package className="h-4 w-4" /> },
       { id: "logs", label: "Logs", icon: <FileText className="h-4 w-4" /> },
+      { id: "snapshots", label: "Snapshots", icon: <Database className="h-4 w-4" /> },
     ],
     []
   );
@@ -317,6 +320,11 @@ export function ProjectDetails() {
               services={Object.keys(project.services || {})}
               isProjectRunning={isRunning}
             />
+          </div>
+        )}
+        {activeTab === "snapshots" && (
+          <div className="p-4 pb-16">
+            <SnapshotsSection projectName={project.name} />
           </div>
         )}
       </div>

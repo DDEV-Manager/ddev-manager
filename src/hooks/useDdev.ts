@@ -177,34 +177,91 @@ export function useOpenFolder() {
   });
 }
 
-// Create snapshot
+// Snapshot types for parsing DDEV output
+interface DdevSnapshotRaw {
+  Name: string;
+  Created: string;
+}
+
+interface DdevSnapshotResponse {
+  level: string;
+  msg: string;
+  raw: Record<string, DdevSnapshotRaw[] | null>;
+  time: string;
+}
+
+export interface Snapshot {
+  name: string;
+  created: string;
+}
+
+// List snapshots for a project
+export function useListSnapshots(project: string | null) {
+  return useQuery({
+    queryKey: queryKeys.snapshots(project ?? ""),
+    queryFn: async (): Promise<Snapshot[]> => {
+      if (!project) return [];
+      const output = await invoke<string>("list_snapshots", { project });
+      try {
+        const parsed: DdevSnapshotResponse = JSON.parse(output);
+        const snapshots = parsed.raw[project];
+        if (!snapshots) return [];
+        return snapshots.map((s) => ({
+          name: s.Name,
+          created: s.Created,
+        }));
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!project,
+  });
+}
+
+// Create snapshot (non-blocking, command runs in background)
 export function useCreateSnapshot() {
-  const queryClient = useQueryClient();
+  const { open, autoOpen } = useTerminalStore();
 
   return useMutation({
     mutationFn: async ({ project, name }: { project: string; name?: string }) => {
+      if (autoOpen) open();
       return invoke<string>("create_snapshot", { project, name });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.snapshots(variables.project),
-      });
     },
   });
 }
 
-// Restore snapshot
+// Restore snapshot (non-blocking, command runs in background)
 export function useRestoreSnapshot() {
-  const queryClient = useQueryClient();
+  const { open, autoOpen } = useTerminalStore();
 
   return useMutation({
     mutationFn: async ({ project, snapshot }: { project: string; snapshot: string }) => {
+      if (autoOpen) open();
       return invoke<string>("restore_snapshot", { project, snapshot });
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.snapshots(variables.project),
-      });
+  });
+}
+
+// Delete a single snapshot (non-blocking, command runs in background)
+export function useDeleteSnapshot() {
+  const { open, autoOpen } = useTerminalStore();
+
+  return useMutation({
+    mutationFn: async ({ project, snapshot }: { project: string; snapshot: string }) => {
+      if (autoOpen) open();
+      return invoke<string>("delete_snapshot", { project, snapshot });
+    },
+  });
+}
+
+// Delete all snapshots for a project (non-blocking, command runs in background)
+export function useCleanupSnapshots() {
+  const { open, autoOpen } = useTerminalStore();
+
+  return useMutation({
+    mutationFn: async (project: string) => {
+      if (autoOpen) open();
+      return invoke<string>("cleanup_snapshots", { project });
     },
   });
 }

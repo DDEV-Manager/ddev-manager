@@ -14,8 +14,11 @@ import {
   usePoweroff,
   useOpenUrl,
   useOpenFolder,
+  useListSnapshots,
   useCreateSnapshot,
   useRestoreSnapshot,
+  useDeleteSnapshot,
+  useCleanupSnapshots,
   queryKeys,
 } from "./useDdev";
 import { setupInvokeMock, createMockProjectBasic, createMockProjectDetails } from "@/test/mocks";
@@ -331,6 +334,107 @@ describe("useDdev hooks", () => {
       expect(invoke).toHaveBeenCalledWith("restore_snapshot", {
         project: "my-project",
         snapshot: "my-snapshot",
+      });
+    });
+  });
+
+  describe("useListSnapshots", () => {
+    it("should fetch and parse snapshots successfully", async () => {
+      const mockResponse = JSON.stringify({
+        level: "info",
+        msg: "snapshot list",
+        raw: {
+          "my-project": [
+            { Name: "snapshot-1", Created: "2024-01-15T10:00:00Z" },
+            { Name: "snapshot-2", Created: "2024-01-14T09:00:00Z" },
+          ],
+        },
+        time: "2024-01-15T10:00:00Z",
+      });
+
+      setupInvokeMock(vi.mocked(invoke), {
+        list_snapshots: mockResponse,
+      });
+
+      const { result } = renderHook(() => useListSnapshots("my-project"), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toHaveLength(2);
+      expect(result.current.data?.[0].name).toBe("snapshot-1");
+      expect(result.current.data?.[1].name).toBe("snapshot-2");
+    });
+
+    it("should return empty array when no snapshots exist", async () => {
+      const mockResponse = JSON.stringify({
+        level: "info",
+        msg: "snapshot list",
+        raw: { "my-project": null },
+        time: "2024-01-15T10:00:00Z",
+      });
+
+      setupInvokeMock(vi.mocked(invoke), {
+        list_snapshots: mockResponse,
+      });
+
+      const { result } = renderHook(() => useListSnapshots("my-project"), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(result.current.data).toEqual([]);
+    });
+
+    it("should not fetch when project is null", async () => {
+      const { result } = renderHook(() => useListSnapshots(null), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.fetchStatus).toBe("idle");
+      expect(invoke).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("useDeleteSnapshot", () => {
+    it("should call delete_snapshot command", async () => {
+      setupInvokeMock(vi.mocked(invoke), {
+        delete_snapshot: "Snapshot deleted",
+      });
+
+      const { result } = renderHook(() => useDeleteSnapshot(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate({ project: "my-project", snapshot: "my-snapshot" });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(invoke).toHaveBeenCalledWith("delete_snapshot", {
+        project: "my-project",
+        snapshot: "my-snapshot",
+      });
+    });
+  });
+
+  describe("useCleanupSnapshots", () => {
+    it("should call cleanup_snapshots command", async () => {
+      setupInvokeMock(vi.mocked(invoke), {
+        cleanup_snapshots: "All snapshots deleted",
+      });
+
+      const { result } = renderHook(() => useCleanupSnapshots(), {
+        wrapper: createWrapper(),
+      });
+
+      result.current.mutate("my-project");
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(invoke).toHaveBeenCalledWith("cleanup_snapshots", {
+        project: "my-project",
       });
     });
   });
