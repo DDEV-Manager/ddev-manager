@@ -67,7 +67,7 @@ export function Dropdown<T extends string>({
               }}
               className={cn(
                 "block w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600",
-                option.value === value && "bg-blue-50 dark:bg-blue-900/30"
+                option.value === value && "bg-primary-50 dark:bg-primary-900/30"
               )}
             >
               {option.label}

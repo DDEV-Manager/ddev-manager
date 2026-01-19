@@ -283,7 +283,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                     className={cn(
                       "rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors",
                       formData.projectType === type.value
-                        ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-400"
+                        ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/30 dark:text-primary-400"
                         : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                     )}
                   >
@@ -295,14 +295,14 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
 
             {/* CMS Installation Options */}
             {hasCmsOptions && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+              <div className="border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-900/20 rounded-lg border p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <Download className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  <Download className="text-primary-600 dark:text-primary-400 h-4 w-4" />
+                  <span className="text-primary-700 dark:text-primary-300 text-sm font-medium">
                     Install {PROJECT_TYPES.find((t) => t.value === formData.projectType)?.label}
                   </span>
                 </div>
-                <p className="mb-3 text-xs text-blue-600 dark:text-blue-400">
+                <p className="text-primary-600 dark:text-primary-400 mb-3 text-xs">
                   The folder is empty. You can optionally install the CMS files.
                 </p>
 
@@ -585,7 +585,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                 index < currentStep
                   ? "bg-green-500 text-white"
                   : index === currentStep
-                    ? "bg-blue-500 text-white"
+                    ? "bg-primary-500 text-white"
                     : "bg-gray-200 text-gray-500 dark:bg-gray-700"
               )}
             >
@@ -624,7 +624,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
           <button
             onClick={() => setCurrentStep((s) => s + 1)}
             disabled={!canProceed()}
-            className="flex items-center gap-1 rounded-lg bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-600 disabled:opacity-50"
+            className="bg-primary-500 hover:bg-primary-600 flex items-center gap-1 rounded-lg px-4 py-2 text-sm text-white disabled:opacity-50"
           >
             Next
             <ChevronRight className="h-4 w-4" />

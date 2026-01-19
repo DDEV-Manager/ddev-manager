@@ -20,7 +20,7 @@ describe("Header", () => {
 
     render(<Header />);
 
-    expect(screen.getByText("DDEV Manager")).toBeInTheDocument();
+    expect(screen.getByText("Manager")).toBeInTheDocument();
   });
 
   it("should show running count badge when projects are running", async () => {

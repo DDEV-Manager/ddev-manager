@@ -101,14 +101,14 @@ export function StatusBar() {
       )}
     >
       {/* Progress bar */}
-      <div className="absolute inset-x-0 top-0 h-1 overflow-hidden bg-blue-100 dark:bg-blue-900/30">
-        <div className="animate-progress h-full w-1/3 bg-blue-500" />
+      <div className="bg-primary-100 dark:bg-primary-900/30 absolute inset-x-0 top-0 h-1 overflow-hidden">
+        <div className="animate-progress bg-primary-500 h-full w-1/3" />
       </div>
 
       <div className="flex items-center gap-3 px-4 py-2">
         {/* Running indicator */}
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+          <Loader2 className="text-primary-500 h-4 w-4 animate-spin" />
           <span>
             {formatCommand(command)}
             {project && project !== "all" && (

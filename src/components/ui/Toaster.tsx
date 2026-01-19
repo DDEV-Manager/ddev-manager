@@ -26,10 +26,10 @@ const styles = {
   },
   info: {
     container:
-      "bg-blue-50/90 border-blue-200/50 backdrop-blur-sm dark:bg-blue-900/30 dark:border-blue-800/50",
-    icon: "text-blue-500 dark:text-blue-400",
-    title: "text-blue-800 dark:text-blue-200",
-    message: "text-blue-700 dark:text-blue-300",
+      "bg-primary-50/90 border-primary-200/50 backdrop-blur-sm dark:bg-primary-900/30 dark:border-primary-800/50",
+    icon: "text-primary-500 dark:text-primary-400",
+    title: "text-primary-800 dark:text-primary-200",
+    message: "text-primary-700 dark:text-primary-300",
   },
   warning: {
     container:

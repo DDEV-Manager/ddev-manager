@@ -8,6 +8,36 @@ import { CreateProjectWizard } from "@/components/projects/CreateProjectWizard";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
+function DdevLogo({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 848.61 199.3" className={className}>
+      <g>
+        <path
+          fill="#02a8e2"
+          fillRule="evenodd"
+          d="M116.77,18.59h84.55l45.32,45.33v71.47l-45.32,45.32H125.2a11.84,11.84,0,0,0-8.72-4.07,11.33,11.33,0,1,0,8.72,18.59h82.22l53.74-53.74V57.81L207.42,4.07H116.77A11.82,11.82,0,0,0,108.06,0a11.33,11.33,0,0,0,0,22.66A11.82,11.82,0,0,0,116.77,18.59Zm-8.71-12.2a4.59,4.59,0,0,1,4.64,4.54V11a4.65,4.65,0,0,1-9.29.43,3.09,3.09,0,0,1,0-.43A4.78,4.78,0,0,1,108.06,6.39Zm8.71,176.93a4.65,4.65,0,1,1-4.65,4.65h0a4.58,4.58,0,0,1,4.53-4.65Z"
+        />
+        <path
+          fill="#02a8e2"
+          fillRule="evenodd"
+          d="M195.5,33.12H87.43v.29a10.58,10.58,0,0,0-8.14-3.49,11.34,11.34,0,1,0,9.3,18H189.4L217.59,76.1v47.35L189.4,151.64H86.85a11.84,11.84,0,0,0-8.72-4.07,11.33,11.33,0,1,0,8.72,18.59H195.21l36.61-36.6V69.73ZM79.29,36.61a4.65,4.65,0,1,1-4.64,4.66v0C74.36,38.64,76.68,36.61,79.29,36.61ZM78.42,154a4.65,4.65,0,1,1-4.65,4.65h0C73.48,156,75.81,154,78.42,154Z"
+        />
+        <path
+          fill="#02a8e2"
+          fillRule="evenodd"
+          d="M178.65,136.55H47.34a10.75,10.75,0,0,1-7.85,3.19,11.33,11.33,0,1,1,0-22.66,11.59,11.59,0,0,1,9.3,4.94h36l-15.1-15.11H20A11.82,11.82,0,0,1,11.31,111,11.33,11.33,0,1,1,20,92.41H75.81L105.73,122H177.2L188,111.27v-23L177.2,77.57H110.67l15.11,15.11h29.34a11.84,11.84,0,0,1,8.72-4.07,11.33,11.33,0,1,1-8.72,18.59H119.68L90,77.28H50.82a11.85,11.85,0,0,1-8.71,4.07,11.33,11.33,0,1,1,8.71-18.6H183.3l19.47,19.47v35.15L183.3,136.55ZM163.84,94.71a4.65,4.65,0,1,0,4.65,4.65h0C168.78,97,166.45,94.71,163.84,94.71ZM42.4,65.08a4.65,4.65,0,1,0,4.65,4.65A4.78,4.78,0,0,0,42.4,65.08Zm-2.91,58.68a4.65,4.65,0,1,0,4.65,4.65C44.43,125.8,42.11,123.76,39.49,123.76ZM11.6,94.71a4.65,4.65,0,1,0,0,9.3,4.6,4.6,0,0,0,4.65-4.53v-.12A4.78,4.78,0,0,0,11.6,94.71Z"
+        />
+        <path
+          fill="currentColor"
+          fillRule="evenodd"
+          d="M323.34,66.82h66.24A20.7,20.7,0,0,1,410.2,87.45v24.4a20.7,20.7,0,0,1-20.62,20.63H323.34ZM389.87,49.1H305.61V150.49h84.26a38.81,38.81,0,0,0,38.64-38.64V87.45A38.75,38.75,0,0,0,389.87,49.1ZM593,90.64V150.2H697.83v-18H611V108.66h72.34v-18H593ZM467.73,66.82H534a20.71,20.71,0,0,1,20.63,20.63v24.4A20.71,20.71,0,0,1,534,132.48H467.73ZM534,49.1H449.72V150.49H534a38.81,38.81,0,0,0,38.64-38.64V87.45A38.57,38.57,0,0,0,534,49.1Zm183,0L772.49,145l2.91,5.23h14.52l3.2-5.23,55.49-95.9H827.69l-45,77.86-45-77.86Z"
+        />
+        <path fill="#02a8e2" fillRule="evenodd" d="M611,66.82h86.87V49.1H593V66.82Z" />
+      </g>
+    </svg>
+  );
+}
+
 export function Header() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
@@ -30,9 +60,9 @@ export function Header() {
   return (
     <header className="flex items-center justify-between border-b border-gray-200/50 bg-white/80 px-4 py-3 backdrop-blur-md dark:border-gray-800/50 dark:bg-gray-900/80">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="DDEV Manager" className="h-8 w-8" />
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">DDEV Manager</h1>
+        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
+          <DdevLogo className="h-7" />
+          <span className="text-lg font-semibold">Manager</span>
         </div>
         {runningCount > 0 && (
           <Badge variant="green" className="rounded-full">

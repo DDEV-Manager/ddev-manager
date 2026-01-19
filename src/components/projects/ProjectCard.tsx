@@ -57,7 +57,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
       className={cn(
         "group relative cursor-pointer rounded-lg border p-3 transition-all",
         isSelected
-          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+          ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30"
           : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
       )}
     >

@@ -67,7 +67,7 @@ describe("Toaster", () => {
       render(<Toaster />);
 
       const toast = screen.getByText("Info").closest("div[class*='rounded-lg']");
-      expect(toast).toHaveClass("bg-blue-50/90");
+      expect(toast).toHaveClass("bg-primary-50/90");
       expect(toast).toHaveClass("backdrop-blur-sm");
     });
 

@@ -259,7 +259,7 @@ export function LogsSection({ projectName, services, isProjectRunning }: LogsSec
                     loading={isLoading}
                     icon={<Play className="h-3 w-3" />}
                     title="Follow logs (real-time)"
-                    className="bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                    className="bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50"
                   >
                     Follow
                   </Button>
@@ -275,7 +275,7 @@ export function LogsSection({ projectName, services, isProjectRunning }: LogsSec
                 title="Toggle timestamps"
                 className={cn(
                   showTimestamps
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
                     : "bg-gray-200 text-gray-600 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
                 )}
               />

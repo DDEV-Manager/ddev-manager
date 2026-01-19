@@ -36,9 +36,9 @@ export function Toggle({ enabled, onChange, disabled = false, size = "md", label
       disabled={disabled}
       onClick={() => onChange(!enabled)}
       className={cn(
-        "relative rounded-full transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none",
+        "focus:ring-primary-500 relative rounded-full transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none",
         styles.track,
-        enabled ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600",
+        enabled ? "bg-primary-500" : "bg-gray-300 dark:bg-gray-600",
         disabled && "cursor-not-allowed opacity-50"
       )}
     >

@@ -67,9 +67,9 @@ describe("ProjectCard", () => {
       <ProjectCard project={project} isSelected={true} onSelect={mockOnSelect} />
     );
 
-    // Check for selected class (border-blue-500)
+    // Check for selected class (border-primary-500)
     const card = container.firstChild as HTMLElement;
-    expect(card.className).toContain("border-blue-500");
+    expect(card.className).toContain("border-primary-500");
   });
 
   describe("running project", () => {

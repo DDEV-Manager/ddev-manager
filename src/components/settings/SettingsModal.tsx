@@ -64,7 +64,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 className={cn(
                   "flex flex-1 flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors",
                   theme === option.value
-                    ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-400"
+                    ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/30 dark:text-primary-400"
                     : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:bg-gray-800"
                 )}
               >
@@ -120,7 +120,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               className={cn(
                 "flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors",
                 zoom === preset
-                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                  ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
               )}
             >
@@ -155,8 +155,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
         {/* Update status */}
         {status === "available" && update && (
-          <div className="mb-4 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-            <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+          <div className="bg-primary-50 dark:bg-primary-900/20 mb-4 rounded-lg p-3">
+            <p className="text-primary-800 dark:text-primary-300 text-sm font-medium">
               Update available: v{update.version}
             </p>
             <Button
@@ -172,13 +172,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         )}
 
         {status === "downloading" && (
-          <div className="mb-4 rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
-            <p className="mb-2 text-sm font-medium text-blue-800 dark:text-blue-300">
+          <div className="bg-primary-50 dark:bg-primary-900/20 mb-4 rounded-lg p-3">
+            <p className="text-primary-800 dark:text-primary-300 mb-2 text-sm font-medium">
               Downloading update... {downloadProgress}%
             </p>
-            <div className="h-2 overflow-hidden rounded-full bg-blue-200 dark:bg-blue-800">
+            <div className="bg-primary-200 dark:bg-primary-800 h-2 overflow-hidden rounded-full">
               <div
-                className="h-full bg-blue-500 transition-all"
+                className="bg-primary-500 h-full transition-all"
                 style={{ width: `${downloadProgress}%` }}
               />
             </div>

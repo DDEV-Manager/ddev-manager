@@ -280,7 +280,7 @@ function UrlRow({
   return (
     <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
       <span className="w-16 text-xs text-gray-500">{label}</span>
-      <code className="flex-1 truncate text-sm text-blue-600 dark:text-blue-400">{url}</code>
+      <code className="text-primary-600 dark:text-primary-400 flex-1 truncate text-sm">{url}</code>
       <Button
         variant="ghost"
         size="icon-sm"

@@ -98,7 +98,7 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
         className={cn(
           "fixed right-4 bottom-4 z-30 flex items-center gap-2 rounded-lg px-3 py-2 shadow-lg transition-all",
           isRunning
-            ? "animate-pulse bg-blue-500 text-white"
+            ? "bg-primary-500 animate-pulse text-white"
             : "bg-gray-800 text-gray-300 hover:bg-gray-700"
         )}
       >
@@ -115,8 +115,8 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-300">Terminal</span>
           {isRunning && (
-            <span className="flex items-center gap-1 text-xs text-blue-400">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-blue-400" />
+            <span className="text-primary-400 flex items-center gap-1 text-xs">
+              <span className="bg-primary-400 h-2 w-2 animate-pulse rounded-full" />
               {currentCommand}
             </span>
           )}
@@ -168,7 +168,7 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
                 line.type === "status" &&
                   line.text.startsWith("⊘") &&
                   "font-medium text-yellow-400",
-                line.type === "info" && "text-blue-400"
+                line.type === "info" && "text-primary-400"
               )}
             >
               {line.text}

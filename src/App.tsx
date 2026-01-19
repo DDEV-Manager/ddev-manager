@@ -85,7 +85,7 @@ function AppContent() {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center">
-          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-blue-500" />
+          <Loader2 className="text-primary-500 mx-auto mb-3 h-8 w-8 animate-spin" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Checking DDEV installation...</p>
         </div>
       </div>
@@ -109,7 +109,7 @@ function AppContent() {
             href="https://ddev.readthedocs.io/en/stable/users/install/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600"
+            className="bg-primary-500 hover:bg-primary-600 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
           >
             Install DDEV
           </a>

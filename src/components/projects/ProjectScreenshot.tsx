@@ -95,7 +95,7 @@ export function ProjectScreenshot({ projectName, primaryUrl, isRunning }: Projec
   if (isCapturing) {
     return (
       <div className="flex h-48 w-full flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <Loader2 className="text-primary-500 h-6 w-6 animate-spin" />
         <span className="text-sm text-gray-500 dark:text-gray-400">Capturing screenshot...</span>
       </div>
     );
@@ -154,8 +154,8 @@ export function ProjectScreenshot({ projectName, primaryUrl, isRunning }: Projec
           onClick={handleCapture}
           className={cn(
             "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm",
-            "bg-blue-100 text-blue-700 hover:bg-blue-200",
-            "dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+            "bg-primary-100 text-primary-700 hover:bg-primary-200",
+            "dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50"
           )}
         >
           <Camera className="h-4 w-4" />

@@ -136,7 +136,7 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
                     className={cn(
                       isInstalled
                         ? ""
-                        : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                        : "bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50"
                     )}
                   >
                     {isInstalled ? "Installed" : isInstalling ? "Installing..." : "Install"}
