@@ -8,94 +8,31 @@ import { Terminal } from "./Terminal";
 vi.mock("@tauri-apps/api/event");
 
 describe("Terminal", () => {
-  const mockOnClose = vi.fn();
-  const mockOnToggle = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(listen).mockResolvedValue(() => {});
   });
 
   describe("when closed", () => {
-    it("should render minimized button", () => {
-      render(<Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />);
-
-      expect(screen.getByText("Terminal")).toBeInTheDocument();
-    });
-
-    it("should call onToggle when minimized button is clicked", async () => {
-      const user = userEvent.setup();
-
-      render(<Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />);
-
-      await user.click(screen.getByText("Terminal"));
-
-      expect(mockOnToggle).toHaveBeenCalled();
-    });
-
-    it("should show running state in minimized button", async () => {
-      // Simulate a command starting
-      let statusCallback: ((event: unknown) => void) | null = null;
-
-      vi.mocked(listen).mockImplementation((event, callback) => {
-        if (event === "command-status") {
-          statusCallback = callback as (event: unknown) => void;
-        }
-        return Promise.resolve(() => {});
-      });
-
-      render(<Terminal isOpen={false} onClose={mockOnClose} onToggle={mockOnToggle} />);
-
-      // Simulate command started
-      await act(async () => {
-        statusCallback?.({
-          payload: {
-            command: "start",
-            project: "my-project",
-            status: "started",
-            message: "Starting my-project...",
-          },
-        });
-      });
-
-      expect(screen.getByText(/Running: start my-project/)).toBeInTheDocument();
+    it("should not render UI but still listen for events", () => {
+      const { container } = render(<Terminal isOpen={false} />);
+      expect(container.firstChild).toBeNull();
+      expect(listen).toHaveBeenCalled();
     });
   });
 
   describe("when open", () => {
-    it("should render terminal panel", () => {
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
+    it("should render output panel", () => {
+      render(<Terminal isOpen={true} />);
 
-      expect(screen.getByText("Terminal")).toBeInTheDocument();
-      expect(
-        screen.getByText("Terminal output will appear here when running commands...")
-      ).toBeInTheDocument();
-    });
-
-    it("should have close button", async () => {
-      const user = userEvent.setup();
-
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
-
-      await user.click(screen.getByTitle("Close"));
-
-      expect(mockOnClose).toHaveBeenCalled();
-    });
-
-    it("should have minimize button", async () => {
-      const user = userEvent.setup();
-
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
-
-      await user.click(screen.getByTitle("Minimize"));
-
-      expect(mockOnToggle).toHaveBeenCalled();
+      expect(screen.getByText("Output")).toBeInTheDocument();
+      expect(screen.getByText("Command output will appear here...")).toBeInTheDocument();
     });
 
     it("should have clear button", () => {
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
+      render(<Terminal isOpen={true} />);
 
-      expect(screen.getByTitle("Clear terminal")).toBeInTheDocument();
+      expect(screen.getByTitle("Clear output")).toBeInTheDocument();
     });
 
     it("should display command output lines", async () => {
@@ -108,7 +45,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
+      render(<Terminal isOpen={true} />);
 
       await act(async () => {
         outputCallback?.({
@@ -133,7 +70,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
+      render(<Terminal isOpen={true} />);
 
       await act(async () => {
         outputCallback?.({
@@ -145,7 +82,7 @@ describe("Terminal", () => {
       expect(errorLine.className).toContain("text-red-400");
     });
 
-    it("should clear terminal when clear button is clicked", async () => {
+    it("should clear output when clear button is clicked", async () => {
       const user = userEvent.setup();
       let outputCallback: ((event: unknown) => void) | null = null;
 
@@ -156,7 +93,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
+      render(<Terminal isOpen={true} />);
 
       await act(async () => {
         outputCallback?.({
@@ -166,12 +103,10 @@ describe("Terminal", () => {
 
       expect(screen.getByText("Some output")).toBeInTheDocument();
 
-      await user.click(screen.getByTitle("Clear terminal"));
+      await user.click(screen.getByTitle("Clear output"));
 
       expect(screen.queryByText("Some output")).not.toBeInTheDocument();
-      expect(
-        screen.getByText("Terminal output will appear here when running commands...")
-      ).toBeInTheDocument();
+      expect(screen.getByText("Command output will appear here...")).toBeInTheDocument();
     });
 
     it("should display command status messages", async () => {
@@ -184,7 +119,7 @@ describe("Terminal", () => {
         return Promise.resolve(() => {});
       });
 
-      render(<Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />);
+      render(<Terminal isOpen={true} />);
 
       await act(async () => {
         statusCallback?.({
@@ -199,15 +134,39 @@ describe("Terminal", () => {
 
       expect(screen.getByText(/Project started successfully/)).toBeInTheDocument();
     });
+
+    it("should show running indicator in header when command is running", async () => {
+      let statusCallback: ((event: unknown) => void) | null = null;
+
+      vi.mocked(listen).mockImplementation((event, callback) => {
+        if (event === "command-status") {
+          statusCallback = callback as (event: unknown) => void;
+        }
+        return Promise.resolve(() => {});
+      });
+
+      render(<Terminal isOpen={true} />);
+
+      await act(async () => {
+        statusCallback?.({
+          payload: {
+            command: "start",
+            project: "my-project",
+            status: "started",
+            message: "Starting my-project...",
+          },
+        });
+      });
+
+      expect(screen.getByText("start my-project")).toBeInTheDocument();
+    });
   });
 
   it("should unsubscribe from events on unmount", async () => {
     const unsubscribeMock = vi.fn();
     vi.mocked(listen).mockResolvedValue(unsubscribeMock);
 
-    const { unmount } = render(
-      <Terminal isOpen={true} onClose={mockOnClose} onToggle={mockOnToggle} />
-    );
+    const { unmount } = render(<Terminal isOpen={true} />);
 
     unmount();
 

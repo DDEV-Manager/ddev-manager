@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { StatusBar } from "./StatusBar";
 import { useStatusStore } from "@/stores/statusStore";
 
@@ -8,6 +9,11 @@ vi.mock("@tauri-apps/api/event", () => ({
   listen: vi.fn(() => Promise.resolve(() => {})),
 }));
 
+const defaultProps = {
+  onToggleTerminal: vi.fn(),
+  isTerminalOpen: false,
+};
+
 describe("StatusBar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -15,81 +21,92 @@ describe("StatusBar", () => {
   });
 
   describe("visibility", () => {
-    it("should not render when not running and not exiting", () => {
-      const { container } = render(<StatusBar />);
-      expect(container.firstChild).toBeNull();
+    it("should always render", () => {
+      render(<StatusBar {...defaultProps} />);
+      expect(screen.getByText("Output")).toBeInTheDocument();
+      expect(screen.getByText("Ready")).toBeInTheDocument();
     });
 
-    it("should render when running", () => {
+    it("should show running status when command is running", () => {
       useStatusStore.getState().setRunning("start", "my-project");
 
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
 
       expect(screen.getByText("Starting")).toBeInTheDocument();
       expect(screen.getByText("(my-project)")).toBeInTheDocument();
     });
+  });
 
-    it("should render when exiting", () => {
-      useStatusStore.setState({ isRunning: true, exiting: true, command: "stop", project: "test" });
+  describe("terminal toggle", () => {
+    it("should call onToggleTerminal when terminal button is clicked", async () => {
+      const onToggleTerminal = vi.fn();
+      render(<StatusBar {...defaultProps} onToggleTerminal={onToggleTerminal} />);
 
-      render(<StatusBar />);
+      await userEvent.click(screen.getByText("Output"));
 
-      expect(screen.getByText("Stopping")).toBeInTheDocument();
+      expect(onToggleTerminal).toHaveBeenCalledTimes(1);
+    });
+
+    it("should show different style when terminal is open", () => {
+      render(<StatusBar {...defaultProps} isTerminalOpen={true} />);
+
+      const button = screen.getByText("Output").closest("button");
+      expect(button).toHaveClass("bg-primary-100");
     });
   });
 
   describe("command formatting", () => {
     it("should format start command", () => {
       useStatusStore.getState().setRunning("start", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Starting")).toBeInTheDocument();
     });
 
     it("should format stop command", () => {
       useStatusStore.getState().setRunning("stop", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Stopping")).toBeInTheDocument();
     });
 
     it("should format restart command", () => {
       useStatusStore.getState().setRunning("restart", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Restarting")).toBeInTheDocument();
     });
 
     it("should format config command", () => {
       useStatusStore.getState().setRunning("config", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Configuring")).toBeInTheDocument();
     });
 
     it("should format delete command", () => {
       useStatusStore.getState().setRunning("delete", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Removing")).toBeInTheDocument();
     });
 
     it("should format poweroff command", () => {
       useStatusStore.getState().setRunning("poweroff", "all");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Powering off")).toBeInTheDocument();
     });
 
     it("should format addon-install command", () => {
       useStatusStore.getState().setRunning("addon-install", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Installing addon")).toBeInTheDocument();
     });
 
     it("should format addon-remove command", () => {
       useStatusStore.getState().setRunning("addon-remove", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Removing addon")).toBeInTheDocument();
     });
 
     it("should use command name for unknown commands", () => {
       useStatusStore.getState().setRunning("custom-command", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("custom-command")).toBeInTheDocument();
     });
   });
@@ -97,13 +114,13 @@ describe("StatusBar", () => {
   describe("project display", () => {
     it("should show project name in parentheses", () => {
       useStatusStore.getState().setRunning("start", "my-project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("(my-project)")).toBeInTheDocument();
     });
 
     it("should not show project name for 'all'", () => {
       useStatusStore.getState().setRunning("poweroff", "all");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.queryByText("(all)")).not.toBeInTheDocument();
     });
   });
@@ -111,35 +128,33 @@ describe("StatusBar", () => {
   describe("last line display", () => {
     it("should show 'Starting...' when no last line", () => {
       useStatusStore.getState().setRunning("start", "project");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Starting...")).toBeInTheDocument();
     });
 
     it("should show last line when available", () => {
       useStatusStore.getState().setRunning("start", "project");
       useStatusStore.getState().setLastLine("Downloading images...");
-      render(<StatusBar />);
+      render(<StatusBar {...defaultProps} />);
       expect(screen.getByText("Downloading images...")).toBeInTheDocument();
     });
   });
 
-  describe("animation classes", () => {
-    it("should have slide-in animation when not exiting", () => {
-      useStatusStore.setState({ isRunning: true, exiting: false, command: "start", project: "p" });
-      render(<StatusBar />);
-
-      const statusBar = screen.getByText("Starting").closest("div[class*='fixed']");
-      expect(statusBar).toHaveClass("animate-in");
-      expect(statusBar).toHaveClass("slide-in-from-bottom");
+  describe("idle state", () => {
+    it("should show Ready when not running", () => {
+      render(<StatusBar {...defaultProps} />);
+      expect(screen.getByText("Ready")).toBeInTheDocument();
     });
 
-    it("should have slide-out animation when exiting", () => {
-      useStatusStore.setState({ isRunning: true, exiting: true, command: "start", project: "p" });
-      render(<StatusBar />);
+    it("should not show progress bar when idle", () => {
+      const { container } = render(<StatusBar {...defaultProps} />);
+      expect(container.querySelector(".animate-progress")).not.toBeInTheDocument();
+    });
 
-      const statusBar = screen.getByText("Starting").closest("div[class*='fixed']");
-      expect(statusBar).toHaveClass("animate-out");
-      expect(statusBar).toHaveClass("slide-out-to-bottom");
+    it("should show progress bar when running", () => {
+      useStatusStore.getState().setRunning("start", "project");
+      const { container } = render(<StatusBar {...defaultProps} />);
+      expect(container.querySelector(".animate-progress")).toBeInTheDocument();
     });
   });
 });

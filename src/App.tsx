@@ -35,7 +35,7 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   const { data: isInstalled, isLoading } = useDdevInstalled();
-  const { isOpen, close, toggle } = useTerminalStore();
+  const { isOpen, toggle } = useTerminalStore();
   const { status: updateStatus, update } = useUpdate();
   const hasShownUpdateToast = useRef(false);
 
@@ -127,16 +127,19 @@ function AppContent() {
           <ProjectList />
         </aside>
 
-        {/* Main content - Project Details */}
+        {/* Main content - Project Details + Terminal + Status Bar */}
         <main className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-gray-900">
           <div className="flex-1 overflow-hidden">
             <ProjectDetails />
           </div>
+
+          {/* Output Panel - always mounted to capture events, hidden when closed */}
+          <Terminal isOpen={isOpen} />
+
+          {/* Status Bar */}
+          <StatusBar onToggleTerminal={toggle} isTerminalOpen={isOpen} />
         </main>
       </div>
-
-      {/* Terminal Panel */}
-      <Terminal isOpen={isOpen} onClose={close} onToggle={toggle} />
     </div>
   );
 }
@@ -145,7 +148,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
-      <StatusBar />
       <Toaster />
     </QueryClientProvider>
   );

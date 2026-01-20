@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Terminal, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStatusStore } from "@/stores/statusStore";
 
@@ -18,7 +18,12 @@ interface CommandStatus {
   process_id?: string;
 }
 
-export function StatusBar() {
+interface StatusBarProps {
+  onToggleTerminal: () => void;
+  isTerminalOpen: boolean;
+}
+
+export function StatusBar({ onToggleTerminal, isTerminalOpen }: StatusBarProps) {
   const {
     isRunning,
     command,
@@ -70,11 +75,6 @@ export function StatusBar() {
     }
   };
 
-  // Don't render if not running and not exiting
-  if (!isRunning && !exiting) {
-    return null;
-  }
-
   // Format command name for display
   const formatCommand = (cmd: string | null) => {
     if (!cmd) return "";
@@ -91,50 +91,81 @@ export function StatusBar() {
     return commandNames[cmd] || cmd;
   };
 
+  const showRunning = isRunning || exiting;
+
   return (
     <div
       className={cn(
-        "fixed right-0 bottom-0 left-0 z-40 border-t border-gray-200/50 bg-gray-100/80 backdrop-blur-md dark:border-gray-700/50 dark:bg-gray-800/80",
-        exiting
-          ? "animate-out slide-out-to-bottom fade-out duration-300"
-          : "animate-in slide-in-from-bottom fade-in duration-300"
+        "relative shrink-0 border-t border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800",
+        exiting && "animate-out fade-out duration-300"
       )}
     >
-      {/* Progress bar */}
-      <div className="bg-primary-100 dark:bg-primary-900/30 absolute inset-x-0 top-0 h-1 overflow-hidden">
-        <div className="animate-progress bg-primary-500 h-full w-1/3" />
-      </div>
-
-      <div className="flex items-center gap-3 px-4 py-2">
-        {/* Running indicator */}
-        <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          <Loader2 className="text-primary-500 h-4 w-4 animate-spin" />
-          <span>
-            {formatCommand(command)}
-            {project && project !== "all" && (
-              <span className="ml-1 text-gray-500 dark:text-gray-400">({project})</span>
-            )}
-          </span>
+      {/* Progress bar - only when running */}
+      {showRunning && (
+        <div className="bg-primary-100 dark:bg-primary-900/30 absolute inset-x-0 top-0 h-1 overflow-hidden">
+          <div className="animate-progress bg-primary-500 h-full w-1/3" />
         </div>
+      )}
+
+      <div className="flex items-center gap-3 px-4 py-1.5">
+        {/* Output toggle button */}
+        <button
+          onClick={onToggleTerminal}
+          className={cn(
+            "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+            isTerminalOpen
+              ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+              : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+          )}
+          title={isTerminalOpen ? "Hide output" : "Show output"}
+        >
+          {isTerminalOpen ? (
+            <Terminal className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronUp className="h-3.5 w-3.5" />
+          )}
+          Output
+        </button>
 
         {/* Separator */}
         <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
 
-        {/* Last line of output */}
-        <div className="min-w-0 flex-1 truncate font-mono text-sm text-gray-600 dark:text-gray-400">
-          {lastLine || "Starting..."}
-        </div>
+        {/* Running status or idle message */}
+        {showRunning ? (
+          <>
+            {/* Running indicator */}
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Loader2 className="text-primary-500 h-4 w-4 animate-spin" />
+              <span>
+                {formatCommand(command)}
+                {project && project !== "all" && (
+                  <span className="ml-1 text-gray-500 dark:text-gray-400">({project})</span>
+                )}
+              </span>
+            </div>
 
-        {/* Cancel button */}
-        {processId && !exiting && (
-          <button
-            onClick={handleCancel}
-            className="flex shrink-0 items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-            title="Cancel command"
-          >
-            <X className="h-3.5 w-3.5" />
-            Cancel
-          </button>
+            {/* Separator */}
+            <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+
+            {/* Last line of output */}
+            <div className="min-w-0 flex-1 truncate font-mono text-xs text-gray-600 dark:text-gray-400">
+              {lastLine || "Starting..."}
+            </div>
+
+            {/* Cancel button */}
+            {processId && !exiting && (
+              <button
+                onClick={handleCancel}
+                className="flex shrink-0 items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                title="Cancel command"
+              >
+                <X className="h-3.5 w-3.5" />
+                Cancel
+              </button>
+            )}
+          </>
+        ) : (
+          <div className="flex-1 text-xs text-gray-500 dark:text-gray-500">Ready</div>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { X, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CommandOutput {
@@ -25,11 +25,9 @@ interface TerminalLine {
 
 interface TerminalProps {
   isOpen: boolean;
-  onClose: () => void;
-  onToggle: () => void;
 }
 
-export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
+export function Terminal({ isOpen }: TerminalProps) {
   const [lines, setLines] = useState<TerminalLine[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [currentCommand, setCurrentCommand] = useState<string | null>(null);
@@ -50,9 +48,9 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
     setLines([]);
   };
 
-  // Auto-scroll to bottom when new lines are added or terminal is opened
+  // Auto-scroll to bottom when new lines are added or panel is opened
   useEffect(() => {
-    if (scrollRef.current) {
+    if (isOpen && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [lines, isOpen]);
@@ -91,29 +89,17 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
     };
   }, []);
 
+  // Don't render UI when closed, but keep component mounted for event listeners
   if (!isOpen) {
-    return (
-      <button
-        onClick={onToggle}
-        className={cn(
-          "fixed right-4 bottom-4 z-30 flex items-center gap-2 rounded-lg px-3 py-2 shadow-lg transition-all",
-          isRunning
-            ? "bg-primary-500 animate-pulse text-white"
-            : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-        )}
-      >
-        <ChevronUp className="h-4 w-4" />
-        {isRunning ? `Running: ${currentCommand}` : "Terminal"}
-      </button>
-    );
+    return null;
   }
 
   return (
     <div className="flex flex-col border-t border-gray-200 bg-gray-900 dark:border-gray-800">
-      {/* Terminal header */}
+      {/* Output header */}
       <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-300">Terminal</span>
+          <span className="text-sm font-medium text-gray-300">Output</span>
           {isRunning && (
             <span className="text-primary-400 flex items-center gap-1 text-xs">
               <span className="bg-primary-400 h-2 w-2 animate-pulse rounded-full" />
@@ -121,29 +107,13 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={clearLines}
-            className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
-            title="Clear terminal"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onToggle}
-            className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
-            title="Minimize"
-          >
-            <ChevronDown className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onClose}
-            className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
-            title="Close"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <button
+          onClick={clearLines}
+          className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
+          title="Clear output"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Terminal content */}
@@ -152,9 +122,7 @@ export function Terminal({ isOpen, onClose, onToggle }: TerminalProps) {
         className="max-h-64 min-h-32 flex-1 overflow-y-auto p-3 font-mono text-sm"
       >
         {lines.length === 0 ? (
-          <div className="text-gray-500 italic">
-            Terminal output will appear here when running commands...
-          </div>
+          <div className="text-gray-500 italic">Command output will appear here...</div>
         ) : (
           lines.map((line) => (
             <div
