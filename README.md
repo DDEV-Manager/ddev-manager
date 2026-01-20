@@ -276,14 +276,14 @@ The release workflow (`.github/workflows/release.yml`) will automatically sign b
 │  Backend (Rust)  │                                      │
 │                  ▼                                      │
 │  ┌─────────────────────────────────────────────┐        │
-│  │         Tauri Commands (lib.rs)             │        │
-│  │  - list_projects() / describe_project()     │        │
-│  │  - start_project() / stop_project()         │        │
-│  │  - create_project() with CMS install        │        │
-│  │  - delete_project() / poweroff()            │        │
-│  │  - create_snapshot() / restore_snapshot()   │        │
-│  │  - import_db() / export_db()                │        │
-│  │  - install_addon() / remove_addon()         │        │
+│  │      Tauri Commands (commands/*.rs)         │        │
+│  │  projects.rs  - list/start/stop/restart     │        │
+│  │  create.rs    - project creation wizard     │        │
+│  │  snapshots.rs - create/restore snapshots    │        │
+│  │  database.rs  - import/export database      │        │
+│  │  addons.rs    - install/remove add-ons      │        │
+│  │  logs.rs      - log viewer                  │        │
+│  │  screenshots.rs - capture screenshots       │        │
 │  └──────────────────┬──────────────────────────┘        │
 │                     │                                   │
 │                     ▼                                   │

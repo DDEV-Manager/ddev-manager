@@ -110,7 +110,7 @@ When adding new features:
 - **Store logic** goes in `src/stores/`
 - **Types** go in `src/types/`
 - **Utility functions** go in `src/lib/`
-- **Rust commands** go in `src-tauri/src/lib.rs`
+- **Rust commands** go in `src-tauri/src/commands/` (organized by feature)
 
 ## Testing
 
@@ -260,8 +260,21 @@ src/
 ```
 src-tauri/
 ├── src/
-│   └── lib.rs      # All Tauri commands
-└── Cargo.toml      # Dependencies
+│   ├── commands/       # Tauri command handlers (organized by feature)
+│   │   ├── addons.rs       # Add-on management
+│   │   ├── create.rs       # Project creation wizard
+│   │   ├── database.rs     # Database import/export
+│   │   ├── logs.rs         # Log viewer
+│   │   ├── projects.rs     # Project operations (start/stop/etc)
+│   │   ├── screenshots.rs  # Screenshot capture
+│   │   ├── snapshots.rs    # Snapshot management
+│   │   └── utils.rs        # Utility commands
+│   ├── ddev.rs         # Core DDEV CLI execution
+│   ├── error.rs        # Error types
+│   ├── lib.rs          # Command registration & exports
+│   ├── process.rs      # Process management
+│   └── types.rs        # Data structures
+└── Cargo.toml          # Dependencies
 ```
 
 ### Data Flow
@@ -269,7 +282,7 @@ src-tauri/
 1. **UI Event** (button click, etc.)
 2. **Hook/Mutation** (e.g., `useStartProject`)
 3. **Tauri invoke()** (IPC to Rust)
-4. **Rust Command** (in `lib.rs`)
+4. **Rust Command** (in `commands/*.rs`)
 5. **DDEV CLI** (subprocess)
 6. **Event Emission** (for streaming output)
 7. **UI Update** (via React Query or events)
@@ -281,7 +294,9 @@ src-tauri/
 | `src/hooks/useDdev.ts` | All DDEV command hooks |
 | `src/stores/appStore.ts` | App state (selection, filters) |
 | `src/stores/terminalStore.ts` | Terminal panel state |
-| `src-tauri/src/lib.rs` | Rust backend commands |
+| `src-tauri/src/lib.rs` | Command registration & app setup |
+| `src-tauri/src/ddev.rs` | Core DDEV CLI execution |
+| `src-tauri/src/commands/` | Feature-specific command handlers |
 | `src/test/mocks/tauri.ts` | Mock factories for tests |
 
 ## Questions?
