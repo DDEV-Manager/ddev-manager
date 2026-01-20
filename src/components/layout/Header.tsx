@@ -45,6 +45,7 @@ export function Header() {
   const poweroff = usePoweroff();
   const { data: projects } = useProjects();
 
+  const totalCount = projects?.length ?? 0;
   const runningCount = projects?.filter((p) => p.status === "running").length ?? 0;
 
   const handleRefresh = () => {
@@ -64,11 +65,16 @@ export function Header() {
           <DdevLogo className="h-7" />
           <span className="text-lg font-semibold">Manager</span>
         </div>
-        {runningCount > 0 && (
-          <Badge variant="green" className="rounded-full">
-            {runningCount} running
+        <div className="flex items-center gap-2">
+          <Badge variant="gray" className="rounded-full">
+            {totalCount} {totalCount === 1 ? "project" : "projects"}
           </Badge>
-        )}
+          {runningCount > 0 && (
+            <Badge variant="green" className="rounded-full">
+              {runningCount} running
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

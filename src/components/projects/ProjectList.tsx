@@ -49,7 +49,7 @@ export function ProjectList() {
         {/* Filter chips */}
         <div className="mt-2 flex items-center gap-2">
           <button
-            onClick={() => setFilter({ status: filter.status === "all" ? "running" : "all" })}
+            onClick={() => setFilter({ status: filter.status === "running" ? "all" : "running" })}
             className={`rounded-full px-2 py-1 text-xs transition-colors ${
               filter.status === "running"
                 ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
@@ -59,7 +59,7 @@ export function ProjectList() {
             Running
           </button>
           <button
-            onClick={() => setFilter({ status: filter.status === "all" ? "stopped" : "all" })}
+            onClick={() => setFilter({ status: filter.status === "stopped" ? "all" : "stopped" })}
             className={`rounded-full px-2 py-1 text-xs transition-colors ${
               filter.status === "stopped"
                 ? "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
