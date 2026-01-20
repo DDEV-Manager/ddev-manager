@@ -132,7 +132,18 @@ ddev-manager/
 │   └── App.tsx                  # Main app component
 ├── src-tauri/                   # Rust backend
 │   ├── src/
-│   │   └── lib.rs               # Tauri commands (DDEV CLI wrapper)
+│   │   ├── commands/            # Tauri command handlers
+│   │   │   ├── addons.rs        # Add-on management
+│   │   │   ├── create.rs        # Project creation
+│   │   │   ├── database.rs      # Import/export database
+│   │   │   ├── logs.rs          # Log viewer
+│   │   │   ├── projects.rs      # Project operations
+│   │   │   ├── screenshots.rs   # Screenshot capture
+│   │   │   └── snapshots.rs     # Snapshot management
+│   │   ├── ddev.rs              # DDEV CLI execution
+│   │   ├── lib.rs               # Command registration
+│   │   ├── process.rs           # Process management
+│   │   └── types.rs             # Data structures
 │   ├── Cargo.toml               # Rust dependencies
 │   └── tauri.conf.json          # Tauri configuration
 ├── package.json
