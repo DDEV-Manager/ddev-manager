@@ -34,10 +34,19 @@ jobs:
         include:
           - platform: macos-latest
             args: --target universal-apple-darwin
+            rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
           - platform: ubuntu-22.04
             args: ''
+            rust_targets: ''
+          - platform: ubuntu-22.04
+            args: --target aarch64-unknown-linux-gnu
+            rust_targets: aarch64-unknown-linux-gnu
           - platform: windows-latest
             args: ''
+            rust_targets: ''
+          - platform: windows-latest
+            args: --target aarch64-pc-windows-msvc
+            rust_targets: aarch64-pc-windows-msvc
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -56,18 +65,34 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
 
-      - name: Install Rust targets (macOS)
-        if: matrix.platform == 'macos-latest'
-        run: |
-          rustup target add aarch64-apple-darwin
-          rustup target add x86_64-apple-darwin
-
-      - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
+      - name: Install Linux dependencies (x86_64)
+        if: matrix.platform == 'ubuntu-22.04' && !contains(matrix.args, 'aarch64')
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install Linux dependencies (aarch64 cross-compile)
+        if: matrix.platform == 'ubuntu-22.04' && contains(matrix.args, 'aarch64')
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu \
+            libc6-dev-arm64-cross \
+            libwebkit2gtk-4.1-dev:arm64 \
+            libappindicator3-dev:arm64 \
+            librsvg2-dev:arm64 \
+            patchelf
+          echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: pnpm install
@@ -86,11 +111,13 @@ jobs:
 
             ## Download
 
-            | Platform | Download |
-            |----------|----------|
-            | macOS (Universal) | `.dmg` |
-            | Windows | `.msi` or `.exe` |
-            | Linux | `.deb` or `.AppImage` |
+            | Platform | Architecture | Download |
+            |----------|--------------|----------|
+            | macOS | Universal (Intel + Apple Silicon) | `.dmg` |
+            | Windows | x64 | `.msi` or `.exe` |
+            | Windows | ARM64 | `.exe` |
+            | Linux | x64 | `.deb` or `.AppImage` |
+            | Linux | ARM64 | `.deb` or `.AppImage` |
 
             ---
             **macOS users**: Run `xattr -cr "/Applications/DDEV Manager.app"` if blocked by Gatekeeper.
