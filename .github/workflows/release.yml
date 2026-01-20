@@ -4,10 +4,29 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build (leave empty for all)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - 'macos'
+          - 'linux-x64'
+          - 'linux-arm64'
+          - 'windows-x64'
+          - 'windows-arm64'
+      dry_run:
+        description: 'Dry run (build only, no release)'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   changelog:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || inputs.dry_run != true }}
     outputs:
       changelog: ${{ steps.changelog.outputs.content }}
     steps:
@@ -26,29 +45,37 @@ jobs:
 
   release:
     needs: changelog
+    if: ${{ !cancelled() }}
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
+          - name: macos
+            platform: macos-latest
             args: --target universal-apple-darwin
             rust_targets: aarch64-apple-darwin,x86_64-apple-darwin
-          - platform: ubuntu-22.04
+          - name: linux-x64
+            platform: ubuntu-22.04
             args: ''
             rust_targets: ''
-          - platform: ubuntu-22.04
+          - name: linux-arm64
+            platform: ubuntu-22.04
             args: --target aarch64-unknown-linux-gnu
             rust_targets: aarch64-unknown-linux-gnu
-          - platform: windows-latest
+          - name: windows-x64
+            platform: windows-latest
             args: ''
             rust_targets: ''
-          - platform: windows-latest
+          - name: windows-arm64
+            platform: windows-latest
             args: --target aarch64-pc-windows-msvc
             rust_targets: aarch64-pc-windows-msvc
 
     runs-on: ${{ matrix.platform }}
+    name: Build ${{ matrix.name }}
+    if: ${{ !inputs.platform || inputs.platform == matrix.name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -97,7 +124,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build only (dry run)
+        if: ${{ inputs.dry_run == true }}
+        run: pnpm tauri build ${{ matrix.args }}
+
       - name: Build and release
+        if: ${{ inputs.dry_run != true }}
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -125,3 +157,12 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }} --config src-tauri/tauri.release.conf.json
           updaterJsonPreferNsis: true
+
+      - name: Upload artifacts (dry run)
+        if: ${{ inputs.dry_run == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.name }}
+          path: |
+            src-tauri/target/*/release/bundle/**/*
+          if-no-files-found: error
