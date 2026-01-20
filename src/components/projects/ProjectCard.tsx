@@ -74,14 +74,16 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
         <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           {isRunning ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleOpenUrl}
-                icon={<ExternalLink className="h-3.5 w-3.5" />}
-                title="Open in browser"
-                className="rounded-md"
-              />
+              {project.primary_url && (
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleOpenUrl}
+                  icon={<ExternalLink className="h-3.5 w-3.5" />}
+                  title="Open in browser"
+                  className="rounded-md"
+                />
+              )}
               <Button
                 variant="ghost"
                 size="icon-sm"

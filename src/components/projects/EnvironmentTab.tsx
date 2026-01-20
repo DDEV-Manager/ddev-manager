@@ -54,51 +54,53 @@ export function EnvironmentTab({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left column: URLs + Database */}
         <div className="space-y-4">
-          {/* URLs */}
-          <section>
-            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">URLs</h3>
-            <div className="space-y-2">
-              {/* Primary URL - always visible */}
-              <UrlRow
-                label="Primary"
-                url={project.primary_url}
-                onCopy={() => copyToClipboard(project.primary_url, "primary")}
-                copied={copiedField === "primary"}
-                isActive={isRunning}
-              />
+          {/* URLs - only show if project has a primary URL */}
+          {project.primary_url && (
+            <section>
+              <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">URLs</h3>
+              <div className="space-y-2">
+                {/* Primary URL - always visible */}
+                <UrlRow
+                  label="Primary"
+                  url={project.primary_url}
+                  onCopy={() => copyToClipboard(project.primary_url, "primary")}
+                  copied={copiedField === "primary"}
+                  isActive={isRunning}
+                />
 
-              {/* Show first additional URL if exists and total ≤ 2 */}
-              {!hasMoreThanTwo &&
-                additionalUrls.map((url, i) => (
-                  <UrlRow
-                    key={url}
-                    label={`URL ${i + 2}`}
-                    url={url}
-                    onCopy={() => copyToClipboard(url, `url-${i}`)}
-                    copied={copiedField === `url-${i}`}
-                    isActive={isRunning}
-                  />
-                ))}
+                {/* Show first additional URL if exists and total ≤ 2 */}
+                {!hasMoreThanTwo &&
+                  additionalUrls.map((url, i) => (
+                    <UrlRow
+                      key={url}
+                      label={`URL ${i + 2}`}
+                      url={url}
+                      onCopy={() => copyToClipboard(url, `url-${i}`)}
+                      copied={copiedField === `url-${i}`}
+                      isActive={isRunning}
+                    />
+                  ))}
 
-              {/* Accordion for more than 2 URLs */}
-              {hasMoreThanTwo && (
-                <Accordion title={`${additionalUrls.length} more URLs`}>
-                  <div className="space-y-2">
-                    {additionalUrls.map((url, i) => (
-                      <UrlRow
-                        key={url}
-                        label={`URL ${i + 2}`}
-                        url={url}
-                        onCopy={() => copyToClipboard(url, `url-${i}`)}
-                        copied={copiedField === `url-${i}`}
-                        isActive={isRunning}
-                      />
-                    ))}
-                  </div>
-                </Accordion>
-              )}
-            </div>
-          </section>
+                {/* Accordion for more than 2 URLs */}
+                {hasMoreThanTwo && (
+                  <Accordion title={`${additionalUrls.length} more URLs`}>
+                    <div className="space-y-2">
+                      {additionalUrls.map((url, i) => (
+                        <UrlRow
+                          key={url}
+                          label={`URL ${i + 2}`}
+                          url={url}
+                          onCopy={() => copyToClipboard(url, `url-${i}`)}
+                          copied={copiedField === `url-${i}`}
+                          isActive={isRunning}
+                        />
+                      ))}
+                    </div>
+                  </Accordion>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* Database info */}
           {project.dbinfo && (
@@ -184,15 +186,17 @@ export function EnvironmentTab({
           )}
         </div>
 
-        {/* Right column: Preview */}
-        <section>
-          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Preview</h3>
-          <ProjectScreenshot
-            projectName={project.name}
-            primaryUrl={project.primary_url}
-            isRunning={isRunning}
-          />
-        </section>
+        {/* Right column: Preview - only for projects with URLs */}
+        {project.primary_url && (
+          <section>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Preview</h3>
+            <ProjectScreenshot
+              projectName={project.name}
+              primaryUrl={project.primary_url}
+              isRunning={isRunning}
+            />
+          </section>
+        )}
       </div>
 
       {/* Services */}

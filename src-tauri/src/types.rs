@@ -1,5 +1,15 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
+
+/// Helper to deserialize a field that can be null or an array into Vec<T>
+pub fn deserialize_null_as_empty_vec<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    let opt: Option<Vec<T>> = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
 
 /// Event payload for command output
 #[derive(Clone, Serialize)]
@@ -28,17 +38,29 @@ pub struct DdevProjectBasic {
     pub project_type: String,
     pub approot: String,
     pub shortroot: String,
+    #[serde(default)]
     pub docroot: String,
+    #[serde(default)]
     pub primary_url: String,
+    #[serde(default)]
     pub httpurl: String,
+    #[serde(default)]
     pub httpsurl: String,
+    #[serde(default)]
     pub mailpit_url: String,
+    #[serde(default)]
     pub mailpit_https_url: String,
+    #[serde(default)]
     pub xhgui_url: String,
+    #[serde(default)]
     pub xhgui_https_url: String,
+    #[serde(default)]
     pub router: String,
+    #[serde(default)]
     pub router_disabled: bool,
+    #[serde(default)]
     pub mutagen_enabled: bool,
+    #[serde(default)]
     pub nodejs_version: String,
 }
 
@@ -91,18 +113,31 @@ pub struct DdevProjectDetails {
     pub project_type: String,
     pub approot: String,
     pub shortroot: String,
+    #[serde(default)]
     pub docroot: String,
+    #[serde(default)]
     pub primary_url: String,
+    #[serde(default)]
     pub httpurl: String,
+    #[serde(default)]
     pub httpsurl: String,
+    #[serde(default)]
     pub hostname: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_as_empty_vec")]
     pub hostnames: Vec<String>,
-    #[serde(rename = "httpURLs", default)]
+    #[serde(
+        rename = "httpURLs",
+        default,
+        deserialize_with = "deserialize_null_as_empty_vec"
+    )]
     pub http_urls: Vec<String>,
-    #[serde(rename = "httpsURLs", default)]
+    #[serde(
+        rename = "httpsURLs",
+        default,
+        deserialize_with = "deserialize_null_as_empty_vec"
+    )]
     pub https_urls: Vec<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_as_empty_vec")]
     pub urls: Vec<String>,
     pub php_version: Option<String>,
     pub webserver_type: Option<String>,
@@ -122,15 +157,21 @@ pub struct DdevProjectDetails {
     pub xhprof_mode: Option<String>,
     #[serde(default)]
     pub fail_on_hook_fail: bool,
+    #[serde(default)]
     pub mailpit_url: String,
+    #[serde(default)]
     pub mailpit_https_url: String,
+    #[serde(default)]
     pub xhgui_url: String,
+    #[serde(default)]
     pub xhgui_https_url: String,
+    #[serde(default)]
     pub router: String,
     #[serde(default)]
     pub router_disabled: bool,
     #[serde(default)]
     pub mutagen_enabled: bool,
+    #[serde(default)]
     pub nodejs_version: String,
     pub dbinfo: Option<DdevDatabaseInfo>,
     #[serde(default)]

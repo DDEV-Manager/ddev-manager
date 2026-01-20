@@ -59,7 +59,7 @@ type ProjectTab = "environment" | "addons" | "logs" | "snapshots";
 
 export function ProjectDetails() {
   const { selectedProject } = useAppStore();
-  const { data: project, isLoading } = useProject(selectedProject);
+  const { data: project, isLoading, error } = useProject(selectedProject);
   const [operation, setOperation] = useState<OperationState>({ type: null, projectName: null });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<ProjectTab>("environment");
@@ -76,15 +76,23 @@ export function ProjectDetails() {
   const importDb = useImportDb();
   const exportDb = useExportDb();
 
-  const projectTabs: Tab[] = useMemo(
-    () => [
+  const hasDatabase = !!project?.dbinfo;
+
+  const projectTabs: Tab[] = useMemo(() => {
+    const tabs: Tab[] = [
       { id: "environment", label: "Environment", icon: <Settings className="h-4 w-4" /> },
       { id: "addons", label: "Add-ons", icon: <Package className="h-4 w-4" /> },
       { id: "logs", label: "Logs", icon: <FileText className="h-4 w-4" /> },
-      { id: "snapshots", label: "Snapshots", icon: <Database className="h-4 w-4" /> },
-    ],
-    []
-  );
+    ];
+    // Only show Snapshots tab if project has a database
+    if (hasDatabase) {
+      tabs.push({ id: "snapshots", label: "Snapshots", icon: <Database className="h-4 w-4" /> });
+    }
+    return tabs;
+  }, [hasDatabase]);
+
+  // Derive effective tab - fallback to environment if snapshots not available
+  const effectiveTab = activeTab === "snapshots" && !hasDatabase ? "environment" : activeTab;
 
   // Listen for command completion to clear loading state and show toasts
   useEffect(() => {
@@ -241,7 +249,14 @@ export function ProjectDetails() {
 
   if (!project) {
     return (
-      <div className="flex h-full items-center justify-center text-gray-500">Project not found</div>
+      <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-500">
+        <span>Project not found</span>
+        {error && (
+          <span className="max-w-md text-center text-xs text-red-500">
+            {error instanceof Error ? error.message : String(error)}
+          </span>
+        )}
+      </div>
     );
   }
 
@@ -310,14 +325,16 @@ export function ProjectDetails() {
       {/* Quick Actions Bar */}
       {isRunning && (
         <div className="flex flex-wrap gap-2 border-b border-gray-200 bg-gray-50 px-4 py-6 dark:border-gray-800 dark:bg-gray-900/50">
-          <Button
-            variant="secondary"
-            onClick={() => openUrl.mutate(project.primary_url)}
-            icon={<ExternalLink className="h-4 w-4" />}
-            className="shadow-sm"
-          >
-            Open Site
-          </Button>
+          {project.primary_url && (
+            <Button
+              variant="secondary"
+              onClick={() => openUrl.mutate(project.primary_url)}
+              icon={<ExternalLink className="h-4 w-4" />}
+              className="shadow-sm"
+            >
+              Open Site
+            </Button>
+          )}
           <Button
             variant="secondary"
             onClick={() => openFolder.mutate(project.approot)}
@@ -326,28 +343,30 @@ export function ProjectDetails() {
           >
             Open Folder
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => openUrl.mutate(project.mailpit_https_url)}
-            icon={<Mail className="h-4 w-4" />}
-            className="shadow-sm"
-          >
-            Mailpit
-          </Button>
+          {project.mailpit_https_url && (
+            <Button
+              variant="secondary"
+              onClick={() => openUrl.mutate(project.mailpit_https_url)}
+              icon={<Mail className="h-4 w-4" />}
+              className="shadow-sm"
+            >
+              Mailpit
+            </Button>
+          )}
         </div>
       )}
 
       {/* Tab Bar */}
       <Tabs
         tabs={projectTabs}
-        activeTab={activeTab}
+        activeTab={effectiveTab}
         onChange={(id) => setActiveTab(id as ProjectTab)}
         className="px-4 dark:border-gray-800"
       />
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === "environment" && (
+        {effectiveTab === "environment" && (
           <EnvironmentTab
             project={project}
             isRunning={isRunning}
@@ -358,12 +377,12 @@ export function ProjectDetails() {
             onExportDb={handleExportDb}
           />
         )}
-        {activeTab === "addons" && (
+        {effectiveTab === "addons" && (
           <div className="p-4 pb-16">
             <AddonsSection projectName={project.name} />
           </div>
         )}
-        {activeTab === "logs" && (
+        {effectiveTab === "logs" && (
           <div className="p-4 pb-16">
             <LogsSection
               projectName={project.name}
@@ -372,7 +391,7 @@ export function ProjectDetails() {
             />
           </div>
         )}
-        {activeTab === "snapshots" && (
+        {effectiveTab === "snapshots" && (
           <div className="p-4 pb-16">
             <SnapshotsSection projectName={project.name} approot={project.approot} />
           </div>
