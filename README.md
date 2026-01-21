@@ -65,33 +65,10 @@ Download the latest release for your platform from the [Releases](https://github
 > xattr -d com.apple.quarantine /Applications/DDEV\ Manager.app
 > ```
 
-> **Linux Users (Wayland/Graphics Issues):** If you encounter errors like:
-> - `Error dispatching to Wayland display`
-> - `Could not create GBM EGL display`
-> - `DRM_IOCTL_MODE_CREATE_DUMB failed: Permission not granted`
-> - `Failed to create GBM buffer`
->
-> These are WebKitGTK graphics compatibility issues. Try running with these environment variables:
+> **Linux Users (Wayland/Graphics Issues):** The app automatically uses X11 (via XWayland on Wayland systems) to avoid WebKitGTK compatibility issues. If you still encounter graphics errors with older versions, try:
 >
 > ```bash
-> # Force X11 backend (most common fix)
 > GDK_BACKEND=x11 ./DDEV.Manager_x.x.x_amd64.AppImage
->
-> # Or disable DMA-BUF renderer
-> WEBKIT_DISABLE_DMABUF_RENDERER=1 ./DDEV.Manager_x.x.x_amd64.AppImage
->
-> # Or combine multiple workarounds
-> GDK_BACKEND=x11 WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 ./DDEV.Manager_x.x.x_amd64.AppImage
-> ```
->
-> For development:
-> ```bash
-> GDK_BACKEND=x11 pnpm tauri dev
-> ```
->
-> To make this permanent, add to your shell profile (`~/.bashrc` or `~/.zshrc`):
-> ```bash
-> export GDK_BACKEND=x11
 > ```
 
 ### Build from Source
