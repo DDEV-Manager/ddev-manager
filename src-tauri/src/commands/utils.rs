@@ -1,7 +1,9 @@
 use std::process::Command;
 use tokio::process::Command as AsyncCommand;
 
-use crate::ddev::{get_ddev_command, get_enhanced_path, run_ddev_command_async};
+use crate::ddev::{
+    get_ddev_base_args, get_ddev_command, get_enhanced_path, run_ddev_command_async,
+};
 use crate::error::DdevError;
 
 /// Check if DDEV is installed
@@ -10,8 +12,12 @@ pub async fn check_ddev_installed() -> Result<bool, DdevError> {
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
 
+    // Build full args list (includes "ddev" prefix when using WSL on Windows)
+    let mut full_args: Vec<&str> = get_ddev_base_args();
+    full_args.push("version");
+
     match AsyncCommand::new(&ddev_cmd)
-        .arg("version")
+        .args(&full_args)
         .env("PATH", &enhanced_path)
         .output()
         .await

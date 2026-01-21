@@ -16,6 +16,7 @@ use crate::types::{CommandOutput, CommandStatus, DdevJsonResponse};
 
 /// Common paths where DDEV might be installed
 /// macOS app bundles don't inherit shell PATH, so we need to search common locations
+#[cfg(not(target_os = "windows"))]
 pub fn get_common_paths() -> Vec<&'static str> {
     vec![
         "/opt/homebrew/bin",              // macOS Apple Silicon (Homebrew)
@@ -28,7 +29,59 @@ pub fn get_common_paths() -> Vec<&'static str> {
     ]
 }
 
+#[cfg(target_os = "windows")]
+pub fn get_common_paths() -> Vec<String> {
+    let mut paths = vec![
+        "C:\\Program Files\\ddev".to_string(),
+        "C:\\ddev".to_string(),
+    ];
+
+    // Add user-specific paths
+    if let Ok(userprofile) = env::var("USERPROFILE") {
+        paths.push(format!("{}\\AppData\\Local\\Programs\\ddev", userprofile));
+        paths.push(format!("{}\\scoop\\shims", userprofile)); // Scoop
+    }
+
+    // Add Chocolatey path
+    if let Ok(choco) = env::var("ChocolateyInstall") {
+        paths.push(format!("{}\\bin", choco));
+    }
+
+    // Add ProgramData paths
+    if let Ok(programdata) = env::var("ProgramData") {
+        paths.push(format!("{}\\chocolatey\\bin", programdata));
+    }
+
+    paths
+}
+
+/// Check if DDEV is available via WSL (Windows Subsystem for Linux)
+#[cfg(target_os = "windows")]
+pub fn check_wsl_ddev() -> bool {
+    use std::process::Command;
+
+    // Try to run ddev version through WSL
+    Command::new("wsl")
+        .args(["ddev", "version"])
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+/// Check if WSL is available on this Windows system
+#[cfg(target_os = "windows")]
+pub fn is_wsl_available() -> bool {
+    use std::process::Command;
+
+    Command::new("wsl")
+        .arg("--status")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
 /// Find the DDEV executable by searching common installation paths
+#[cfg(not(target_os = "windows"))]
 pub fn find_ddev_path() -> Option<PathBuf> {
     // First, try to find ddev in common paths
     for dir in get_common_paths() {
@@ -38,14 +91,17 @@ pub fn find_ddev_path() -> Option<PathBuf> {
         }
     }
 
-    // On Windows, also check .exe extension
-    #[cfg(target_os = "windows")]
-    {
-        for dir in get_common_paths() {
-            let path = PathBuf::from(dir).join("ddev.exe");
-            if path.exists() {
-                return Some(path);
-            }
+    // Fall back to hoping it's in PATH
+    None
+}
+
+#[cfg(target_os = "windows")]
+pub fn find_ddev_path() -> Option<PathBuf> {
+    // Try to find ddev.exe in common paths (native Windows install)
+    for dir in get_common_paths() {
+        let path = PathBuf::from(&dir).join("ddev.exe");
+        if path.exists() {
+            return Some(path);
         }
     }
 
@@ -53,7 +109,26 @@ pub fn find_ddev_path() -> Option<PathBuf> {
     None
 }
 
+/// Determines how to run DDEV on Windows
+/// Returns ("wsl", ["ddev"]) for WSL or ("ddev", []) for native
+#[cfg(target_os = "windows")]
+pub fn get_windows_ddev_execution() -> (&'static str, Vec<&'static str>) {
+    // First check for native Windows DDEV
+    if find_ddev_path().is_some() {
+        return ("ddev", vec![]);
+    }
+
+    // Check if DDEV is available through WSL
+    if check_wsl_ddev() {
+        return ("wsl", vec!["ddev"]);
+    }
+
+    // Fall back to native ddev (will fail if not installed)
+    ("ddev", vec![])
+}
+
 /// Get an enhanced PATH that includes common installation directories
+#[cfg(not(target_os = "windows"))]
 pub fn get_enhanced_path() -> String {
     let common_paths = get_common_paths();
     let current_path = env::var("PATH").unwrap_or_default();
@@ -67,11 +142,63 @@ pub fn get_enhanced_path() -> String {
     paths.join(":")
 }
 
+#[cfg(target_os = "windows")]
+pub fn get_enhanced_path() -> String {
+    let common_paths = get_common_paths();
+    let current_path = env::var("PATH").unwrap_or_default();
+
+    // Prepend common paths to existing PATH
+    let mut paths: Vec<String> = common_paths;
+    if !current_path.is_empty() {
+        paths.push(current_path);
+    }
+
+    paths.join(";")
+}
+
 /// Get the DDEV command - either the full path or just "ddev"
+#[cfg(not(target_os = "windows"))]
 pub fn get_ddev_command() -> String {
     find_ddev_path()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|| "ddev".to_string())
+}
+
+#[cfg(target_os = "windows")]
+pub fn get_ddev_command() -> String {
+    // Check for native Windows install first
+    if let Some(path) = find_ddev_path() {
+        return path.to_string_lossy().to_string();
+    }
+
+    // Check if DDEV is available through WSL
+    if check_wsl_ddev() {
+        return "wsl".to_string();
+    }
+
+    // Fall back to ddev (will fail if not installed)
+    "ddev".to_string()
+}
+
+/// Check if we're using WSL to run DDEV (Windows only)
+#[cfg(target_os = "windows")]
+fn is_using_wsl() -> bool {
+    find_ddev_path().is_none() && check_wsl_ddev()
+}
+
+/// Get the base arguments for DDEV command (empty on Unix, ["ddev"] on Windows with WSL)
+#[cfg(target_os = "windows")]
+pub fn get_ddev_base_args() -> Vec<&'static str> {
+    if is_using_wsl() {
+        vec!["ddev"]
+    } else {
+        vec![]
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn get_ddev_base_args() -> Vec<&'static str> {
+    vec![]
 }
 
 /// Run a DDEV command and return the raw output (async version)
@@ -79,8 +206,13 @@ pub async fn run_ddev_command_async(args: &[&str]) -> Result<String, DdevError> 
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
 
+    // Build full args list (includes "ddev" prefix when using WSL)
+    let base_args = get_ddev_base_args();
+    let mut full_args: Vec<&str> = base_args.clone();
+    full_args.extend_from_slice(args);
+
     let output = AsyncCommand::new(&ddev_cmd)
-        .args(args)
+        .args(&full_args)
         .env("PATH", &enhanced_path)
         .output()
         .await
@@ -111,10 +243,14 @@ pub fn run_ddev_command_streaming(
     let process_id = generate_process_id();
     let command_name = command_name.to_string();
     let project_name = project_name.to_string();
-    let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
     let process_id_clone = process_id.clone();
+
+    // Build full args list (includes "ddev" prefix when using WSL)
+    let base_args: Vec<String> = get_ddev_base_args().iter().map(|s| s.to_string()).collect();
+    let mut full_args: Vec<String> = base_args;
+    full_args.extend(args.iter().map(|s| s.to_string()));
 
     // Emit start status with process_id
     let _ = window.emit(
@@ -131,7 +267,7 @@ pub fn run_ddev_command_streaming(
     // Spawn the command in a background thread
     thread::spawn(move || {
         let result = Command::new(&ddev_cmd)
-            .args(&args)
+            .args(&full_args)
             .env("PATH", &enhanced_path)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -270,11 +406,15 @@ pub fn run_ddev_command_streaming_in_dir(
     let process_id = generate_process_id();
     let command_name = command_name.to_string();
     let project_name = project_name.to_string();
-    let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
     let ddev_cmd = get_ddev_command();
     let enhanced_path = get_enhanced_path();
     let process_id_clone = process_id.clone();
     let working_dir = working_dir.to_string();
+
+    // Build full args list (includes "ddev" prefix when using WSL)
+    let base_args: Vec<String> = get_ddev_base_args().iter().map(|s| s.to_string()).collect();
+    let mut full_args: Vec<String> = base_args;
+    full_args.extend(args.iter().map(|s| s.to_string()));
 
     // Emit start status with process_id
     let _ = window.emit(
@@ -291,7 +431,7 @@ pub fn run_ddev_command_streaming_in_dir(
     // Spawn the command in a background thread
     thread::spawn(move || {
         let result = Command::new(&ddev_cmd)
-            .args(&args)
+            .args(&full_args)
             .current_dir(&working_dir)
             .env("PATH", &enhanced_path)
             .stdout(Stdio::piped())
