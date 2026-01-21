@@ -50,7 +50,7 @@ describe("EnvironmentTab", () => {
       vi.unstubAllGlobals();
     });
 
-    it("should open URL when external link clicked", async () => {
+    it("should open URL when external link button clicked", async () => {
       const user = userEvent.setup();
       render(<EnvironmentTab {...defaultProps} />);
 
@@ -64,10 +64,32 @@ describe("EnvironmentTab", () => {
       });
     });
 
+    it("should open URL when clicking URL text directly", async () => {
+      const user = userEvent.setup();
+      render(<EnvironmentTab {...defaultProps} />);
+
+      const urlButton = screen.getByTitle("Open in browser");
+      await user.click(urlButton);
+
+      await waitFor(() => {
+        expect(invoke).toHaveBeenCalledWith("open_project_url", {
+          url: defaultProps.project.primary_url,
+        });
+      });
+    });
+
     it("should not show open URL button when project is stopped", () => {
       render(<EnvironmentTab {...defaultProps} isRunning={false} />);
 
       expect(screen.queryByTitle("Open URL")).not.toBeInTheDocument();
+    });
+
+    it("should show URL as non-clickable text when project is stopped", () => {
+      render(<EnvironmentTab {...defaultProps} isRunning={false} />);
+
+      // URL should be shown as code element, not button
+      expect(screen.queryByTitle("Open in browser")).not.toBeInTheDocument();
+      expect(screen.getByText(defaultProps.project.primary_url)).toBeInTheDocument();
     });
 
     it("should show additional URLs in accordion when more than 2", () => {
