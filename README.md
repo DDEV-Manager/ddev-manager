@@ -65,9 +65,10 @@ Download the latest release for your platform from the [Releases](https://github
 > xattr -d com.apple.quarantine /Applications/DDEV\ Manager.app
 > ```
 
-> **Linux Users (Wayland/Graphics Issues):** The app automatically uses X11 (via XWayland on Wayland systems) to avoid WebKitGTK compatibility issues. If you still encounter graphics errors with older versions, try:
+> **Linux Users (Wayland/Graphics Issues):** The app automatically disables WebKit compositing to avoid common graphics errors. If you still encounter issues, try:
 >
 > ```bash
+> # Force X11 backend (via XWayland on Wayland systems)
 > GDK_BACKEND=x11 ./DDEV.Manager_x.x.x_amd64.AppImage
 > ```
 
