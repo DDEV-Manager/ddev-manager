@@ -4,9 +4,9 @@ import {
   Check,
   Folder,
   Trash2,
-  ExternalLink,
   Upload,
   Download,
+  ExternalLink,
 } from "lucide-react";
 import { useState } from "react";
 import { useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
@@ -284,7 +284,26 @@ function UrlRow({
   return (
     <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
       <span className="w-16 text-xs text-gray-500">{label}</span>
-      <code className="text-primary-600 dark:text-primary-400 flex-1 truncate text-sm">{url}</code>
+      {isActive ? (
+        <button
+          onClick={() => openUrl.mutate(url)}
+          className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex-1 cursor-pointer truncate text-left font-mono text-sm underline decoration-dotted underline-offset-2"
+          title="Open in browser"
+        >
+          {url}
+        </button>
+      ) : (
+        <code className="flex-1 truncate text-sm text-gray-400 dark:text-gray-500">{url}</code>
+      )}
+      {isActive && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => openUrl.mutate(url)}
+          icon={<ExternalLink className="h-4 w-4 text-gray-400" />}
+          title="Open URL"
+        />
+      )}
       <Button
         variant="ghost"
         size="icon-sm"
@@ -298,15 +317,6 @@ function UrlRow({
         }
         title="Copy URL"
       />
-      {isActive && (
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => openUrl.mutate(url)}
-          icon={<ExternalLink className="h-4 w-4 text-gray-400" />}
-          title="Open URL"
-        />
-      )}
     </div>
   );
 }
