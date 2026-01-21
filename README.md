@@ -49,7 +49,7 @@ DDEV Manager provides a standalone visual interface for managing DDEV projects. 
 
 ### Download
 
-Download the latest release for your platform from the [Releases](https://github.com/your-username/ddev-manager/releases) page:
+Download the latest release for your platform from the [Releases](https://github.com/DDEV-Manager/ddev-manager/releases) page:
 
 - **macOS**: `DDEV Manager_x.x.x_universal.dmg` (works on both Apple Silicon and Intel)
 - **Windows**: `DDEV Manager_x.x.x_x64-setup.exe`
