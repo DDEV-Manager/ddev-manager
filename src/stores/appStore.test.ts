@@ -232,30 +232,38 @@ describe("filterProjects", () => {
   });
 
   describe("sorting", () => {
-    it("should sort by name ascending", () => {
+    it("should sort by name ascending with running projects first", () => {
       const result = filterProjects(mockProjects, defaultFilter, {
         field: "name",
         direction: "asc",
       });
+      // Running projects first (alpha, gamma), then non-running (beta, delta)
       expect(result[0].name).toBe("alpha-project");
-      expect(result[3].name).toBe("gamma-project");
+      expect(result[1].name).toBe("gamma-project");
+      expect(result[2].name).toBe("beta-project");
+      expect(result[3].name).toBe("delta-project");
     });
 
-    it("should sort by name descending", () => {
+    it("should sort by name descending with running projects first", () => {
       const result = filterProjects(mockProjects, defaultFilter, {
         field: "name",
         direction: "desc",
       });
+      // Running projects first (gamma, alpha desc), then non-running (delta, beta desc)
       expect(result[0].name).toBe("gamma-project");
-      expect(result[3].name).toBe("alpha-project");
+      expect(result[1].name).toBe("alpha-project");
+      expect(result[2].name).toBe("delta-project");
+      expect(result[3].name).toBe("beta-project");
     });
 
-    it("should sort by status", () => {
+    it("should always sort running projects first regardless of sort field", () => {
       const result = filterProjects(mockProjects, defaultFilter, {
         field: "status",
         direction: "asc",
       });
-      expect(result[0].status).toBe("paused");
+      // Running projects always come first
+      expect(result[0].status).toBe("running");
+      expect(result[1].status).toBe("running");
     });
 
     it("should sort by type", () => {

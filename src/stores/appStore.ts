@@ -120,10 +120,17 @@ export function filterProjects<T extends { name: string; status: string; type?: 
     filtered = filtered.filter((p) => p.type === filter.type);
   }
 
-  // Apply sorting
+  // Apply sorting: always sort by status first (running on top), then by selected field
   filtered.sort((a, b) => {
-    let comparison = 0;
+    // Primary sort: running projects first
+    const aRunning = a.status === "running" ? 0 : 1;
+    const bRunning = b.status === "running" ? 0 : 1;
+    if (aRunning !== bRunning) {
+      return aRunning - bRunning;
+    }
 
+    // Secondary sort: by selected field
+    let comparison = 0;
     switch (sort.field) {
       case "name":
         comparison = a.name.localeCompare(b.name);
