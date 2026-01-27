@@ -65,7 +65,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
       <div className="flex items-center gap-2">
         <div
           className={cn("h-2.5 w-2.5 shrink-0 rounded-full", getStatusBgColor(project.status))}
-          title={project.status}
+          title={`Status: ${project.status.charAt(0).toUpperCase() + project.status.slice(1)}`}
         />
         <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900 dark:text-gray-100">
           {project.name}
