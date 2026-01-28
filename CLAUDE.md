@@ -40,6 +40,12 @@ Fixes #123
 
 Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
+### Pull Request Descriptions
+- Include a `## Summary` section with bullet points
+- Include a `## Test plan` section with checklist items
+- Reference related issues with `Fixes #123` or `Closes #123`
+- Do NOT include "Generated with Claude Code" or similar attribution lines
+
 ## Development Commands
 ```bash
 pnpm tauri dev          # Run development server
