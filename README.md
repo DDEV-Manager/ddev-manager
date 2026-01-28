@@ -375,6 +375,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tauri](https://tauri.app/) - For the lightweight, secure app framework
 - [React](https://react.dev/) - For the UI library
 - [Tailwind CSS](https://tailwindcss.com/) - For the utility-first CSS framework
+- [Simple Icons](https://simpleicons.org/) - For the project type brand icons (Drupal, Laravel, WordPress, etc.)
 
 ---
 

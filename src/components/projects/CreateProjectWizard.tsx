@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Folder, ChevronRight, ChevronLeft, Check, Download, Loader2 } from "lucide-react";
+import { ProjectTypeIcon, getProjectTypeColor } from "./ProjectTypeIcon";
 import {
   useSelectFolder,
   useCreateProject,
@@ -281,12 +282,19 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                       setFormData({ ...formData, projectType: type.value, cmsInstall: null })
                     }
                     className={cn(
-                      "rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors",
+                      "flex items-center gap-2 rounded-lg border-2 px-3 py-2 text-left text-sm transition-colors",
                       formData.projectType === type.value
                         ? "border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-900/30 dark:text-primary-400"
                         : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"
                     )}
                   >
+                    {type.value && (
+                      <ProjectTypeIcon
+                        type={type.value}
+                        size="sm"
+                        className={getProjectTypeColor(type.value)}
+                      />
+                    )}
                     {type.label}
                   </button>
                 ))}
@@ -503,7 +511,14 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Type:</dt>
-                  <dd className="text-gray-900 dark:text-gray-100">
+                  <dd className="flex items-center gap-1.5 text-gray-900 dark:text-gray-100">
+                    {formData.projectType && (
+                      <ProjectTypeIcon
+                        type={formData.projectType}
+                        size="sm"
+                        className={getProjectTypeColor(formData.projectType)}
+                      />
+                    )}
                     {PROJECT_TYPES.find((t) => t.value === formData.projectType)?.label}
                   </dd>
                 </div>

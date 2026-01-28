@@ -1,5 +1,6 @@
 import { Play, Square, RotateCw, ExternalLink, Folder } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ProjectTypeIcon, getProjectTypeColor } from "./ProjectTypeIcon";
 import { cn, getStatusBgColor, formatProjectType, truncatePath } from "@/lib/utils";
 import {
   useStartProject,
@@ -134,8 +135,13 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
       </div>
 
       {/* Type and path - full width */}
-      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        {formatProjectType(project.type)}
+      <div className="mt-1 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <ProjectTypeIcon
+          type={project.type}
+          size="sm"
+          className={getProjectTypeColor(project.type)}
+        />
+        <span>{formatProjectType(project.type)}</span>
       </div>
       <div
         className="overflow-hidden text-xs whitespace-nowrap text-gray-400 dark:text-gray-500"
