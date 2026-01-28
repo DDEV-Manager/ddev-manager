@@ -20,7 +20,16 @@ interface EnvironmentTabProps {
   project: DdevProjectDetails;
   isRunning: boolean;
   isOperationPending: boolean;
-  currentOp: "start" | "stop" | "restart" | "delete" | "import-db" | "export-db" | null;
+  currentOp:
+    | "start"
+    | "stop"
+    | "restart"
+    | "delete"
+    | "import-db"
+    | "export-db"
+    | "change-php"
+    | "change-nodejs"
+    | null;
   onDelete: () => void;
   onImportDb: () => void;
   onExportDb: () => void;

@@ -312,3 +312,57 @@ export function useExportDb() {
     },
   });
 }
+
+// Change PHP version (non-blocking, command runs in background)
+export function useChangePhpVersion() {
+  const queryClient = useQueryClient();
+  const { open, autoOpen } = useTerminalStore();
+
+  return useMutation({
+    mutationFn: async ({
+      name,
+      approot,
+      phpVersion,
+    }: {
+      name: string;
+      approot: string;
+      phpVersion: string;
+    }) => {
+      if (autoOpen) open();
+      return invoke<string>("change_php_version", { name, approot, phpVersion });
+    },
+    onSuccess: () => {
+      // Invalidate after a short delay to allow the command to complete
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      }, 1000);
+    },
+  });
+}
+
+// Change Node.js version (non-blocking, command runs in background)
+export function useChangeNodejsVersion() {
+  const queryClient = useQueryClient();
+  const { open, autoOpen } = useTerminalStore();
+
+  return useMutation({
+    mutationFn: async ({
+      name,
+      approot,
+      nodejsVersion,
+    }: {
+      name: string;
+      approot: string;
+      nodejsVersion: string;
+    }) => {
+      if (autoOpen) open();
+      return invoke<string>("change_nodejs_version", { name, approot, nodejsVersion });
+    },
+    onSuccess: () => {
+      // Invalidate after a short delay to allow the command to complete
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      }, 1000);
+    },
+  });
+}

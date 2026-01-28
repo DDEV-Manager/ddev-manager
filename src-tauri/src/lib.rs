@@ -2,6 +2,7 @@ mod commands;
 mod ddev;
 mod error;
 mod process;
+mod schema;
 mod types;
 
 use commands::*;
@@ -31,6 +32,8 @@ pub fn run() {
             restart_project,
             delete_project,
             poweroff,
+            change_php_version,
+            change_nodejs_version,
             // Snapshots
             list_snapshots,
             create_snapshot,
@@ -67,7 +70,15 @@ pub fn run() {
             get_screenshot_path,
             get_screenshot_data,
             delete_screenshot,
+            // Schema
+            get_ddev_schema,
+            refresh_ddev_schema,
         ])
+        .setup(|_app| {
+            // Ensure schema is updated in the background on startup
+            schema::ensure_schema_updated();
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -20,6 +20,8 @@ import { AddonsSection } from "@/components/addons/AddonsSection";
 import { LogsSection } from "@/components/logs/LogsSection";
 import { SnapshotsSection } from "@/components/snapshots/SnapshotsSection";
 import { EnvironmentTab } from "./EnvironmentTab";
+import { PhpVersionSelector } from "./PhpVersionSelector";
+import { NodejsVersionSelector } from "./NodejsVersionSelector";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -48,7 +50,16 @@ interface CommandStatus {
   process_id?: string;
 }
 
-type ProjectOperation = "start" | "stop" | "restart" | "delete" | "import-db" | "export-db" | null;
+type ProjectOperation =
+  | "start"
+  | "stop"
+  | "restart"
+  | "delete"
+  | "import-db"
+  | "export-db"
+  | "change-php"
+  | "change-nodejs"
+  | null;
 
 interface OperationState {
   type: ProjectOperation;
@@ -279,8 +290,20 @@ export function ProjectDetails() {
               </h2>
             </div>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {formatProjectType(project.type)} • PHP {project.php_version ?? "N/A"} • Node.js{" "}
-              {project.nodejs_version}
+              {formatProjectType(project.type)} •{" "}
+              <PhpVersionSelector
+                currentVersion={project.php_version}
+                projectName={project.name}
+                approot={project.approot}
+                disabled={isOperationPending}
+              />{" "}
+              •{" "}
+              <NodejsVersionSelector
+                currentVersion={project.nodejs_version}
+                projectName={project.name}
+                approot={project.approot}
+                disabled={isOperationPending}
+              />
             </p>
           </div>
 
