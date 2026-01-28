@@ -22,6 +22,7 @@ import { SnapshotsSection } from "@/components/snapshots/SnapshotsSection";
 import { EnvironmentTab } from "./EnvironmentTab";
 import { PhpVersionSelector } from "./PhpVersionSelector";
 import { NodejsVersionSelector } from "./NodejsVersionSelector";
+import { ProjectTypeIcon, getProjectTypeColor } from "./ProjectTypeIcon";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -289,7 +290,12 @@ export function ProjectDetails() {
                 {project.name}
               </h2>
             </div>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+              <ProjectTypeIcon
+                type={project.type}
+                size="sm"
+                className={getProjectTypeColor(project.type)}
+              />
               {formatProjectType(project.type)} •{" "}
               <PhpVersionSelector
                 currentVersion={project.php_version}
