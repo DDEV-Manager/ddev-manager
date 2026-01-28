@@ -1,0 +1,128 @@
+# DDEV Manager - Claude Code Instructions
+
+## Project Overview
+A desktop UI for managing DDEV local development environments, built with Tauri (Rust backend) and React (TypeScript frontend).
+
+## Tech Stack
+- **Backend**: Rust with Tauri 2.x
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand + TanStack Query
+- **Testing**: Vitest + React Testing Library
+
+## Git Workflow
+
+**Important**: Always create a feature branch for changes. Never commit directly to `main`.
+
+```bash
+# Create a new branch
+git checkout -b feature/description   # or fix/description
+
+# After changes, push and create PR
+git push -u origin <branch-name>
+gh pr create
+```
+
+### Branch Naming
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `refactor/` - Code refactoring
+- `docs/` - Documentation changes
+
+### Commit Messages
+```
+type: short description
+
+Longer description if needed.
+
+Fixes #123
+```
+
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+## Development Commands
+```bash
+pnpm tauri dev          # Run development server
+pnpm test:run           # Run tests once
+pnpm test               # Run tests in watch mode
+pnpm lint               # Run ESLint
+pnpm lint --fix         # Fix ESLint issues
+pnpm tsc --noEmit       # Type check
+cargo check --manifest-path src-tauri/Cargo.toml   # Rust check
+cargo clippy --manifest-path src-tauri/Cargo.toml  # Rust linting
+```
+
+## Project Structure
+```
+src/                        # React frontend
+  components/               # UI components (organized by feature)
+  hooks/                    # React hooks
+    useDdev.ts              # DDEV command hooks
+    useSchema.ts            # Schema fetching hooks
+  stores/                   # Zustand stores
+  types/                    # TypeScript types
+  lib/                      # Utility functions
+  test/                     # Test utilities and mocks
+
+src-tauri/                  # Rust backend
+  src/
+    commands/               # Tauri commands (organized by feature)
+      projects.rs           # Project operations
+      addons.rs             # Add-on management
+      database.rs           # Import/export
+      schema.rs             # Schema commands
+    ddev.rs                 # DDEV CLI interaction
+    schema.rs               # DDEV schema caching
+    process.rs              # Process management
+    types.rs                # Data structures
+    error.rs                # Error types
+    lib.rs                  # Command registration
+```
+
+## Key Patterns
+
+### Streaming Commands
+Long-running commands use events for real-time output:
+- `command-status` - Command lifecycle (started/finished/error/cancelled)
+- `command-output` - Stdout/stderr lines
+
+### Schema Caching
+DDEV schema (PHP versions, project types, etc.) is:
+- Fetched from GitHub and cached locally
+- Refreshed every 24 hours in background
+- Falls back to hardcoded values if offline on first launch
+
+### Testing
+Tests are colocated with source files (`*.test.ts`, `*.test.tsx`).
+
+Mock Tauri APIs:
+```typescript
+import { vi } from "vitest";
+import { invoke } from "@tauri-apps/api/core";
+import { setupInvokeMock, createMockProjectBasic } from "@/test/mocks";
+
+vi.mock("@tauri-apps/api/core");
+
+beforeEach(() => {
+  setupInvokeMock(vi.mocked(invoke), {
+    list_projects: [createMockProjectBasic()],
+  });
+});
+```
+
+### Code Style
+- Use TypeScript strict mode
+- Prefer named exports over default exports
+- Use `@/` path alias for imports
+- Follow existing patterns in codebase
+- Pre-commit hooks run linters automatically
+
+## Adding New Features
+
+1. **React components** → `src/components/` (organized by feature)
+2. **Hooks** → `src/hooks/`
+3. **Stores** → `src/stores/`
+4. **Types** → `src/types/`
+5. **Utilities** → `src/lib/`
+6. **Rust commands** → `src-tauri/src/commands/`
+7. Register commands in `src-tauri/src/lib.rs`
