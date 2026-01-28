@@ -63,8 +63,8 @@ pub fn delete_project(window: Window, name: String) -> Result<String, DdevError>
     )
 }
 
-/// Change a project configuration option and restart
-/// Generic helper for config changes that require restart
+/// Change a project configuration option and optionally restart
+/// Generic helper for config changes
 fn change_project_config(
     window: Window,
     name: String,
@@ -73,6 +73,7 @@ fn change_project_config(
     config_value: String,
     command_name: &str,
     success_message: String,
+    restart: bool,
 ) -> Result<String, DdevError> {
     let process_id = generate_process_id();
     let command_name = command_name.to_string();
@@ -123,61 +124,77 @@ fn change_project_config(
             &project_name,
         ) {
             Ok(true) => {
-                // Config succeeded, now restart
-                if check_cancelled() {
-                    return;
-                }
+                // Config succeeded
+                if restart {
+                    // Only restart if requested (project was running)
+                    if check_cancelled() {
+                        return;
+                    }
 
-                let _ = window.emit(
-                    "command-output",
-                    CommandOutput {
-                        line: "Restarting project...".to_string(),
-                        stream: "stdout".to_string(),
-                    },
-                );
+                    let _ = window.emit(
+                        "command-output",
+                        CommandOutput {
+                            line: "Restarting project...".to_string(),
+                            stream: "stdout".to_string(),
+                        },
+                    );
 
-                // Step 2: Run ddev restart
-                match run_streaming_command(
-                    &window,
-                    &ddev_cmd,
-                    &["restart"],
-                    &approot,
-                    &enhanced_path,
-                    Some(&process_id_clone),
-                    &command_name,
-                    &project_name,
-                ) {
-                    Ok(true) => {
-                        // Clean up registry entry
-                        remove_task_entry(&process_id_clone);
-                        let _ = window.emit(
-                            "command-status",
-                            CommandStatus {
-                                command: command_name,
-                                project: project_name,
-                                status: "finished".to_string(),
-                                message: Some(success_message),
-                                process_id: None,
-                            },
-                        );
+                    // Step 2: Run ddev restart
+                    match run_streaming_command(
+                        &window,
+                        &ddev_cmd,
+                        &["restart"],
+                        &approot,
+                        &enhanced_path,
+                        Some(&process_id_clone),
+                        &command_name,
+                        &project_name,
+                    ) {
+                        Ok(true) => {
+                            // Clean up registry entry
+                            remove_task_entry(&process_id_clone);
+                            let _ = window.emit(
+                                "command-status",
+                                CommandStatus {
+                                    command: command_name,
+                                    project: project_name,
+                                    status: "finished".to_string(),
+                                    message: Some(success_message),
+                                    process_id: None,
+                                },
+                            );
+                        }
+                        Ok(false) => {
+                            // Clean up registry entry
+                            remove_task_entry(&process_id_clone);
+                            let _ = window.emit(
+                                "command-status",
+                                CommandStatus {
+                                    command: command_name,
+                                    project: project_name,
+                                    status: "error".to_string(),
+                                    message: Some("Failed to restart project".to_string()),
+                                    process_id: None,
+                                },
+                            );
+                        }
+                        Err(_) => {
+                            // Cancelled - cancel_command already emitted the status
+                        }
                     }
-                    Ok(false) => {
-                        // Clean up registry entry
-                        remove_task_entry(&process_id_clone);
-                        let _ = window.emit(
-                            "command-status",
-                            CommandStatus {
-                                command: command_name,
-                                project: project_name,
-                                status: "error".to_string(),
-                                message: Some("Failed to restart project".to_string()),
-                                process_id: None,
-                            },
-                        );
-                    }
-                    Err(_) => {
-                        // Cancelled - cancel_command already emitted the status
-                    }
+                } else {
+                    // No restart needed, just finish
+                    remove_task_entry(&process_id_clone);
+                    let _ = window.emit(
+                        "command-status",
+                        CommandStatus {
+                            command: command_name,
+                            project: project_name,
+                            status: "finished".to_string(),
+                            message: Some(success_message),
+                            process_id: None,
+                        },
+                    );
                 }
             }
             Ok(false) => {
@@ -204,7 +221,7 @@ fn change_project_config(
 }
 
 /// Change the PHP version for a DDEV project
-/// Runs `ddev config --php-version=X.X` followed by `ddev restart`
+/// Runs `ddev config --php-version=X.X` and optionally `ddev restart`
 /// Returns a process ID that can be used to cancel the command
 #[tauri::command]
 pub fn change_php_version(
@@ -212,6 +229,7 @@ pub fn change_php_version(
     name: String,
     approot: String,
     php_version: String,
+    restart: bool,
 ) -> Result<String, DdevError> {
     change_project_config(
         window,
@@ -221,11 +239,12 @@ pub fn change_php_version(
         php_version.clone(),
         "change-php",
         format!("PHP version changed to {} successfully", php_version),
+        restart,
     )
 }
 
 /// Change the Node.js version for a DDEV project
-/// Runs `ddev config --nodejs-version=XX` followed by `ddev restart`
+/// Runs `ddev config --nodejs-version=XX` and optionally `ddev restart`
 /// Returns a process ID that can be used to cancel the command
 #[tauri::command]
 pub fn change_nodejs_version(
@@ -233,6 +252,7 @@ pub fn change_nodejs_version(
     name: String,
     approot: String,
     nodejs_version: String,
+    restart: bool,
 ) -> Result<String, DdevError> {
     change_project_config(
         window,
@@ -242,5 +262,6 @@ pub fn change_nodejs_version(
         nodejs_version.clone(),
         "change-nodejs",
         format!("Node.js version changed to {} successfully", nodejs_version),
+        restart,
     )
 }

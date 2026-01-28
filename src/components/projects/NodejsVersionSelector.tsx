@@ -19,6 +19,7 @@ interface NodejsVersionSelectorProps {
   currentVersion: string | null | undefined;
   projectName: string;
   approot: string;
+  isRunning: boolean;
   disabled?: boolean;
 }
 
@@ -26,6 +27,7 @@ export function NodejsVersionSelector({
   currentVersion,
   projectName,
   approot,
+  isRunning,
   disabled = false,
 }: NodejsVersionSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -115,8 +117,9 @@ export function NodejsVersionSelector({
       name: projectName,
       approot,
       nodejsVersion: selectedVersion,
+      restart: isRunning,
     });
-  }, [selectedVersion, projectName, approot, changeNodejsVersion]);
+  }, [selectedVersion, projectName, approot, isRunning, changeNodejsVersion]);
 
   const handleCancel = useCallback(() => {
     setShowConfirm(false);
@@ -184,10 +187,14 @@ export function NodejsVersionSelector({
       <ConfirmDialog
         isOpen={showConfirm}
         title="Change Node.js Version"
-        message={`Change Node.js version to ${selectedVersion}? The project will be restarted.`}
+        message={
+          isRunning
+            ? `Change Node.js version to ${selectedVersion}? The project will be restarted.`
+            : `Change Node.js version to ${selectedVersion}?`
+        }
         confirmLabel="Change"
         cancelLabel="Cancel"
-        variant="warning"
+        variant={isRunning ? "warning" : "default"}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />

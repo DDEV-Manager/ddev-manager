@@ -19,6 +19,7 @@ interface PhpVersionSelectorProps {
   currentVersion: string | null | undefined;
   projectName: string;
   approot: string;
+  isRunning: boolean;
   disabled?: boolean;
 }
 
@@ -26,6 +27,7 @@ export function PhpVersionSelector({
   currentVersion,
   projectName,
   approot,
+  isRunning,
   disabled = false,
 }: PhpVersionSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -115,8 +117,9 @@ export function PhpVersionSelector({
       name: projectName,
       approot,
       phpVersion: selectedVersion,
+      restart: isRunning,
     });
-  }, [selectedVersion, projectName, approot, changePhpVersion]);
+  }, [selectedVersion, projectName, approot, isRunning, changePhpVersion]);
 
   const handleCancel = useCallback(() => {
     setShowConfirm(false);
@@ -184,10 +187,14 @@ export function PhpVersionSelector({
       <ConfirmDialog
         isOpen={showConfirm}
         title="Change PHP Version"
-        message={`Change PHP version to ${selectedVersion}? The project will be restarted.`}
+        message={
+          isRunning
+            ? `Change PHP version to ${selectedVersion}? The project will be restarted.`
+            : `Change PHP version to ${selectedVersion}?`
+        }
         confirmLabel="Change"
         cancelLabel="Cancel"
-        variant="warning"
+        variant={isRunning ? "warning" : "default"}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
       />

@@ -295,6 +295,7 @@ export function ProjectDetails() {
                 currentVersion={project.php_version}
                 projectName={project.name}
                 approot={project.approot}
+                isRunning={isRunning}
                 disabled={isOperationPending}
               />{" "}
               •{" "}
@@ -302,6 +303,7 @@ export function ProjectDetails() {
                 currentVersion={project.nodejs_version}
                 projectName={project.name}
                 approot={project.approot}
+                isRunning={isRunning}
                 disabled={isOperationPending}
               />
             </p>

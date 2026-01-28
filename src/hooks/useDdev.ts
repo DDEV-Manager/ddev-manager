@@ -323,13 +323,15 @@ export function useChangePhpVersion() {
       name,
       approot,
       phpVersion,
+      restart,
     }: {
       name: string;
       approot: string;
       phpVersion: string;
+      restart: boolean;
     }) => {
-      if (autoOpen) open();
-      return invoke<string>("change_php_version", { name, approot, phpVersion });
+      if (autoOpen && restart) open();
+      return invoke<string>("change_php_version", { name, approot, phpVersion, restart });
     },
     onSuccess: () => {
       // Invalidate after a short delay to allow the command to complete
@@ -350,13 +352,15 @@ export function useChangeNodejsVersion() {
       name,
       approot,
       nodejsVersion,
+      restart,
     }: {
       name: string;
       approot: string;
       nodejsVersion: string;
+      restart: boolean;
     }) => {
-      if (autoOpen) open();
-      return invoke<string>("change_nodejs_version", { name, approot, nodejsVersion });
+      if (autoOpen && restart) open();
+      return invoke<string>("change_nodejs_version", { name, approot, nodejsVersion, restart });
     },
     onSuccess: () => {
       // Invalidate after a short delay to allow the command to complete
