@@ -95,7 +95,7 @@ export function Modal({
       onAnimationEnd={handleAnimationEnd}
       style={{ display: isOpen ? "flex" : "none" }}
       className={cn(
-        "fixed inset-0 z-50 items-center justify-center bg-white/20 backdrop-blur-md duration-200 dark:bg-gray-900/30",
+        "fixed inset-0 z-50 items-center justify-center bg-black/60 duration-200",
         isOpen ? "animate-in fade-in" : "animate-out fade-out"
       )}
     >
@@ -105,7 +105,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={ariaLabelledBy}
         className={cn(
-          "mx-4 w-full rounded-xl border border-white/90 bg-white/30 p-6 shadow-2xl duration-200 dark:border-white/10 dark:bg-gray-900/70",
+          "mx-4 w-full rounded-xl border border-gray-200 bg-white p-6 shadow-2xl duration-200 dark:border-gray-700 dark:bg-gray-900",
           isOpen ? "animate-in fade-in zoom-in-95" : "animate-out fade-out zoom-out-95",
           maxWidthClasses[maxWidth],
           scrollable && "max-h-[90vh] overflow-y-auto",
