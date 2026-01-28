@@ -61,10 +61,9 @@ jobs:
             args: ''
             rust_targets: ''
           - name: linux-arm64
-            platform: ubuntu-22.04
-            # Only build .deb for ARM64 (AppImage fails on cross-compile due to exec format error)
-            args: --target aarch64-unknown-linux-gnu --bundles deb
-            rust_targets: aarch64-unknown-linux-gnu
+            platform: ubuntu-24.04-arm64
+            args: ''
+            rust_targets: ''
           - name: windows-x64
             platform: windows-latest
             args: ''
@@ -104,31 +103,11 @@ jobs:
         with:
           targets: ${{ matrix.rust_targets }}
 
-      - name: Install Linux dependencies (x86_64)
-        if: steps.should_run.outputs.skip != 'true' && matrix.platform == 'ubuntu-22.04' && !contains(matrix.args, 'aarch64')
+      - name: Install Linux dependencies
+        if: steps.should_run.outputs.skip != 'true' && contains(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Install Linux dependencies (aarch64 cross-compile)
-        if: steps.should_run.outputs.skip != 'true' && matrix.platform == 'ubuntu-22.04' && contains(matrix.args, 'aarch64')
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ jammy-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-          sudo apt-get update
-          sudo apt-get install -y \
-            gcc-aarch64-linux-gnu \
-            g++-aarch64-linux-gnu \
-            libc6-dev-arm64-cross \
-            libwebkit2gtk-4.1-dev:arm64 \
-            libappindicator3-dev:arm64 \
-            librsvg2-dev:arm64 \
-            patchelf
-          echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig" >> $GITHUB_ENV
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
 
       - name: Install dependencies
         if: steps.should_run.outputs.skip != 'true'
@@ -159,7 +138,7 @@ jobs:
             | Windows | x64 | `.msi` or `.exe` |
             | Windows | ARM64 | `.exe` |
             | Linux | x64 | `.deb` or `.AppImage` |
-            | Linux | ARM64 | `.deb` |
+            | Linux | ARM64 | `.deb` or `.AppImage` |
 
             ---
             **macOS users**: Run `xattr -cr "/Applications/DDEV Manager.app"` if blocked by Gatekeeper.
