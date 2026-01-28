@@ -62,7 +62,8 @@ jobs:
             rust_targets: ''
           - name: linux-arm64
             platform: ubuntu-22.04
-            args: --target aarch64-unknown-linux-gnu
+            # Only build .deb for ARM64 (AppImage fails on cross-compile due to exec format error)
+            args: --target aarch64-unknown-linux-gnu --bundles deb
             rust_targets: aarch64-unknown-linux-gnu
           - name: windows-x64
             platform: windows-latest
@@ -158,7 +159,7 @@ jobs:
             | Windows | x64 | `.msi` or `.exe` |
             | Windows | ARM64 | `.exe` |
             | Linux | x64 | `.deb` or `.AppImage` |
-            | Linux | ARM64 | `.deb` or `.AppImage` |
+            | Linux | ARM64 | `.deb` |
 
             ---
             **macOS users**: Run `xattr -cr "/Applications/DDEV Manager.app"` if blocked by Gatekeeper.
