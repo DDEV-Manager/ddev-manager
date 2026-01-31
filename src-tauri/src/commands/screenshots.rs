@@ -5,6 +5,28 @@ use tauri::{Emitter, Manager, Window};
 use crate::error::DdevError;
 use crate::types::ScreenshotStatus;
 
+/// Find Chrome/Chromium executable on Linux
+#[cfg(target_os = "linux")]
+fn find_chrome_executable() -> Option<PathBuf> {
+    let candidates = [
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+        "/snap/bin/chromium",
+        "/usr/bin/brave-browser",
+    ];
+
+    for path in candidates {
+        let path = PathBuf::from(path);
+        if path.exists() {
+            return Some(path);
+        }
+    }
+
+    None
+}
+
 /// Get the screenshots directory, creating it if necessary
 fn get_screenshots_dir(app: &tauri::AppHandle) -> Result<PathBuf, DdevError> {
     let data_dir = app
@@ -60,12 +82,35 @@ pub fn capture_screenshot(
         );
 
         // Launch headless browser with certificate error bypass (DDEV uses self-signed certs)
-        let launch_options = match LaunchOptions::default_builder()
+        let mut builder = LaunchOptions::default_builder();
+        builder
             .headless(true)
             .ignore_certificate_errors(true)
-            .window_size(Some((1280, 800)))
-            .build()
+            .window_size(Some((1280, 800)));
+
+        // On Linux, we need to explicitly find and set the Chrome/Chromium path
+        #[cfg(target_os = "linux")]
         {
+            if let Some(chrome_path) = find_chrome_executable() {
+                builder.path(Some(chrome_path));
+            } else {
+                let _ = window.emit(
+                    "screenshot-status",
+                    ScreenshotStatus {
+                        project: project_name,
+                        status: "error".to_string(),
+                        path: None,
+                        message: Some(
+                            "Chrome or Chromium not found. Please install google-chrome or chromium."
+                                .to_string(),
+                        ),
+                    },
+                );
+                return;
+            }
+        }
+
+        let launch_options = match builder.build() {
             Ok(opts) => opts,
             Err(e) => {
                 let _ = window.emit(
