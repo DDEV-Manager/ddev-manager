@@ -78,13 +78,18 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
       </div>
 
       {/* Addons list */}
-      <div className="space-y-2 p-2">
+      <div
+        role="list"
+        aria-label="Available add-ons"
+        aria-busy={isLoading}
+        className="space-y-2 p-2"
+      >
         {isLoading ? (
           <div className="flex justify-center py-6">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400" aria-label="Loading add-ons" />
           </div>
         ) : error ? (
-          <div className="py-6 text-center text-sm text-red-500">
+          <div role="alert" className="py-6 text-center text-sm text-red-500">
             Failed to load registry: {error instanceof Error ? error.message : String(error)}
           </div>
         ) : filteredAddons.length === 0 ? (
@@ -98,6 +103,7 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
             return (
               <div
                 key={addon.repo_id}
+                role="listitem"
                 className="flex items-start gap-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-900"
               >
                 <div className="min-w-0 flex-1">
@@ -111,8 +117,8 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
                   <p className="line-clamp-2 text-xs text-gray-500">{addon.description}</p>
                   <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
                     <span className="flex items-center gap-1">
-                      <Star className="h-3 w-3" />
-                      {addon.stars}
+                      <Star className="h-3 w-3" aria-hidden="true" />
+                      <span aria-label={`${addon.stars} stars`}>{addon.stars}</span>
                     </span>
                     {addon.tag_name && <span>{addon.tag_name}</span>}
                   </div>
@@ -122,8 +128,8 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
                     variant="ghost"
                     size="icon-sm"
                     onClick={() => openUrl.mutate(addon.github_url)}
-                    icon={<ExternalLink className="h-4 w-4 text-gray-400" />}
-                    title="View on GitHub"
+                    icon={<ExternalLink className="h-4 w-4 text-gray-400" aria-hidden="true" />}
+                    aria-label={`View ${addon.repo} on GitHub`}
                   />
                   <Button
                     variant={isInstalled ? "success" : "primary"}
@@ -131,7 +137,18 @@ export function AddonBrowser({ installedAddons, installingAddon, onInstall }: Ad
                     disabled={isInstalled || installingAddon !== null}
                     loading={isInstalling}
                     icon={
-                      isInstalled ? <Check className="h-4 w-4" /> : <Download className="h-4 w-4" />
+                      isInstalled ? (
+                        <Check className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                      )
+                    }
+                    aria-label={
+                      isInstalled
+                        ? `${addon.repo} is installed`
+                        : isInstalling
+                          ? `Installing ${addon.repo}`
+                          : `Install ${addon.repo}`
                     }
                     className={cn(
                       isInstalled

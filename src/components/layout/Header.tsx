@@ -8,9 +8,20 @@ import { CreateProjectWizard } from "@/components/projects/CreateProjectWizard";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
-function DdevLogo({ className }: { className?: string }) {
+function DdevLogo({
+  className,
+  "aria-hidden": ariaHidden,
+}: {
+  className?: string;
+  "aria-hidden"?: boolean | "true" | "false";
+}) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 848.61 199.3" className={className}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 848.61 199.3"
+      className={className}
+      aria-hidden={ariaHidden}
+    >
       <g>
         <path
           fill="#02a8e2"
@@ -61,8 +72,11 @@ export function Header() {
   return (
     <header className="flex items-center justify-between border-b border-gray-200/50 bg-white/80 px-4 py-3 backdrop-blur-md dark:border-gray-800/50 dark:bg-gray-900/80">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-gray-900 dark:text-gray-100">
-          <DdevLogo className="h-7" />
+        <div
+          className="flex items-center gap-2 text-gray-900 dark:text-gray-100"
+          aria-label="DDEV Manager"
+        >
+          <DdevLogo className="h-7" aria-hidden="true" />
           <span className="text-lg font-semibold">Manager</span>
         </div>
         <div className="flex items-center gap-2">
@@ -80,8 +94,8 @@ export function Header() {
       <div className="flex items-center gap-2">
         <Button
           onClick={() => setIsCreateProjectOpen(true)}
-          icon={<Plus className="h-4 w-4" />}
-          title="Create new project"
+          icon={<Plus className="h-4 w-4" aria-hidden="true" />}
+          aria-label="Create new project"
         >
           New Project
         </Button>
@@ -90,8 +104,8 @@ export function Header() {
           variant="ghost"
           size="icon"
           onClick={handleRefresh}
-          icon={<RefreshCw className="h-4 w-4" />}
-          title="Refresh projects"
+          icon={<RefreshCw className="h-4 w-4" aria-hidden="true" />}
+          aria-label="Refresh projects"
         />
 
         <Button
@@ -99,16 +113,16 @@ export function Header() {
           size="icon"
           onClick={handlePoweroff}
           disabled={runningCount === 0 || poweroff.isPending}
-          icon={<Power className="h-4 w-4" />}
-          title="Power off all projects"
+          icon={<Power className="h-4 w-4" aria-hidden="true" />}
+          aria-label="Power off all projects"
         />
 
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsSettingsOpen(true)}
-          icon={<Settings className="h-4 w-4" />}
-          title="Settings"
+          icon={<Settings className="h-4 w-4" aria-hidden="true" />}
+          aria-label="Settings"
         />
       </div>
 

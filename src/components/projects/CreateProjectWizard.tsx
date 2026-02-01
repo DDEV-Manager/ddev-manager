@@ -215,31 +215,37 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
         return (
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="project-folder"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Project Folder
               </label>
               <div className="flex gap-2">
                 <input
+                  id="project-folder"
                   type="text"
                   value={formData.path}
                   onChange={(e) => setFormData({ ...formData, path: e.target.value })}
                   placeholder="/path/to/project"
+                  aria-describedby="project-folder-hint"
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
                 />
                 <button
                   onClick={handleSelectFolder}
                   disabled={selectFolder.isPending}
+                  aria-label="Browse for folder"
                   className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
                 >
                   {selectFolder.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   ) : (
-                    <Folder className="h-4 w-4" />
+                    <Folder className="h-4 w-4" aria-hidden="true" />
                   )}
                   Browse
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p id="project-folder-hint" className="mt-1 text-xs text-gray-500">
                 Select an existing folder or enter a path for a new project
               </p>
             </div>
@@ -250,10 +256,14 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
         return (
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="project-name"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Project Name
               </label>
               <input
+                id="project-name"
                 type="text"
                 value={formData.name}
                 onChange={(e) =>
@@ -263,21 +273,31 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                   })
                 }
                 placeholder="my-project"
+                aria-describedby="project-name-hint"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p id="project-name-hint" className="mt-1 text-xs text-gray-500">
                 Lowercase letters, numbers, and hyphens only
               </p>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                id="project-type-label"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Project Type
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div
+                role="radiogroup"
+                aria-labelledby="project-type-label"
+                className="grid grid-cols-2 gap-2"
+              >
                 {PROJECT_TYPES.map((type) => (
                   <button
                     key={type.value}
+                    role="radio"
+                    aria-checked={formData.projectType === type.value}
                     onClick={() =>
                       setFormData({ ...formData, projectType: type.value, cmsInstall: null })
                     }
@@ -293,6 +313,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                         type={type.value}
                         size="sm"
                         className={getProjectTypeColor(type.value)}
+                        aria-hidden="true"
                       />
                     )}
                     {type.label}
@@ -305,7 +326,10 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
             {hasCmsOptions && (
               <div className="border-primary-200 bg-primary-50 dark:border-primary-800 dark:bg-primary-900/20 rounded-lg border p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <Download className="text-primary-600 dark:text-primary-400 h-4 w-4" />
+                  <Download
+                    className="text-primary-600 dark:text-primary-400 h-4 w-4"
+                    aria-hidden="true"
+                  />
                   <span className="text-primary-700 dark:text-primary-300 text-sm font-medium">
                     Install {PROJECT_TYPES.find((t) => t.value === formData.projectType)?.label}
                   </span>
@@ -412,10 +436,14 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
         return (
           <div className="space-y-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="php-version"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 PHP Version
               </label>
               <select
+                id="php-version"
                 value={formData.phpVersion}
                 onChange={(e) => setFormData({ ...formData, phpVersion: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
@@ -429,10 +457,14 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="database"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Database
               </label>
               <select
+                id="database"
                 value={formData.database}
                 onChange={(e) => setFormData({ ...formData, database: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
@@ -446,10 +478,14 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="webserver"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Web Server
               </label>
               <select
+                id="webserver"
                 value={formData.webserver}
                 onChange={(e) => setFormData({ ...formData, webserver: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
@@ -463,17 +499,24 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="docroot"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Document Root (optional)
               </label>
               <input
+                id="docroot"
                 type="text"
                 value={formData.docroot}
                 onChange={(e) => setFormData({ ...formData, docroot: e.target.value })}
                 placeholder="e.g., public, web, docroot"
+                aria-describedby="docroot-hint"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800"
               />
-              <p className="mt-1 text-xs text-gray-500">Leave empty for project root</p>
+              <p id="docroot-hint" className="mt-1 text-xs text-gray-500">
+                Leave empty for project root
+              </p>
             </div>
           </div>
         );
@@ -517,6 +560,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
                         type={formData.projectType}
                         size="sm"
                         className={getProjectTypeColor(formData.projectType)}
+                        aria-hidden="true"
                       />
                     )}
                     {PROJECT_TYPES.find((t) => t.value === formData.projectType)?.label}
@@ -557,6 +601,7 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
 
             <label className="flex items-center gap-2">
               <input
+                id="auto-start"
                 type="checkbox"
                 checked={formData.autoStart}
                 onChange={(e) => setFormData({ ...formData, autoStart: e.target.checked })}
@@ -576,47 +621,69 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} maxWidth="lg" scrollable closeOnClickOutside={false}>
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      maxWidth="lg"
+      scrollable
+      closeOnClickOutside={false}
+      ariaLabelledBy="create-project-title"
+    >
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <h2
+          id="create-project-title"
+          className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+        >
           Create New Project
         </h2>
         <button
           onClick={onClose}
+          aria-label="Close wizard"
           className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 
       {/* Step Indicator */}
-      <div className="mb-6 flex items-center justify-between">
-        {STEPS.map((step, index) => (
-          <div key={step} className="flex items-center">
-            <div
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium",
-                index < currentStep
-                  ? "bg-green-500 text-white"
-                  : index === currentStep
-                    ? "bg-primary-500 text-white"
-                    : "bg-gray-200 text-gray-500 dark:bg-gray-700"
-              )}
-            >
-              {index < currentStep ? <Check className="h-4 w-4" /> : index + 1}
-            </div>
-            {index < STEPS.length - 1 && (
+      <nav aria-label="Wizard progress" className="mb-6">
+        <ol className="flex items-center justify-between">
+          {STEPS.map((step, index) => (
+            <li key={step} className="flex items-center">
               <div
+                aria-current={index === currentStep ? "step" : undefined}
                 className={cn(
-                  "mx-2 h-0.5 w-24",
-                  index < currentStep ? "bg-green-500" : "bg-gray-200 dark:bg-gray-700"
+                  "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium",
+                  index < currentStep
+                    ? "bg-green-500 text-white"
+                    : index === currentStep
+                      ? "bg-primary-500 text-white"
+                      : "bg-gray-200 text-gray-500 dark:bg-gray-700"
                 )}
-              />
-            )}
-          </div>
-        ))}
-      </div>
+              >
+                {index < currentStep ? <Check className="h-4 w-4" aria-hidden="true" /> : index + 1}
+              </div>
+              <span className="sr-only">
+                {step}
+                {index < currentStep ? " (completed)" : index === currentStep ? " (current)" : ""}
+              </span>
+              {index < STEPS.length - 1 && (
+                <div
+                  aria-hidden="true"
+                  className={cn(
+                    "mx-2 h-0.5 w-24",
+                    index < currentStep ? "bg-green-500" : "bg-gray-200 dark:bg-gray-700"
+                  )}
+                />
+              )}
+            </li>
+          ))}
+        </ol>
+        <p className="sr-only">
+          Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}
+        </p>
+      </nav>
 
       {/* Step Title */}
       <h3 className="mb-4 text-sm font-medium text-gray-500">{STEPS[currentStep]}</h3>
@@ -629,9 +696,10 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
         <button
           onClick={() => setCurrentStep((s) => s - 1)}
           disabled={currentStep === 0}
+          aria-label="Go to previous step"
           className="flex items-center gap-1 rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-400 dark:hover:bg-gray-800"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Back
         </button>
 
@@ -639,17 +707,19 @@ function CreateProjectWizardContent({ onClose }: { onClose: () => void }) {
           <button
             onClick={() => setCurrentStep((s) => s + 1)}
             disabled={!canProceed()}
+            aria-label="Go to next step"
             className="bg-primary-500 hover:bg-primary-600 flex items-center gap-1 rounded-lg px-4 py-2 text-sm text-white disabled:opacity-50"
           >
             Next
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
         ) : (
           <button
             onClick={handleCreate}
+            aria-label="Create project"
             className="flex items-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm text-white hover:bg-green-600"
           >
-            <Check className="h-4 w-4" />
+            <Check className="h-4 w-4" aria-hidden="true" />
             Create Project
           </button>
         )}

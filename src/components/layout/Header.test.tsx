@@ -60,7 +60,7 @@ describe("Header", () => {
 
     render(<Header />);
 
-    const refreshButton = screen.getByTitle("Refresh projects");
+    const refreshButton = screen.getByLabelText("Refresh projects");
     expect(refreshButton).toBeInTheDocument();
   });
 
@@ -72,7 +72,7 @@ describe("Header", () => {
     render(<Header />);
 
     await waitFor(() => {
-      const poweroffButton = screen.getByTitle("Power off all projects");
+      const poweroffButton = screen.getByLabelText("Power off all projects");
       expect(poweroffButton).toBeDisabled();
     });
   });
@@ -85,7 +85,7 @@ describe("Header", () => {
     render(<Header />);
 
     await waitFor(() => {
-      const poweroffButton = screen.getByTitle("Power off all projects");
+      const poweroffButton = screen.getByLabelText("Power off all projects");
       expect(poweroffButton).not.toBeDisabled();
     });
   });
@@ -106,10 +106,10 @@ describe("Header", () => {
     render(<Header />);
 
     await waitFor(() => {
-      expect(screen.getByTitle("Power off all projects")).not.toBeDisabled();
+      expect(screen.getByLabelText("Power off all projects")).not.toBeDisabled();
     });
 
-    const poweroffButton = screen.getByTitle("Power off all projects");
+    const poweroffButton = screen.getByLabelText("Power off all projects");
     await user.click(poweroffButton);
 
     expect(window.confirm).toHaveBeenCalled();
@@ -131,10 +131,10 @@ describe("Header", () => {
     render(<Header />);
 
     await waitFor(() => {
-      expect(screen.getByTitle("Power off all projects")).not.toBeDisabled();
+      expect(screen.getByLabelText("Power off all projects")).not.toBeDisabled();
     });
 
-    const poweroffButton = screen.getByTitle("Power off all projects");
+    const poweroffButton = screen.getByLabelText("Power off all projects");
     await user.click(poweroffButton);
 
     expect(window.confirm).toHaveBeenCalled();
@@ -148,6 +148,6 @@ describe("Header", () => {
 
     render(<Header />);
 
-    expect(screen.getByTitle("Settings")).toBeInTheDocument();
+    expect(screen.getByLabelText("Settings")).toBeInTheDocument();
   });
 });

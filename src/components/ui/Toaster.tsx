@@ -45,8 +45,12 @@ function ToastItem({ toast }: { toast: Toast }) {
   const Icon = icons[toast.type];
   const style = styles[toast.type];
 
+  // Use role="alert" for errors, role="status" for others
+  const role = toast.type === "error" ? "alert" : "status";
+
   return (
     <div
+      role={role}
       className={cn(
         "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border p-4 shadow-lg",
         toast.exiting
@@ -55,19 +59,20 @@ function ToastItem({ toast }: { toast: Toast }) {
         style.container
       )}
     >
-      <Icon className={cn("h-5 w-5 shrink-0", style.icon)} />
+      <Icon className={cn("h-5 w-5 shrink-0", style.icon)} aria-hidden="true" />
       <div className="flex-1 space-y-1">
         <p className={cn("text-sm font-medium", style.title)}>{toast.title}</p>
         {toast.message && <p className={cn("text-sm", style.message)}>{toast.message}</p>}
       </div>
       <button
         onClick={() => dismissToast(toast.id)}
+        aria-label="Dismiss notification"
         className={cn(
           "shrink-0 rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/10",
           style.icon
         )}
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );
@@ -79,7 +84,12 @@ export function Toaster() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed bottom-4 left-4 z-50 flex flex-col gap-2">
+    <div
+      role="region"
+      aria-label="Notifications"
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-4 left-4 z-50 flex flex-col gap-2"
+    >
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} />
       ))}

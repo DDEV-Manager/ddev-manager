@@ -25,10 +25,11 @@ export function InstalledAddonsList({ addons, removingAddon, onRemove }: Install
   }
 
   return (
-    <div className="space-y-2">
+    <div role="list" aria-label="Installed add-ons" className="space-y-2">
       {addons.map((addon) => (
         <div
           key={addon.name}
+          role="listitem"
           className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-900"
         >
           <div className="min-w-0 flex-1">
@@ -42,20 +43,20 @@ export function InstalledAddonsList({ addons, removingAddon, onRemove }: Install
             <button
               onClick={() => openUrl.mutate(getGitHubUrl(addon.repository))}
               className="rounded p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700"
-              title="View on GitHub"
+              aria-label={`View ${addon.name} on GitHub`}
             >
-              <ExternalLink className="h-4 w-4 text-gray-400" />
+              <ExternalLink className="h-4 w-4 text-gray-400" aria-hidden="true" />
             </button>
             <button
               onClick={() => onRemove(addon.name)}
               disabled={removingAddon !== null}
               className="rounded p-1.5 text-red-500 hover:bg-red-100 disabled:opacity-50 dark:hover:bg-red-900/30"
-              title="Remove add-on"
+              aria-label={`Remove ${addon.name} add-on`}
             >
               {removingAddon === addon.name ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
               )}
             </button>
           </div>

@@ -12,6 +12,8 @@ interface ModalProps {
   scrollable?: boolean;
   /** Accessible label ID for the modal */
   ariaLabelledBy?: string;
+  /** Accessible description ID for the modal */
+  ariaDescribedBy?: string;
   /** Whether clicking outside the modal closes it (default: true) */
   closeOnClickOutside?: boolean;
 }
@@ -31,10 +33,12 @@ export function Modal({
   className,
   scrollable = false,
   ariaLabelledBy,
+  ariaDescribedBy,
   closeOnClickOutside = true,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   // Handle animation end to unmount after close animation
   const handleAnimationEnd = useCallback(() => {
@@ -53,18 +57,44 @@ export function Modal({
     }
   }, [isOpen]);
 
-  // Close on escape key
+  // Focus trap and keyboard handling
   useEffect(() => {
+    if (!isOpen) return;
+
+    // Store previously focused element and focus the modal
+    previouslyFocusedRef.current = document.activeElement as HTMLElement;
+    modalRef.current?.focus();
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
+        return;
+      }
+
+      // Focus trap - Tab cycles within modal
+      if (e.key === "Tab" && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
-    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      // Restore focus to previously focused element
+      previouslyFocusedRef.current?.focus();
+    };
   }, [isOpen, onClose]);
 
   // Close on click outside
@@ -104,6 +134,8 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
+        tabIndex={-1}
         className={cn(
           "mx-4 w-full rounded-xl border border-gray-200 bg-white p-6 shadow-2xl duration-200 dark:border-gray-700 dark:bg-gray-900",
           isOpen ? "animate-in fade-in zoom-in-95" : "animate-out fade-out zoom-out-95",
