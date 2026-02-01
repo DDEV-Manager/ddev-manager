@@ -50,22 +50,59 @@ pub async fn select_export_destination(
 
 /// Import a database file (streaming output)
 #[tauri::command]
-pub fn import_db(window: Window, project: String, file_path: String) -> Result<String, DdevError> {
-    run_ddev_command_streaming(
-        window,
-        "import-db",
-        &project,
-        &["import-db", &format!("--file={}", file_path), &project],
-    )
+pub fn import_db(
+    window: Window,
+    project: String,
+    file_path: String,
+    database: Option<String>,
+    no_drop: Option<bool>,
+) -> Result<String, DdevError> {
+    let mut args = vec!["import-db".to_string(), format!("--file={}", file_path)];
+
+    if let Some(db) = database {
+        if !db.is_empty() {
+            args.push(format!("--database={}", db));
+        }
+    }
+
+    if no_drop.unwrap_or(false) {
+        args.push("--no-drop".to_string());
+    }
+
+    args.push(project.clone());
+
+    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    run_ddev_command_streaming(window, "import-db", &project, &args_refs)
 }
 
 /// Export database to file (streaming output)
 #[tauri::command]
-pub fn export_db(window: Window, project: String, file_path: String) -> Result<String, DdevError> {
-    run_ddev_command_streaming(
-        window,
-        "export-db",
-        &project,
-        &["export-db", &format!("--file={}", file_path), &project],
-    )
+pub fn export_db(
+    window: Window,
+    project: String,
+    file_path: String,
+    database: Option<String>,
+    compression: Option<String>,
+) -> Result<String, DdevError> {
+    let mut args = vec!["export-db".to_string(), format!("--file={}", file_path)];
+
+    if let Some(db) = database {
+        if !db.is_empty() {
+            args.push(format!("--database={}", db));
+        }
+    }
+
+    // Add compression flag (gzip is default, only add flag for bzip2 or xz)
+    if let Some(comp) = compression {
+        match comp.as_str() {
+            "bzip2" => args.push("--bzip2".to_string()),
+            "xz" => args.push("--xz".to_string()),
+            _ => {} // gzip is default, no flag needed
+        }
+    }
+
+    args.push(project.clone());
+
+    let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
+    run_ddev_command_streaming(window, "export-db", &project, &args_refs)
 }

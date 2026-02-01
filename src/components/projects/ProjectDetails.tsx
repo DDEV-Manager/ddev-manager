@@ -24,6 +24,9 @@ import { PhpVersionSelector } from "./PhpVersionSelector";
 import { NodejsVersionSelector } from "./NodejsVersionSelector";
 import { ProjectTypeIcon, getProjectTypeColor } from "./ProjectTypeIcon";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { DatabaseImportDialog } from "./DatabaseImportDialog";
+import { DatabaseExportDialog } from "./DatabaseExportDialog";
+import type { DbImportOptions, DbExportOptions } from "@/types/ddev";
 import { useState, useEffect, useCallback } from "react";
 import {
   useProject,
@@ -75,6 +78,8 @@ export function ProjectDetails() {
   const [operation, setOperation] = useState<OperationState>({ type: null, projectName: null });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<ProjectTab>("environment");
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   const startProject = useStartProject();
   const stopProject = useStopProject();
@@ -223,24 +228,56 @@ export function ProjectDetails() {
     deleteProject.mutate(project.name);
   }, [project, deleteProject]);
 
-  const handleImportDb = useCallback(async () => {
+  const handleImportDb = useCallback(() => {
     if (!project) return;
-    const filePath = await selectDbFile.mutateAsync();
-    if (filePath) {
-      setOperation({ type: "import-db", projectName: project.name });
-      importDb.mutate({ project: project.name, filePath });
-    }
-  }, [project, selectDbFile, importDb]);
+    setShowImportDialog(true);
+  }, [project]);
 
-  const handleExportDb = useCallback(async () => {
+  const handleImportConfirm = useCallback(
+    async (options: DbImportOptions) => {
+      if (!project) return;
+      setShowImportDialog(false);
+      const filePath = await selectDbFile.mutateAsync();
+      if (filePath) {
+        setOperation({ type: "import-db", projectName: project.name });
+        importDb.mutate({ project: project.name, filePath, options });
+      }
+    },
+    [project, selectDbFile, importDb]
+  );
+
+  const handleImportCancel = useCallback(() => {
+    setShowImportDialog(false);
+  }, []);
+
+  const handleExportDb = useCallback(() => {
     if (!project) return;
-    const defaultName = `${project.name}-${new Date().toISOString().split("T")[0]}.sql.gz`;
-    const filePath = await selectExportDest.mutateAsync(defaultName);
-    if (filePath) {
-      setOperation({ type: "export-db", projectName: project.name });
-      exportDb.mutate({ project: project.name, filePath });
-    }
-  }, [project, selectExportDest, exportDb]);
+    setShowExportDialog(true);
+  }, [project]);
+
+  const handleExportConfirm = useCallback(
+    async (options: DbExportOptions) => {
+      if (!project) return;
+      setShowExportDialog(false);
+      const ext =
+        options.compression === "bzip2"
+          ? ".sql.bz2"
+          : options.compression === "xz"
+            ? ".sql.xz"
+            : ".sql.gz";
+      const defaultName = `${project.name}-${new Date().toISOString().split("T")[0]}${ext}`;
+      const filePath = await selectExportDest.mutateAsync(defaultName);
+      if (filePath) {
+        setOperation({ type: "export-db", projectName: project.name });
+        exportDb.mutate({ project: project.name, filePath, options });
+      }
+    },
+    [project, selectExportDest, exportDb]
+  );
+
+  const handleExportCancel = useCallback(() => {
+    setShowExportDialog(false);
+  }, []);
 
   if (!selectedProject) {
     return (
@@ -439,6 +476,20 @@ export function ProjectDetails() {
         variant="danger"
         onConfirm={confirmDelete}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      {/* Database import options dialog */}
+      <DatabaseImportDialog
+        isOpen={showImportDialog}
+        onConfirm={handleImportConfirm}
+        onCancel={handleImportCancel}
+      />
+
+      {/* Database export options dialog */}
+      <DatabaseExportDialog
+        isOpen={showExportDialog}
+        onConfirm={handleExportConfirm}
+        onCancel={handleExportCancel}
       />
     </div>
   );

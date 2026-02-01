@@ -1,6 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { DdevProjectBasic, DdevProjectDetails } from "@/types/ddev";
+import type {
+  DdevProjectBasic,
+  DdevProjectDetails,
+  DbImportOptions,
+  DbExportOptions,
+} from "@/types/ddev";
 import { useTerminalStore } from "@/stores/terminalStore";
 import { useAppStore } from "@/stores/appStore";
 
@@ -294,9 +299,22 @@ export function useImportDb() {
   const { open, autoOpen } = useTerminalStore();
 
   return useMutation({
-    mutationFn: async ({ project, filePath }: { project: string; filePath: string }) => {
+    mutationFn: async ({
+      project,
+      filePath,
+      options,
+    }: {
+      project: string;
+      filePath: string;
+      options?: DbImportOptions;
+    }) => {
       if (autoOpen) open();
-      return invoke<string>("import_db", { project, filePath });
+      return invoke<string>("import_db", {
+        project,
+        filePath,
+        database: options?.database,
+        noDrop: options?.noDrop,
+      });
     },
   });
 }
@@ -306,9 +324,22 @@ export function useExportDb() {
   const { open, autoOpen } = useTerminalStore();
 
   return useMutation({
-    mutationFn: async ({ project, filePath }: { project: string; filePath: string }) => {
+    mutationFn: async ({
+      project,
+      filePath,
+      options,
+    }: {
+      project: string;
+      filePath: string;
+      options?: DbExportOptions;
+    }) => {
       if (autoOpen) open();
-      return invoke<string>("export_db", { project, filePath });
+      return invoke<string>("export_db", {
+        project,
+        filePath,
+        database: options?.database,
+        compression: options?.compression,
+      });
     },
   });
 }
