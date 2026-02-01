@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question
+    url: https://github.com/DDEV-Manager/ddev-manager/discussions/new?category=q-a
+    about: Ask questions in GitHub Discussions
+  - name: DDEV Support
+    url: https://ddev.readthedocs.io/en/stable/users/support/
+    about: For DDEV-specific issues (not DDEV Manager), check DDEV support resources

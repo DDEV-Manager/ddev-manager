@@ -1,0 +1,62 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe your idea below.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this feature solve? Why would it be useful?
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe how you'd like this feature to work.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered any alternative solutions or workarounds?
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or examples
+      description: If applicable, add mockups, screenshots, or links to similar features in other apps.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Feature scope
+      description: What area of the app does this affect?
+      options:
+        - Project management (start/stop/restart)
+        - Configuration editing
+        - Add-ons
+        - Database management
+        - Logs/Terminal
+        - Snapshots
+        - UI/UX
+        - Settings
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to help implement this feature
