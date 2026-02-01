@@ -47,26 +47,35 @@ export function ConfirmDialog({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onCancel} ariaLabelledBy="dialog-title" className="relative">
+    <Modal
+      isOpen={isOpen}
+      onClose={onCancel}
+      ariaLabelledBy="dialog-title"
+      ariaDescribedBy="dialog-description"
+      className="relative"
+    >
       {/* Close button */}
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={onCancel}
-        icon={<X className="h-5 w-5" />}
+        icon={<X className="h-5 w-5" aria-hidden="true" />}
+        aria-label="Close dialog"
         className="absolute top-4 right-4"
       />
 
       {/* Icon and title */}
       <div className="flex items-start gap-4">
         <div className={cn("shrink-0 rounded-full p-2", iconColors[variant])}>
-          <AlertTriangle className="h-6 w-6" />
+          <AlertTriangle className="h-6 w-6" aria-hidden="true" />
         </div>
         <div className="flex-1">
           <h3 id="dialog-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             {title}
           </h3>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{message}</p>
+          <p id="dialog-description" className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {message}
+          </p>
         </div>
       </div>
 

@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Play, Square, RotateCw, ExternalLink, Folder } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProjectTypeIcon, getProjectTypeColor } from "./ProjectTypeIcon";
@@ -17,7 +18,10 @@ interface ProjectCardProps {
   onSelect: () => void;
 }
 
-export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps) {
+export const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(function ProjectCard(
+  { project, isSelected, onSelect },
+  ref
+) {
   const startProject = useStartProject();
   const stopProject = useStopProject();
   const restartProject = useRestartProject();
@@ -52,13 +56,19 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
     openFolder.mutate(project.approot);
   };
 
+  const statusLabel = project.status.charAt(0).toUpperCase() + project.status.slice(1);
+
   return (
     <div
+      ref={ref}
+      id={`project-${project.name}`}
+      role="option"
+      aria-selected={isSelected}
       onClick={onSelect}
       className={cn(
         "group relative cursor-pointer rounded-lg border p-3 transition-all",
         isSelected
-          ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30"
+          ? "border-primary-500 bg-primary-50 ring-primary-500 dark:bg-primary-950/30 ring-2"
           : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-800 dark:hover:border-gray-700 dark:hover:bg-gray-900"
       )}
     >
@@ -66,12 +76,13 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
       <div className="flex items-center gap-2">
         <div
           className={cn("h-2.5 w-2.5 shrink-0 rounded-full", getStatusBgColor(project.status))}
-          title={`Status: ${project.status.charAt(0).toUpperCase() + project.status.slice(1)}`}
+          aria-hidden="true"
         />
+        <span className="sr-only">Status: {statusLabel}</span>
         <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900 dark:text-gray-100">
           {project.name}
         </h3>
-        {/* Quick actions */}
+        {/* Quick actions - tabIndex={-1} to keep them out of tab order (mouse-only, appear on hover) */}
         <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           {isRunning ? (
             <>
@@ -79,6 +90,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  tabIndex={-1}
                   onClick={handleOpenUrl}
                   icon={<ExternalLink className="h-3.5 w-3.5" />}
                   title="Open in browser"
@@ -88,6 +100,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
               <Button
                 variant="ghost"
                 size="icon-sm"
+                tabIndex={-1}
                 onClick={handleRestart}
                 disabled={isPending}
                 icon={
@@ -101,6 +114,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
               <Button
                 variant="ghost"
                 size="icon-sm"
+                tabIndex={-1}
                 onClick={handleStop}
                 disabled={isPending}
                 icon={<Square className="h-3.5 w-3.5" />}
@@ -113,6 +127,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
               <Button
                 variant="ghost"
                 size="icon-sm"
+                tabIndex={-1}
                 onClick={handleOpenFolder}
                 icon={<Folder className="h-3.5 w-3.5" />}
                 title="Open folder"
@@ -121,6 +136,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
               <Button
                 variant="ghost"
                 size="icon-sm"
+                tabIndex={-1}
                 onClick={handleStart}
                 disabled={isPending}
                 icon={
@@ -140,6 +156,7 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
           type={project.type}
           size="sm"
           className={getProjectTypeColor(project.type)}
+          aria-hidden="true"
         />
         <span>{formatProjectType(project.type)}</span>
       </div>
@@ -151,4 +168,4 @@ export function ProjectCard({ project, isSelected, onSelect }: ProjectCardProps)
       </div>
     </div>
   );
-}
+});

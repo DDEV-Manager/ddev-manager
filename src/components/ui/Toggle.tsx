@@ -1,3 +1,4 @@
+import { type KeyboardEvent } from "react";
 import { cn } from "@/lib/utils";
 
 interface ToggleProps {
@@ -27,6 +28,15 @@ export function Toggle({ enabled, onChange, disabled = false, size = "md", label
 
   const styles = sizeStyles[size];
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      if (!disabled) {
+        onChange(!enabled);
+      }
+    }
+  };
+
   return (
     <button
       type="button"
@@ -35,6 +45,7 @@ export function Toggle({ enabled, onChange, disabled = false, size = "md", label
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!enabled)}
+      onKeyDown={handleKeyDown}
       className={cn(
         "focus:ring-primary-500 relative rounded-full transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none",
         styles.track,
@@ -43,6 +54,7 @@ export function Toggle({ enabled, onChange, disabled = false, size = "md", label
       )}
     >
       <span
+        aria-hidden="true"
         className={cn(
           "absolute top-0.5 left-0.5 rounded-full bg-white shadow transition-transform",
           styles.thumb,
