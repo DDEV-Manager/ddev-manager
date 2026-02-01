@@ -208,3 +208,15 @@ export interface SortOption {
   field: "name" | "status" | "type";
   direction: "asc" | "desc";
 }
+
+// Database import options
+export interface DbImportOptions {
+  database?: string;
+  noDrop?: boolean;
+}
+
+// Database export options
+export interface DbExportOptions {
+  database?: string;
+  compression?: "gzip" | "bzip2" | "xz";
+}
