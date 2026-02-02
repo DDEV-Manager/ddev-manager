@@ -48,6 +48,34 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 - Reference related issues with `Fixes #123` or `Closes #123`
 - Do NOT include "Generated with Claude Code" or similar attribution lines
 
+### Releases
+Releases are created automatically by GitHub Actions when a version tag is pushed.
+
+To create a release:
+```bash
+# 1. Create a release branch
+git checkout -b chore/release-X.Y.Z
+
+# 2. Bump version (updates package.json and src-tauri/tauri.conf.json)
+pnpm version:bump minor    # or: patch, major, X.Y.Z
+
+# 3. Commit and push
+git add package.json src-tauri/tauri.conf.json
+git commit -m "chore: bump version to X.Y.Z"
+git push -u origin chore/release-X.Y.Z
+
+# 4. Create PR and merge it
+gh pr create --title "chore: bump version to X.Y.Z" --body "Release X.Y.Z"
+gh pr merge --squash --delete-branch
+
+# 5. Create and push the tag from main
+git checkout main && git pull
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+GitHub Actions will automatically build and publish the release with binaries for all platforms.
+
 ## Development Commands
 ```bash
 pnpm tauri dev          # Run development server
