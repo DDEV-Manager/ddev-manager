@@ -14,35 +14,10 @@ const ZOOM_STEP = 10;
  * These are registered when initializeDefaultShortcuts() is called.
  */
 export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
-  // Zoom in: Cmd/Ctrl + = (or Cmd/Ctrl + Shift + =)
+  // Zoom in: Cmd/Ctrl + =
   {
     id: "zoom-in",
     key: "=",
-    modifierKey: true,
-    description: "Zoom in",
-    action: () => {
-      const { zoom, setZoom } = useAppStore.getState();
-      setZoom(zoom + ZOOM_STEP);
-    },
-    preventDefault: true,
-  },
-  // Zoom in with +: Cmd/Ctrl + Shift + = (standard way to type +)
-  {
-    id: "zoom-in-shift-plus",
-    key: "+",
-    modifierKey: true,
-    shiftKey: true,
-    description: "Zoom in",
-    action: () => {
-      const { zoom, setZoom } = useAppStore.getState();
-      setZoom(zoom + ZOOM_STEP);
-    },
-    preventDefault: true,
-  },
-  // Zoom in with + on numpad or keyboards that report + without shift
-  {
-    id: "zoom-in-plus",
-    key: "+",
     modifierKey: true,
     description: "Zoom in",
     action: () => {
@@ -92,17 +67,18 @@ export function initializeDefaultShortcuts(): void {
   initialized = true;
 }
 
-// Extend Window interface for global zoom handlers
+// Extend Window interface for global menu handlers
 declare global {
   interface Window {
     __ZOOM_IN?: () => void;
     __ZOOM_OUT?: () => void;
     __ZOOM_RESET?: () => void;
+    __SET_THEME?: (theme: "light" | "dark" | "system") => void;
   }
 }
 
 /**
- * Initialize global zoom handlers for native menu integration.
+ * Initialize global handlers for native menu integration.
  * These are called from Tauri's native menu via window.eval().
  */
 export function initializeMenuZoomHandlers(): void {
@@ -118,5 +94,9 @@ export function initializeMenuZoomHandlers(): void {
 
   window.__ZOOM_RESET = () => {
     useAppStore.getState().setZoom(100);
+  };
+
+  window.__SET_THEME = (theme: "light" | "dark" | "system") => {
+    useAppStore.getState().setTheme(theme);
   };
 }

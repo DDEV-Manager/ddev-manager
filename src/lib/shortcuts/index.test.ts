@@ -26,22 +26,6 @@ describe("DEFAULT_SHORTCUTS", () => {
       expect(shortcut?.modifierKey).toBe(true);
     });
 
-    it("should have zoom-in-shift-plus shortcut (Cmd/Ctrl + Shift + +)", () => {
-      const shortcut = DEFAULT_SHORTCUTS.find((s) => s.id === "zoom-in-shift-plus");
-      expect(shortcut).toBeDefined();
-      expect(shortcut?.key).toBe("+");
-      expect(shortcut?.modifierKey).toBe(true);
-      expect(shortcut?.shiftKey).toBe(true);
-    });
-
-    it("should have zoom-in-plus shortcut (Cmd/Ctrl + +)", () => {
-      const shortcut = DEFAULT_SHORTCUTS.find((s) => s.id === "zoom-in-plus");
-      expect(shortcut).toBeDefined();
-      expect(shortcut?.key).toBe("+");
-      expect(shortcut?.modifierKey).toBe(true);
-      expect(shortcut?.shiftKey).toBeUndefined();
-    });
-
     it("should have zoom-out shortcut (Cmd/Ctrl + -)", () => {
       const shortcut = DEFAULT_SHORTCUTS.find((s) => s.id === "zoom-out");
       expect(shortcut).toBeDefined();
@@ -120,26 +104,6 @@ describe("zoom shortcuts in registry", () => {
     });
     const found = shortcutRegistry.findByKey(event);
     expect(found?.id).toBe("zoom-in");
-  });
-
-  it("should find zoom-in-shift-plus with Cmd + Shift + +", () => {
-    const event = new KeyboardEvent("keydown", {
-      key: "+",
-      metaKey: true,
-      shiftKey: true,
-    });
-    const found = shortcutRegistry.findByKey(event);
-    expect(found?.id).toBe("zoom-in-shift-plus");
-  });
-
-  it("should find zoom-in-plus with Cmd + + (numpad)", () => {
-    const event = new KeyboardEvent("keydown", {
-      key: "+",
-      metaKey: true,
-      shiftKey: false,
-    });
-    const found = shortcutRegistry.findByKey(event);
-    expect(found?.id).toBe("zoom-in-plus");
   });
 
   it("should find zoom-out with Cmd + -", () => {

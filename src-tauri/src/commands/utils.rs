@@ -92,3 +92,20 @@ pub fn open_project_folder(path: String) -> Result<(), DdevError> {
 
     Ok(())
 }
+
+/// Sync theme menu checkmarks with the current theme
+#[tauri::command]
+pub fn sync_theme_menu(app_handle: tauri::AppHandle, theme: String) -> Result<(), DdevError> {
+    use crate::ThemeMenuItems;
+    use std::sync::Mutex;
+    use tauri::Manager;
+
+    if let Some(items) = app_handle.try_state::<Mutex<ThemeMenuItems>>() {
+        if let Ok(items) = items.lock() {
+            let _ = items.light.set_checked(theme == "light");
+            let _ = items.dark.set_checked(theme == "dark");
+            let _ = items.system.set_checked(theme == "system");
+        }
+    }
+    Ok(())
+}
