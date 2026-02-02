@@ -304,11 +304,11 @@ function UrlRow({
     <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
       <span className="w-16 text-xs text-gray-500">{label}</span>
       {isActive ? (
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <Tooltip content="Open in browser">
             <button
               onClick={() => openUrl.mutate(url)}
-              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 w-full cursor-pointer truncate text-left font-mono text-sm underline decoration-dotted underline-offset-2"
+              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 block max-w-full cursor-pointer truncate text-left font-mono text-sm underline decoration-dotted underline-offset-2"
               aria-label="Open in browser"
             >
               {url}
