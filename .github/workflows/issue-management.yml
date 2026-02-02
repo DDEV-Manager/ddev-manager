@@ -1,0 +1,117 @@
+name: Issue Management
+
+on:
+  pull_request:
+    types: [closed]
+  release:
+    types: [published]
+
+jobs:
+  # When a PR is merged, add "pending-release" label to linked issues
+  label-linked-issues:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Add pending-release label to linked issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+
+            // Match patterns like "Fixes #123", "Closes #123", "Related to #123", "Resolves #123"
+            const issuePattern = /(?:fix(?:es)?|close[sd]?|related to|resolves?)\s*#(\d+)/gi;
+            const matches = [...prBody.matchAll(issuePattern)];
+
+            const issueNumbers = [...new Set(matches.map(m => parseInt(m[1])))];
+
+            for (const issueNumber of issueNumbers) {
+              try {
+                // Check if issue exists and is open
+                const { data: issue } = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+
+                if (issue.state === 'open') {
+                  // Add the pending-release label
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    labels: ['pending-release']
+                  });
+
+                  // Add a comment
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `A fix for this issue has been merged in #${context.payload.pull_request.number}. It will be available in the next release.`
+                  });
+
+                  console.log(`Added pending-release label to issue #${issueNumber}`);
+                }
+              } catch (error) {
+                console.log(`Could not process issue #${issueNumber}: ${error.message}`);
+              }
+            }
+
+  # When a release is published, close all issues with "pending-release" label
+  close-released-issues:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close issues with pending-release label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releaseName = context.payload.release.name || context.payload.release.tag_name;
+
+            // Find all open issues with pending-release label
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'pending-release'
+            });
+
+            for (const issue of issues) {
+              try {
+                // Add a comment about the release
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `This issue has been fixed in ${releaseName}. 🎉`
+                });
+
+                // Remove the pending-release label
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  name: 'pending-release'
+                });
+
+                // Close the issue
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'completed'
+                });
+
+                console.log(`Closed issue #${issue.number}`);
+              } catch (error) {
+                console.log(`Could not close issue #${issue.number}: ${error.message}`);
+              }
+            }
+
+            console.log(`Closed ${issues.length} issues for release ${releaseName}`);
