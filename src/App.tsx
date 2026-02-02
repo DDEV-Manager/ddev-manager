@@ -12,7 +12,7 @@ import { useUpdate } from "@/hooks/useUpdate";
 import { useTerminalStore } from "@/stores/terminalStore";
 import { useTheme } from "@/hooks/useTheme";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { initializeDefaultShortcuts } from "@/lib/shortcuts";
+import { initializeDefaultShortcuts, initializeMenuZoomHandlers } from "@/lib/shortcuts";
 import { toast } from "@/stores/toastStore";
 import { AlertCircle, Loader2 } from "lucide-react";
 
@@ -57,6 +57,7 @@ function AppContent() {
   useKeyboardShortcuts();
   useEffect(() => {
     initializeDefaultShortcuts();
+    initializeMenuZoomHandlers();
   }, []);
 
   // Global listener for project creation completion
