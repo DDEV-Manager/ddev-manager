@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
-import { X, Sun, Moon, Monitor, Minus, Plus, RefreshCw, Download, RotateCcw } from "lucide-react";
+import {
+  X,
+  Sun,
+  Moon,
+  Monitor,
+  Contrast,
+  Minus,
+  Plus,
+  RefreshCw,
+  Download,
+  RotateCcw,
+} from "lucide-react";
 import { useAppStore } from "@/stores/appStore";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -32,9 +43,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       .catch(() => setAppVersion("dev"));
   }, []);
 
-  const themeOptions: { value: "light" | "dark" | "system"; icon: typeof Sun; label: string }[] = [
+  const themeOptions: {
+    value: "light" | "dark" | "high-contrast" | "system";
+    icon: typeof Sun;
+    label: string;
+  }[] = [
     { value: "light", icon: Sun, label: "Light" },
     { value: "dark", icon: Moon, label: "Dark" },
+    { value: "high-contrast", icon: Contrast, label: "High Contrast" },
     { value: "system", icon: Monitor, label: "System" },
   ];
 

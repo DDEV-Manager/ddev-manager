@@ -4,6 +4,9 @@
 /* Enable class-based dark mode for manual theme switching */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Enable high contrast mode variant */
+@custom-variant high-contrast (&:where(.high-contrast, .high-contrast *));
+
 @theme {
   --font-sans:
     "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -30,6 +33,15 @@
   --color-sidebar: oklch(0.97 0.01 250);
   --color-sidebar-dark: oklch(0.15 0.02 250);
 
+  /* High contrast palette */
+  --color-hc-bg: #000000;
+  --color-hc-text: #ffffff;
+  --color-hc-accent: #00ffff;
+  --color-hc-accent-alt: #ffff00;
+  --color-hc-success: #00ff00;
+  --color-hc-error: #ff0000;
+  --color-hc-border: #ffffff;
+
   /* Border radius */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -55,6 +67,58 @@ body {
 html.dark body {
   background-color: var(--color-gray-950);
   color: var(--color-gray-100);
+}
+
+/* High contrast mode - class-based (always dark-based) */
+html.high-contrast body {
+  background-color: var(--color-hc-bg);
+  color: var(--color-hc-text);
+}
+
+/* High contrast overrides for common elements */
+html.high-contrast {
+  /* Override white to black for backgrounds */
+  --color-white: #000000;
+
+  /* Links and primary elements - bright cyan */
+  --color-primary-50: #000000;
+  --color-primary-100: #001a1a;
+  --color-primary-200: #003333;
+  --color-primary-300: #00cccc;
+  --color-primary-400: #00ffff;
+  --color-primary-500: #00ffff;
+  --color-primary-600: #00ffff;
+  --color-primary-700: #00ffff;
+  --color-primary-800: #00ffff;
+  --color-primary-900: #001a1a;
+  --color-primary-950: #000000;
+
+  /* Status colors - maximum brightness */
+  --color-success: #00ff00;
+  --color-warning: #ffff00;
+  --color-error: #ff3333;
+
+  /* Sidebar */
+  --color-sidebar: #000000;
+  --color-sidebar-dark: #000000;
+
+  /*
+   * Gray palette for high contrast dark mode:
+   * - Dark grays (700-950) used for backgrounds in dark mode → pure black
+   * - Light grays (100-300) used for text in dark mode → pure white
+   * - Mid grays (400-600) used for secondary text/borders → bright for visibility
+   */
+  --color-gray-50: #000000;
+  --color-gray-100: #ffffff;
+  --color-gray-200: #ffffff;
+  --color-gray-300: #ffffff;
+  --color-gray-400: #ffffff;
+  --color-gray-500: #cccccc;
+  --color-gray-600: #ffffff;
+  --color-gray-700: #222222;
+  --color-gray-800: #000000;
+  --color-gray-900: #000000;
+  --color-gray-950: #000000;
 }
 
 /* Prevent text selection on UI elements */
@@ -89,6 +153,87 @@ html.dark ::-webkit-scrollbar-thumb {
 
 html.dark ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gray-600);
+}
+
+/* High contrast scrollbar */
+html.high-contrast ::-webkit-scrollbar-thumb {
+  background: var(--color-hc-accent);
+}
+
+html.high-contrast ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-hc-text);
+}
+
+/* High contrast - ensure borders are visible */
+html.high-contrast *:where([class*="border"]) {
+  border-color: #ffffff !important;
+}
+
+/* High contrast - buttons and interactive elements */
+html.high-contrast button,
+html.high-contrast [role="button"] {
+  border: 2px solid #ffffff !important;
+}
+
+html.high-contrast button:hover,
+html.high-contrast [role="button"]:hover {
+  background-color: #333333 !important;
+}
+
+html.high-contrast button:focus,
+html.high-contrast [role="button"]:focus {
+  outline: 3px solid #00ffff !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast - inputs */
+html.high-contrast input,
+html.high-contrast select,
+html.high-contrast textarea {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+html.high-contrast input:focus,
+html.high-contrast select:focus,
+html.high-contrast textarea:focus {
+  outline: 3px solid #00ffff !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast - range slider */
+html.high-contrast input[type="range"] {
+  background-color: #333333 !important;
+}
+
+html.high-contrast input[type="range"]::-webkit-slider-thumb {
+  background-color: #00ffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+/* High contrast - selected/active states */
+html.high-contrast [aria-selected="true"],
+html.high-contrast [aria-checked="true"],
+html.high-contrast [data-state="checked"] {
+  background-color: #003333 !important;
+  border-color: #00ffff !important;
+}
+
+/* High contrast - links */
+html.high-contrast a {
+  color: #00ffff !important;
+  text-decoration: underline !important;
+}
+
+html.high-contrast a:hover {
+  color: #ffff00 !important;
+}
+
+/* High contrast - focus visible */
+html.high-contrast *:focus-visible {
+  outline: 3px solid #00ffff !important;
+  outline-offset: 2px !important;
 }
 
 /* Progress bar animation */
