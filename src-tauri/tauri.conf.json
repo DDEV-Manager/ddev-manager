@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "DDEV Manager",
         "width": 1200,
         "height": 800,

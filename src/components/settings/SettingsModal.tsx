@@ -7,6 +7,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { cn } from "@/lib/utils";
 import { useUpdate } from "@/hooks/useUpdate";
 import { getVersion } from "@tauri-apps/api/app";
+import { getModifierDisplay } from "@/lib/shortcuts";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -128,6 +129,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </button>
           ))}
         </div>
+
+        {/* Keyboard shortcuts hint */}
+        <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          Keyboard: {getModifierDisplay()}+ to zoom in, {getModifierDisplay()}- to zoom out,{" "}
+          {getModifierDisplay()}0 to reset
+        </p>
       </div>
 
       {/* Separator */}

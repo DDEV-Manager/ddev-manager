@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { invoke } from "@tauri-apps/api/core";
 import { useTheme } from "./useTheme";
 import { useAppStore } from "@/stores/appStore";
+
+// Mock Tauri invoke
+vi.mock("@tauri-apps/api/core");
 
 describe("useTheme", () => {
   let originalMatchMedia: typeof window.matchMedia;
@@ -12,6 +16,9 @@ describe("useTheme", () => {
   };
 
   beforeEach(() => {
+    // Mock invoke to return resolved promise
+    vi.mocked(invoke).mockResolvedValue(undefined);
+
     // Reset app store
     useAppStore.setState({ theme: "light", zoom: 100 });
 

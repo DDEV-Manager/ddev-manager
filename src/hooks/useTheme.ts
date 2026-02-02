@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { useAppStore } from "@/stores/appStore";
 
 /**
@@ -9,7 +10,7 @@ export function useTheme() {
   const theme = useAppStore((state) => state.theme);
   const zoom = useAppStore((state) => state.zoom);
 
-  // Apply theme class to document
+  // Apply theme class to document and sync menu
   useEffect(() => {
     const root = document.documentElement;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -38,6 +39,11 @@ export function useTheme() {
 
     // Apply immediately
     applyTheme();
+
+    // Sync theme menu checkmarks
+    invoke("sync_theme_menu", { theme }).catch(() => {
+      // Ignore errors (menu might not exist in some environments)
+    });
 
     // Listen for system preference changes when in "system" mode
     if (theme === "system") {
