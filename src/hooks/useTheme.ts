@@ -18,8 +18,9 @@ export function useTheme() {
     const applyTheme = () => {
       // Determine if we should use dark mode
       let isDark = false;
+      const isHighContrast = theme === "high-contrast";
 
-      if (theme === "dark") {
+      if (theme === "dark" || theme === "high-contrast") {
         isDark = true;
       } else if (theme === "system") {
         isDark = mediaQuery.matches;
@@ -31,6 +32,13 @@ export function useTheme() {
         root.classList.add("dark");
       } else {
         root.classList.remove("dark");
+      }
+
+      // Apply or remove high-contrast class
+      if (isHighContrast) {
+        root.classList.add("high-contrast");
+      } else {
+        root.classList.remove("high-contrast");
       }
 
       // Also set color-scheme for native elements (scrollbars, form controls)

@@ -14,10 +14,10 @@ const ZOOM_STEP = 10;
  * These are registered when initializeDefaultShortcuts() is called.
  */
 export const DEFAULT_SHORTCUTS: KeyboardShortcut[] = [
-  // Zoom in: Cmd/Ctrl + =
+  // Zoom in: Cmd/Ctrl + Plus (handled by native menu, this is fallback)
   {
     id: "zoom-in",
-    key: "=",
+    key: "+",
     modifierKey: true,
     description: "Zoom in",
     action: () => {
@@ -73,7 +73,7 @@ declare global {
     __ZOOM_IN?: () => void;
     __ZOOM_OUT?: () => void;
     __ZOOM_RESET?: () => void;
-    __SET_THEME?: (theme: "light" | "dark" | "system") => void;
+    __SET_THEME?: (theme: "light" | "dark" | "high-contrast" | "system") => void;
   }
 }
 
@@ -96,7 +96,7 @@ export function initializeMenuZoomHandlers(): void {
     useAppStore.getState().setZoom(100);
   };
 
-  window.__SET_THEME = (theme: "light" | "dark" | "system") => {
+  window.__SET_THEME = (theme: "light" | "dark" | "high-contrast" | "system") => {
     useAppStore.getState().setTheme(theme);
   };
 }

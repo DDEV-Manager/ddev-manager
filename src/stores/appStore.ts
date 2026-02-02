@@ -21,8 +21,8 @@ interface AppState {
   toggleSidebar: () => void;
 
   // Theme
-  theme: "light" | "dark" | "system";
-  setTheme: (theme: "light" | "dark" | "system") => void;
+  theme: "light" | "dark" | "high-contrast" | "system";
+  setTheme: (theme: "light" | "dark" | "high-contrast" | "system") => void;
 
   // Zoom (percentage: 50-200)
   zoom: number;

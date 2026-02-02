@@ -18,6 +18,7 @@ use tauri::Manager;
 pub struct ThemeMenuItems {
     pub light: CheckMenuItem<tauri::Wry>,
     pub dark: CheckMenuItem<tauri::Wry>,
+    pub high_contrast: CheckMenuItem<tauri::Wry>,
     pub system: CheckMenuItem<tauri::Wry>,
 }
 
@@ -48,7 +49,7 @@ pub fn run() {
 
             // Build the View menu with zoom controls and appearance
             let zoom_in = MenuItemBuilder::with_id("zoom_in", "Zoom In")
-                .accelerator("CmdOrCtrl++")
+                .accelerator("CmdOrCtrl+Plus")
                 .build(app)?;
             let zoom_out = MenuItemBuilder::with_id("zoom_out", "Zoom Out")
                 .accelerator("CmdOrCtrl+-")
@@ -60,6 +61,8 @@ pub fn run() {
             // Appearance submenu with check items (default to System checked)
             let theme_light = CheckMenuItemBuilder::with_id("theme_light", "Light").build(app)?;
             let theme_dark = CheckMenuItemBuilder::with_id("theme_dark", "Dark").build(app)?;
+            let theme_high_contrast =
+                CheckMenuItemBuilder::with_id("theme_high_contrast", "High Contrast").build(app)?;
             let theme_system = CheckMenuItemBuilder::with_id("theme_system", "System")
                 .checked(true)
                 .build(app)?;
@@ -68,12 +71,14 @@ pub fn run() {
             app.manage(Mutex::new(ThemeMenuItems {
                 light: theme_light.clone(),
                 dark: theme_dark.clone(),
+                high_contrast: theme_high_contrast.clone(),
                 system: theme_system.clone(),
             }));
 
             let appearance_menu = SubmenuBuilder::new(app, "Appearance")
                 .item(&theme_light)
                 .item(&theme_dark)
+                .item(&theme_high_contrast)
                 .item(&theme_system)
                 .build()?;
 
@@ -106,6 +111,9 @@ pub fn run() {
                     if let Ok(items) = items.lock() {
                         let _ = items.light.set_checked(event_id == "theme_light");
                         let _ = items.dark.set_checked(event_id == "theme_dark");
+                        let _ = items
+                            .high_contrast
+                            .set_checked(event_id == "theme_high_contrast");
                         let _ = items.system.set_checked(event_id == "theme_system");
                     }
                 }
@@ -119,6 +127,9 @@ pub fn run() {
                     "zoom_reset" => Some("if(window.__ZOOM_RESET)window.__ZOOM_RESET()"),
                     "theme_light" => Some("if(window.__SET_THEME)window.__SET_THEME('light')"),
                     "theme_dark" => Some("if(window.__SET_THEME)window.__SET_THEME('dark')"),
+                    "theme_high_contrast" => {
+                        Some("if(window.__SET_THEME)window.__SET_THEME('high-contrast')")
+                    }
                     "theme_system" => Some("if(window.__SET_THEME)window.__SET_THEME('system')"),
                     _ => None,
                 };

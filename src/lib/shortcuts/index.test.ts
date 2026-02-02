@@ -19,10 +19,10 @@ describe("DEFAULT_SHORTCUTS", () => {
   });
 
   describe("zoom shortcuts", () => {
-    it("should have zoom-in shortcut (Cmd/Ctrl + =)", () => {
+    it("should have zoom-in shortcut (Cmd/Ctrl + +)", () => {
       const shortcut = DEFAULT_SHORTCUTS.find((s) => s.id === "zoom-in");
       expect(shortcut).toBeDefined();
-      expect(shortcut?.key).toBe("=");
+      expect(shortcut?.key).toBe("+");
       expect(shortcut?.modifierKey).toBe(true);
     });
 
@@ -97,9 +97,9 @@ describe("zoom shortcuts in registry", () => {
     shortcutRegistry.clear();
   });
 
-  it("should find zoom-in with Cmd + =", () => {
+  it("should find zoom-in with Cmd + +", () => {
     const event = new KeyboardEvent("keydown", {
-      key: "=",
+      key: "+",
       metaKey: true,
     });
     const found = shortcutRegistry.findByKey(event);

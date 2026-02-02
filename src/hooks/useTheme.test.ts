@@ -37,6 +37,7 @@ describe("useTheme", () => {
 
     // Clear document classes and styles
     document.documentElement.classList.remove("dark");
+    document.documentElement.classList.remove("high-contrast");
     document.documentElement.style.colorScheme = "";
     document.documentElement.style.removeProperty("--zoom");
   });
@@ -84,6 +85,30 @@ describe("useTheme", () => {
       expect(document.documentElement.classList.contains("dark")).toBe(true);
       expect(document.documentElement.style.colorScheme).toBe("dark");
     });
+
+    it("should apply high-contrast theme with both dark and high-contrast classes", () => {
+      useAppStore.setState({ theme: "high-contrast" });
+
+      renderHook(() => useTheme());
+
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+      expect(document.documentElement.classList.contains("high-contrast")).toBe(true);
+      expect(document.documentElement.style.colorScheme).toBe("dark");
+    });
+
+    it("should remove high-contrast class when switching to other themes", () => {
+      useAppStore.setState({ theme: "high-contrast" });
+
+      const { rerender } = renderHook(() => useTheme());
+
+      expect(document.documentElement.classList.contains("high-contrast")).toBe(true);
+
+      useAppStore.setState({ theme: "dark" });
+      rerender();
+
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+      expect(document.documentElement.classList.contains("high-contrast")).toBe(false);
+    });
   });
 
   describe("system theme listener", () => {
@@ -108,6 +133,14 @@ describe("useTheme", () => {
 
     it("should not add event listener when theme is dark", () => {
       useAppStore.setState({ theme: "dark" });
+
+      renderHook(() => useTheme());
+
+      expect(mockMediaQueryList.addEventListener).not.toHaveBeenCalled();
+    });
+
+    it("should not add event listener when theme is high-contrast", () => {
+      useAppStore.setState({ theme: "high-contrast" });
 
       renderHook(() => useTheme());
 
