@@ -45,8 +45,15 @@ Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 ### Pull Request Descriptions
 - Include a `## Summary` section with bullet points
 - Include a `## Test plan` section with checklist items
-- Reference related issues with `Fixes #123` or `Closes #123`
+- Reference related issues with `Related to #123` (NOT `Fixes` or `Closes` - see below)
 - Do NOT include "Generated with Claude Code" or similar attribution lines
+
+### Issue Management
+Issues are closed only when the fix is published in a release, not when the PR is merged.
+
+- Use `Related to #123` in PR descriptions (not `Fixes #123` or `Closes #123`)
+- When a PR is merged, linked issues automatically get a `pending-release` label
+- When a release is published, all `pending-release` issues are automatically closed
 
 ### Releases
 Releases are created automatically by GitHub Actions when a version tag is pushed.
