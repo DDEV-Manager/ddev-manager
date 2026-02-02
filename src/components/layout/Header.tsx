@@ -7,6 +7,7 @@ import { SettingsModal } from "@/components/settings/SettingsModal";
 import { CreateProjectWizard } from "@/components/projects/CreateProjectWizard";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 function DdevLogo({
   className,
@@ -100,30 +101,34 @@ export function Header() {
           New Project
         </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleRefresh}
-          icon={<RefreshCw className="h-4 w-4" aria-hidden="true" />}
-          aria-label="Refresh projects"
-        />
+        <Tooltip content="Refresh projects">
+          <Button variant="ghost" size="icon" onClick={handleRefresh} aria-label="Refresh projects">
+            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </Tooltip>
 
-        <Button
-          variant={runningCount > 0 ? "danger" : "ghost"}
-          size="icon"
-          onClick={handlePoweroff}
-          disabled={runningCount === 0 || poweroff.isPending}
-          icon={<Power className="h-4 w-4" aria-hidden="true" />}
-          aria-label="Power off all projects"
-        />
+        <Tooltip content="Power off all projects">
+          <Button
+            variant={runningCount > 0 ? "danger" : "ghost"}
+            size="icon"
+            onClick={handlePoweroff}
+            disabled={runningCount === 0 || poweroff.isPending}
+            aria-label="Power off all projects"
+          >
+            <Power className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </Tooltip>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsSettingsOpen(true)}
-          icon={<Settings className="h-4 w-4" aria-hidden="true" />}
-          aria-label="Settings"
-        />
+        <Tooltip content="Settings">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSettingsOpen(true)}
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </Tooltip>
       </div>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

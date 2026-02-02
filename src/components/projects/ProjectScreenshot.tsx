@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { RefreshCw, ImageOff, Loader2, Camera } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useScreenshotData, useCaptureScreenshot } from "@/hooks/useScreenshot";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -132,13 +133,17 @@ export function ProjectScreenshot({ projectName, primaryUrl, isRunning }: Projec
           style={{ maxHeight: "300px" }}
         />
         {isRunning && (
-          <button
-            onClick={handleCapture}
-            className="absolute top-2 right-2 rounded-md bg-black/50 p-1.5 text-white hover:bg-black/70"
-            title="Refresh screenshot"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </button>
+          <div className="absolute top-2 right-2">
+            <Tooltip content="Refresh screenshot">
+              <button
+                onClick={handleCapture}
+                className="rounded-md bg-black/50 p-1.5 text-white hover:bg-black/70"
+                aria-label="Refresh screenshot"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </button>
+            </Tooltip>
+          </div>
         )}
       </div>
     );

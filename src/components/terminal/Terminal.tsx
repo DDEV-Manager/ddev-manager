@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface CommandOutput {
   line: string;
@@ -107,13 +108,15 @@ export function Terminal({ isOpen }: TerminalProps) {
             </span>
           )}
         </div>
-        <button
-          onClick={clearLines}
-          className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
-          title="Clear output"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <Tooltip content="Clear output">
+          <button
+            onClick={clearLines}
+            className="rounded p-1.5 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
+            aria-label="Clear output"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Terminal content */}

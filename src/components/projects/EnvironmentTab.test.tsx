@@ -42,7 +42,7 @@ describe("EnvironmentTab", () => {
 
       render(<EnvironmentTab {...defaultProps} />);
 
-      const copyButtons = screen.getAllByTitle("Copy URL");
+      const copyButtons = screen.getAllByLabelText("Copy URL");
       await user.click(copyButtons[0]);
 
       expect(writeText).toHaveBeenCalledWith(defaultProps.project.primary_url);
@@ -54,7 +54,7 @@ describe("EnvironmentTab", () => {
       const user = userEvent.setup();
       render(<EnvironmentTab {...defaultProps} />);
 
-      const openButtons = screen.getAllByTitle("Open URL");
+      const openButtons = screen.getAllByLabelText("Open URL");
       await user.click(openButtons[0]);
 
       await waitFor(() => {
@@ -68,7 +68,7 @@ describe("EnvironmentTab", () => {
       const user = userEvent.setup();
       render(<EnvironmentTab {...defaultProps} />);
 
-      const urlButton = screen.getByTitle("Open in browser");
+      const urlButton = screen.getByLabelText("Open in browser");
       await user.click(urlButton);
 
       await waitFor(() => {
@@ -81,14 +81,14 @@ describe("EnvironmentTab", () => {
     it("should not show open URL button when project is stopped", () => {
       render(<EnvironmentTab {...defaultProps} isRunning={false} />);
 
-      expect(screen.queryByTitle("Open URL")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Open URL")).not.toBeInTheDocument();
     });
 
     it("should show URL as non-clickable text when project is stopped", () => {
       render(<EnvironmentTab {...defaultProps} isRunning={false} />);
 
       // URL should be shown as code element, not button
-      expect(screen.queryByTitle("Open in browser")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Open in browser")).not.toBeInTheDocument();
       expect(screen.getByText(defaultProps.project.primary_url)).toBeInTheDocument();
     });
 
@@ -147,7 +147,7 @@ describe("EnvironmentTab", () => {
 
       render(<EnvironmentTab {...defaultProps} />);
 
-      await user.click(screen.getByTitle("Copy password"));
+      await user.click(screen.getByLabelText("Copy password"));
 
       expect(writeText).toHaveBeenCalledWith("db");
 
@@ -252,7 +252,7 @@ describe("EnvironmentTab", () => {
       const user = userEvent.setup();
       render(<EnvironmentTab {...defaultProps} />);
 
-      await user.click(screen.getByTitle("Open folder"));
+      await user.click(screen.getByLabelText("Open folder"));
 
       await waitFor(() => {
         expect(invoke).toHaveBeenCalledWith("open_project_folder", {

@@ -32,7 +32,7 @@ describe("Terminal", () => {
     it("should have clear button", () => {
       render(<Terminal isOpen={true} />);
 
-      expect(screen.getByTitle("Clear output")).toBeInTheDocument();
+      expect(screen.getByLabelText("Clear output")).toBeInTheDocument();
     });
 
     it("should display command output lines", async () => {
@@ -103,7 +103,7 @@ describe("Terminal", () => {
 
       expect(screen.getByText("Some output")).toBeInTheDocument();
 
-      await user.click(screen.getByTitle("Clear output"));
+      await user.click(screen.getByLabelText("Clear output"));
 
       expect(screen.queryByText("Some output")).not.toBeInTheDocument();
       expect(screen.getByText("Command output will appear here...")).toBeInTheDocument();

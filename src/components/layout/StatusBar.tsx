@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Loader2, X, Terminal, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStatusStore } from "@/stores/statusStore";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface CommandOutput {
   line: string;
@@ -109,23 +110,24 @@ export function StatusBar({ onToggleTerminal, isTerminalOpen }: StatusBarProps) 
 
       <div className="flex items-center gap-3 px-4 py-1.5">
         {/* Output toggle button */}
-        <button
-          onClick={onToggleTerminal}
-          className={cn(
-            "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors",
-            isTerminalOpen
-              ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
-              : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
-          )}
-          title={isTerminalOpen ? "Hide output" : "Show output"}
-        >
-          {isTerminalOpen ? (
-            <Terminal className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronUp className="h-3.5 w-3.5" />
-          )}
-          Output
-        </button>
+        <Tooltip content={isTerminalOpen ? "Hide output" : "Show output"}>
+          <button
+            onClick={onToggleTerminal}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+              isTerminalOpen
+                ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                : "text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+            )}
+          >
+            {isTerminalOpen ? (
+              <Terminal className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronUp className="h-3.5 w-3.5" />
+            )}
+            Output
+          </button>
+        </Tooltip>
 
         {/* Separator */}
         <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
@@ -154,14 +156,15 @@ export function StatusBar({ onToggleTerminal, isTerminalOpen }: StatusBarProps) 
 
             {/* Cancel button */}
             {processId && !exiting && (
-              <button
-                onClick={handleCancel}
-                className="flex shrink-0 items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                title="Cancel command"
-              >
-                <X className="h-3.5 w-3.5" />
-                Cancel
-              </button>
+              <Tooltip content="Cancel command">
+                <button
+                  onClick={handleCancel}
+                  className="flex shrink-0 items-center gap-1.5 rounded-md bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Cancel
+                </button>
+              </Tooltip>
             )}
           </>
         ) : (
