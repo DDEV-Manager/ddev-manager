@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
 import { ProjectScreenshot } from "./ProjectScreenshot";
 import { Button } from "@/components/ui/Button";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { Accordion } from "@/components/ui/Accordion";
 import { cn } from "@/lib/utils";
 import type { DdevProjectDetails } from "@/types/ddev";
@@ -145,17 +146,19 @@ export function EnvironmentTab({
                     <span className="text-gray-900 dark:text-gray-100">
                       {project.dbinfo.password}
                     </span>
-                    <button
-                      onClick={() => copyToClipboard(project.dbinfo!.password, "password")}
-                      className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-                      title="Copy password"
-                    >
-                      {copiedField === "password" ? (
-                        <Check className="h-3 w-3 text-green-500" />
-                      ) : (
-                        <Copy className="h-3 w-3 text-gray-400" />
-                      )}
-                    </button>
+                    <Tooltip content="Copy password">
+                      <button
+                        onClick={() => copyToClipboard(project.dbinfo!.password, "password")}
+                        className="rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        aria-label="Copy password"
+                      >
+                        {copiedField === "password" ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3 text-gray-400" />
+                        )}
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
                 {isRunning && project.dbinfo.published_port > 0 && (
@@ -213,20 +216,25 @@ export function EnvironmentTab({
         <section>
           <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Services</h3>
           <div className="grid grid-cols-2 gap-2">
-            {Object.entries(project.services).map(([name, service]) => (
-              <div
-                key={name}
-                className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900"
-              >
+            {Object.entries(project.services).map(([name, service]) => {
+              const statusLabel = service.status.charAt(0).toUpperCase() + service.status.slice(1);
+              return (
                 <div
-                  className={cn(
-                    "h-2 w-2 rounded-full",
-                    service.status === "running" ? "bg-green-500" : "bg-gray-400"
-                  )}
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{name}</span>
-              </div>
-            ))}
+                  key={name}
+                  className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900"
+                >
+                  <Tooltip content={statusLabel} position="right">
+                    <div
+                      className={cn(
+                        "h-2 w-2 rounded-full",
+                        service.status === "running" ? "bg-green-500" : "bg-gray-400"
+                      )}
+                    />
+                  </Tooltip>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{name}</span>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
@@ -238,13 +246,15 @@ export function EnvironmentTab({
           <code className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">
             {project.approot}
           </code>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => openFolder.mutate(project.approot)}
-            icon={<Folder className="h-4 w-4 text-gray-500" />}
-            title="Open folder"
-          />
+          <Tooltip content="Open folder">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => openFolder.mutate(project.approot)}
+              icon={<Folder className="h-4 w-4 text-gray-500" />}
+              aria-label="Open folder"
+            />
+          </Tooltip>
         </div>
       </section>
 
@@ -294,38 +304,46 @@ function UrlRow({
     <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900">
       <span className="w-16 text-xs text-gray-500">{label}</span>
       {isActive ? (
-        <button
-          onClick={() => openUrl.mutate(url)}
-          className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 flex-1 cursor-pointer truncate text-left font-mono text-sm underline decoration-dotted underline-offset-2"
-          title="Open in browser"
-        >
-          {url}
-        </button>
+        <div className="min-w-0 flex-1">
+          <Tooltip content="Open in browser">
+            <button
+              onClick={() => openUrl.mutate(url)}
+              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 w-full cursor-pointer truncate text-left font-mono text-sm underline decoration-dotted underline-offset-2"
+              aria-label="Open in browser"
+            >
+              {url}
+            </button>
+          </Tooltip>
+        </div>
       ) : (
         <code className="flex-1 truncate text-sm text-gray-400 dark:text-gray-500">{url}</code>
       )}
       {isActive && (
+        <Tooltip content="Open URL">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => openUrl.mutate(url)}
+            icon={<ExternalLink className="h-4 w-4 text-gray-400" />}
+            aria-label="Open URL"
+          />
+        </Tooltip>
+      )}
+      <Tooltip content="Copy URL">
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={() => openUrl.mutate(url)}
-          icon={<ExternalLink className="h-4 w-4 text-gray-400" />}
-          title="Open URL"
+          onClick={onCopy}
+          icon={
+            copied ? (
+              <Check className="h-4 w-4 text-green-500" />
+            ) : (
+              <Copy className="h-4 w-4 text-gray-400" />
+            )
+          }
+          aria-label="Copy URL"
         />
-      )}
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        onClick={onCopy}
-        icon={
-          copied ? (
-            <Check className="h-4 w-4 text-green-500" />
-          ) : (
-            <Copy className="h-4 w-4 text-gray-400" />
-          )
-        }
-        title="Copy URL"
-      />
+      </Tooltip>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { Play, Square, RotateCw, ExternalLink, Folder } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { ProjectTypeIcon, getProjectTypeColor } from "./ProjectTypeIcon";
 import { cn, getStatusBgColor, formatProjectType, truncatePath } from "@/lib/utils";
 import {
@@ -74,10 +75,12 @@ export const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(function
     >
       {/* Title row with status, name, and actions */}
       <div className="flex items-center gap-2">
-        <div
-          className={cn("h-2.5 w-2.5 shrink-0 rounded-full", getStatusBgColor(project.status))}
-          aria-hidden="true"
-        />
+        <Tooltip content={statusLabel} position="right">
+          <div
+            className={cn("h-2.5 w-2.5 shrink-0 rounded-full", getStatusBgColor(project.status))}
+            aria-hidden="true"
+          />
+        </Tooltip>
         <span className="sr-only">Status: {statusLabel}</span>
         <h3 className="min-w-0 flex-1 truncate font-medium text-gray-900 dark:text-gray-100">
           {project.name}
@@ -87,64 +90,75 @@ export const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(function
           {isRunning ? (
             <>
               {project.primary_url && (
+                <Tooltip content="Open in browser">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    tabIndex={-1}
+                    onClick={handleOpenUrl}
+                    className="rounded-md"
+                    aria-label="Open in browser"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </Tooltip>
+              )}
+              <Tooltip content="Restart">
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   tabIndex={-1}
-                  onClick={handleOpenUrl}
-                  icon={<ExternalLink className="h-3.5 w-3.5" />}
-                  title="Open in browser"
-                  className="rounded-md"
-                />
-              )}
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                tabIndex={-1}
-                onClick={handleRestart}
-                disabled={isPending}
-                icon={
+                  onClick={handleRestart}
+                  disabled={isPending}
+                  className="rounded-md text-yellow-600 hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-900/30"
+                  aria-label="Restart"
+                >
                   <RotateCw
                     className={cn("h-3.5 w-3.5", restartProject.isPending && "animate-spin")}
                   />
-                }
-                title="Restart"
-                className="rounded-md text-yellow-600 hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-900/30"
-              />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                tabIndex={-1}
-                onClick={handleStop}
-                disabled={isPending}
-                icon={<Square className="h-3.5 w-3.5" />}
-                title="Stop"
-                className="rounded-md text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
-              />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Stop">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  tabIndex={-1}
+                  onClick={handleStop}
+                  disabled={isPending}
+                  className="rounded-md text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30"
+                  aria-label="Stop"
+                >
+                  <Square className="h-3.5 w-3.5" />
+                </Button>
+              </Tooltip>
             </>
           ) : (
             <>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                tabIndex={-1}
-                onClick={handleOpenFolder}
-                icon={<Folder className="h-3.5 w-3.5" />}
-                title="Open folder"
-                className="rounded-md"
-              />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                tabIndex={-1}
-                onClick={handleStart}
-                disabled={isPending}
-                icon={
+              <Tooltip content="Open folder">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  tabIndex={-1}
+                  onClick={handleOpenFolder}
+                  className="rounded-md"
+                  aria-label="Open folder"
+                >
+                  <Folder className="h-3.5 w-3.5" />
+                </Button>
+              </Tooltip>
+              <Tooltip content="Start">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  tabIndex={-1}
+                  onClick={handleStart}
+                  disabled={isPending}
+                  className="rounded-md text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/30"
+                  aria-label="Start"
+                >
                   <Play className={cn("h-3.5 w-3.5", startProject.isPending && "animate-pulse")} />
-                }
-                title="Start"
-                className="rounded-md text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/30"
-              />
+                </Button>
+              </Tooltip>
             </>
           )}
         </div>
@@ -160,12 +174,11 @@ export const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(function
         />
         <span>{formatProjectType(project.type)}</span>
       </div>
-      <div
-        className="overflow-hidden text-xs whitespace-nowrap text-gray-400 dark:text-gray-500"
-        title={project.shortroot}
-      >
-        {truncatePath(project.shortroot, 43)}
-      </div>
+      <Tooltip content={project.shortroot} position="bottom">
+        <div className="overflow-hidden text-xs whitespace-nowrap text-gray-400 dark:text-gray-500">
+          {truncatePath(project.shortroot, 43)}
+        </div>
+      </Tooltip>
     </div>
   );
 });

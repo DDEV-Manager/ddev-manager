@@ -78,9 +78,9 @@ describe("ProjectCard", () => {
 
       render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-      expect(screen.getByTitle("Stop")).toBeInTheDocument();
-      expect(screen.getByTitle("Restart")).toBeInTheDocument();
-      expect(screen.getByTitle("Open in browser")).toBeInTheDocument();
+      expect(screen.getByLabelText("Stop")).toBeInTheDocument();
+      expect(screen.getByLabelText("Restart")).toBeInTheDocument();
+      expect(screen.getByLabelText("Open in browser")).toBeInTheDocument();
     });
 
     it("should call stop_project when stop button clicked", async () => {
@@ -92,7 +92,7 @@ describe("ProjectCard", () => {
 
       render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-      await user.click(screen.getByTitle("Stop"));
+      await user.click(screen.getByLabelText("Stop"));
 
       await waitFor(() => {
         expect(invoke).toHaveBeenCalledWith("stop_project", {
@@ -110,7 +110,7 @@ describe("ProjectCard", () => {
 
       render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-      await user.click(screen.getByTitle("Restart"));
+      await user.click(screen.getByLabelText("Restart"));
 
       await waitFor(() => {
         expect(invoke).toHaveBeenCalledWith("restart_project", {
@@ -128,7 +128,7 @@ describe("ProjectCard", () => {
 
       render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-      await user.click(screen.getByTitle("Open in browser"));
+      await user.click(screen.getByLabelText("Open in browser"));
 
       await waitFor(() => {
         expect(invoke).toHaveBeenCalledWith("open_project_url", {
@@ -144,8 +144,8 @@ describe("ProjectCard", () => {
 
       render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-      expect(screen.getByTitle("Start")).toBeInTheDocument();
-      expect(screen.getByTitle("Open folder")).toBeInTheDocument();
+      expect(screen.getByLabelText("Start")).toBeInTheDocument();
+      expect(screen.getByLabelText("Open folder")).toBeInTheDocument();
     });
 
     it("should call start_project when start button clicked", async () => {
@@ -157,7 +157,7 @@ describe("ProjectCard", () => {
 
       render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-      await user.click(screen.getByTitle("Start"));
+      await user.click(screen.getByLabelText("Start"));
 
       await waitFor(() => {
         expect(invoke).toHaveBeenCalledWith("start_project", {
@@ -175,7 +175,7 @@ describe("ProjectCard", () => {
 
       render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-      await user.click(screen.getByTitle("Open folder"));
+      await user.click(screen.getByLabelText("Open folder"));
 
       await waitFor(() => {
         expect(invoke).toHaveBeenCalledWith("open_project_folder", {
@@ -191,7 +191,7 @@ describe("ProjectCard", () => {
 
     render(<ProjectCard project={project} isSelected={false} onSelect={mockOnSelect} />);
 
-    await user.click(screen.getByTitle("Start"));
+    await user.click(screen.getByLabelText("Start"));
 
     // onSelect should not be called because the event propagation is stopped
     expect(mockOnSelect).not.toHaveBeenCalled();

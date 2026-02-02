@@ -14,6 +14,7 @@ import {
   Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { Tabs, type Tab } from "@/components/ui/Tabs";
 import { listen } from "@tauri-apps/api/event";
 import { AddonsSection } from "@/components/addons/AddonsSection";
@@ -319,11 +320,18 @@ export function ProjectDetails() {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div className="border-b border-gray-200 p-4 dark:border-gray-800">
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-start gap-4">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <div className={cn("h-3 w-3 rounded-full", getStatusBgColor(project.status))} />
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              <Tooltip content={project.status.charAt(0).toUpperCase() + project.status.slice(1)}>
+                <div
+                  className={cn(
+                    "h-3 w-3 flex-shrink-0 rounded-full",
+                    getStatusBgColor(project.status)
+                  )}
+                />
+              </Tooltip>
+              <h2 className="truncate text-xl font-semibold text-gray-900 dark:text-gray-100">
                 {project.name}
               </h2>
             </div>
@@ -353,7 +361,47 @@ export function ProjectDetails() {
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-shrink-0 items-center gap-1">
+            {/* Quick actions - icon only with tooltips */}
+            {isRunning && project.primary_url && (
+              <Tooltip content="Open Site">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => openUrl.mutate(project.primary_url)}
+                  aria-label="Open Site"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </Tooltip>
+            )}
+            <Tooltip content="Open Folder">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => openFolder.mutate(project.approot)}
+                aria-label="Open Folder"
+              >
+                <Folder className="h-4 w-4" />
+              </Button>
+            </Tooltip>
+            {isRunning && project.mailpit_https_url && (
+              <Tooltip content="Mailpit">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => openUrl.mutate(project.mailpit_https_url)}
+                  aria-label="Mailpit"
+                >
+                  <Mail className="h-4 w-4" />
+                </Button>
+              </Tooltip>
+            )}
+
+            {/* Divider */}
+            <div className="mx-1 h-6 w-px bg-gray-300 dark:bg-gray-700" />
+
+            {/* Start/Stop/Restart buttons */}
             {isRunning ? (
               <>
                 <Button
@@ -389,40 +437,6 @@ export function ProjectDetails() {
           </div>
         </div>
       </div>
-
-      {/* Quick Actions Bar */}
-      {isRunning && (
-        <div className="flex flex-wrap gap-2 border-b border-gray-200 bg-gray-50 px-4 py-6 dark:border-gray-800 dark:bg-gray-900/50">
-          {project.primary_url && (
-            <Button
-              variant="secondary"
-              onClick={() => openUrl.mutate(project.primary_url)}
-              icon={<ExternalLink className="h-4 w-4" />}
-              className="shadow-sm"
-            >
-              Open Site
-            </Button>
-          )}
-          <Button
-            variant="secondary"
-            onClick={() => openFolder.mutate(project.approot)}
-            icon={<Folder className="h-4 w-4" />}
-            className="shadow-sm"
-          >
-            Open Folder
-          </Button>
-          {project.mailpit_https_url && (
-            <Button
-              variant="secondary"
-              onClick={() => openUrl.mutate(project.mailpit_https_url)}
-              icon={<Mail className="h-4 w-4" />}
-              className="shadow-sm"
-            >
-              Mailpit
-            </Button>
-          )}
-        </div>
-      )}
 
       {/* Tab Bar */}
       <Tabs
