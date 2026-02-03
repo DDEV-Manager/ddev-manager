@@ -12,5 +12,5 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
-          repository: DDEV-Manager/ddev-manager-site
+          repository: DDEV-Manager/ddev-manager.github.io
           event-type: release-published
