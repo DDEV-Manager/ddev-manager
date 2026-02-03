@@ -1,0 +1,16 @@
+name: Trigger Website Rebuild
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  trigger-rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger website rebuild
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.WEBSITE_DEPLOY_TOKEN }}
+          repository: DDEV-Manager/ddev-manager-site
+          event-type: release-published
