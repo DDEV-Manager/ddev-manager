@@ -224,11 +224,46 @@ describe("EnvironmentTab", () => {
       // Just check the services heading exists and web service is shown
     });
 
-    it("should not render services section when empty", () => {
+    it("should still render services section when docker services are empty", () => {
       const project = createMockProjectDetails({ services: {} });
       render(<EnvironmentTab {...defaultProps} project={project} />);
 
-      expect(screen.queryByText("Services")).not.toBeInTheDocument();
+      // Services section always shows because of Xdebug control
+      expect(screen.getByText("Services")).toBeInTheDocument();
+      expect(screen.getByText("Xdebug")).toBeInTheDocument();
+      // Xhgui toggle only shows when xhgui is in services
+      expect(screen.queryByText("Xhgui")).not.toBeInTheDocument();
+      // But no Docker service items
+      expect(screen.queryByText("web")).not.toBeInTheDocument();
+    });
+
+    it("should show xhgui toggle only when xhgui service is installed", () => {
+      const project = createMockProjectDetails({
+        services: {
+          web: {
+            short_name: "web",
+            full_name: "ddev-test-web",
+            image: "ddev/ddev-webserver:v1.23.0",
+            status: "running",
+            exposed_ports: "80,443",
+            host_ports: "",
+            host_ports_mapping: [],
+          },
+          xhgui: {
+            short_name: "xhgui",
+            full_name: "ddev-test-xhgui",
+            image: "ddev/ddev-xhgui:v1.23.0",
+            status: "running",
+            exposed_ports: "80",
+            host_ports: "",
+            host_ports_mapping: [],
+          },
+        },
+      });
+      render(<EnvironmentTab {...defaultProps} project={project} />);
+
+      expect(screen.getByText("XHGui")).toBeInTheDocument();
+      expect(screen.getByRole("switch", { name: /xhgui/i })).toBeInTheDocument();
     });
 
     it("should show running indicator for running services", () => {

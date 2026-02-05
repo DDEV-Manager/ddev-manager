@@ -7,9 +7,17 @@ interface ToggleProps {
   disabled?: boolean;
   size?: "sm" | "md";
   label?: string;
+  labelledBy?: string;
 }
 
-export function Toggle({ enabled, onChange, disabled = false, size = "md", label }: ToggleProps) {
+export function Toggle({
+  enabled,
+  onChange,
+  disabled = false,
+  size = "md",
+  label,
+  labelledBy,
+}: ToggleProps) {
   // Thumb starts at left-0.5 (2px). When enabled, translate by (track - thumb - 4px padding)
   // sm: 36px - 16px - 4px = 16px
   // md: 44px - 20px - 4px = 20px
@@ -43,6 +51,7 @@ export function Toggle({ enabled, onChange, disabled = false, size = "md", label
       role="switch"
       aria-checked={enabled}
       aria-label={label}
+      aria-labelledby={labelledBy}
       disabled={disabled}
       onClick={() => onChange(!enabled)}
       onKeyDown={handleKeyDown}

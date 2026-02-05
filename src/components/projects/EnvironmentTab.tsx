@@ -8,13 +8,15 @@ import {
   Download,
   ExternalLink,
 } from "lucide-react";
-import { useState } from "react";
-import { useOpenUrl, useOpenFolder } from "@/hooks/useDdev";
+import { useState, useCallback } from "react";
+import { useOpenUrl, useOpenFolder, useToggleService } from "@/hooks/useDdev";
 import { ProjectScreenshot } from "./ProjectScreenshot";
 import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { Accordion } from "@/components/ui/Accordion";
 import { cn } from "@/lib/utils";
+import { toast } from "@/stores/toastStore";
 import type { DdevProjectDetails } from "@/types/ddev";
 
 interface EnvironmentTabProps {
@@ -46,7 +48,39 @@ export function EnvironmentTab({
   onExportDb,
 }: EnvironmentTabProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [togglingService, setTogglingService] = useState<string | null>(null);
   const openFolder = useOpenFolder();
+  const openUrl = useOpenUrl();
+  const toggleService = useToggleService();
+
+  const handleToggle = useCallback(
+    async (service: string, label: string, enable: boolean) => {
+      setTogglingService(service);
+      try {
+        await toggleService.mutateAsync({
+          name: project.name,
+          approot: project.approot,
+          service,
+          enable,
+        });
+        const action = enable ? "enabled" : "disabled";
+        toast.success(`${label} ${action}`, "Command completed successfully");
+        // DDEV automatically disables xdebug when enabling xhgui to avoid PHP engine conflicts
+        if (enable && service === "xhgui" && project.xdebug_enabled) {
+          toast.info(
+            "Xdebug was automatically disabled",
+            "Running both may cause PHP engine conflicts"
+          );
+        }
+      } catch {
+        const action = enable ? "enable" : "disable";
+        toast.error(`Failed to ${action} ${label}`, "Check the terminal for details");
+      } finally {
+        setTogglingService(null);
+      }
+    },
+    [project.name, project.approot, project.xdebug_enabled, toggleService]
+  );
 
   // Get additional URLs (excluding primary)
   const additionalUrls = project.urls?.slice(1) || [];
@@ -212,32 +246,93 @@ export function EnvironmentTab({
       </div>
 
       {/* Services */}
-      {project.services && Object.keys(project.services).length > 0 && (
-        <section>
-          <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Services</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {Object.entries(project.services).map(([name, service]) => {
-              const statusLabel = service.status.charAt(0).toUpperCase() + service.status.slice(1);
-              return (
+      <section>
+        <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Services</h3>
+        <div className="grid grid-cols-2 gap-2">
+          {/* Toggleable services */}
+          {[
+            {
+              service: "xdebug",
+              label: "Xdebug",
+              enabled: project.xdebug_enabled,
+            },
+            // Only show xhgui toggle if it's installed as a service
+            ...(project.services?.xhgui
+              ? [
+                  {
+                    service: "xhgui",
+                    label: "XHGui",
+                    enabled: project.xhgui_status === "enabled",
+                    url: project.xhgui_https_url,
+                  },
+                ]
+              : []),
+          ].map(({ service, label, enabled, url }) => (
+            <div
+              key={service}
+              className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900"
+            >
+              <div className="flex items-center gap-2">
                 <div
-                  key={name}
-                  className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900"
-                >
-                  <Tooltip content={statusLabel} position="right">
+                  aria-hidden="true"
+                  className={cn("h-2 w-2 rounded-full", enabled ? "bg-green-500" : "bg-gray-400")}
+                />
+                <span id={`${service}-label`} className="text-sm text-gray-700 dark:text-gray-300">
+                  {label}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {url && enabled && isRunning && (
+                  <Tooltip content={`Open ${label}`}>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => openUrl.mutate(url)}
+                      icon={<ExternalLink className="h-3.5 w-3.5 text-gray-400" />}
+                      aria-label={`Open ${label}`}
+                    />
+                  </Tooltip>
+                )}
+                <Toggle
+                  size="sm"
+                  enabled={enabled}
+                  disabled={!isRunning || isOperationPending || togglingService !== null}
+                  onChange={(newEnabled) => handleToggle(service, label, newEnabled)}
+                  label={`${label}: ${enabled ? "enabled" : "disabled"}`}
+                  labelledBy={`${service}-label`}
+                />
+              </div>
+            </div>
+          ))}
+
+          {/* Docker services (excluding xhgui which has its own toggle above) */}
+          {project.services &&
+            Object.entries(project.services)
+              .filter(([name]) => name !== "xhgui")
+              .map(([name, service]) => {
+                const statusLabel =
+                  service.status.charAt(0).toUpperCase() + service.status.slice(1);
+                return (
+                  <div
+                    key={name}
+                    className="flex items-center gap-2 rounded-lg bg-gray-50 p-2 dark:bg-gray-900"
+                  >
                     <div
+                      aria-hidden="true"
                       className={cn(
                         "h-2 w-2 rounded-full",
                         service.status === "running" ? "bg-green-500" : "bg-gray-400"
                       )}
                     />
-                  </Tooltip>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{name}</span>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {name}
+                      <span className="sr-only"> ({statusLabel})</span>
+                    </span>
+                  </div>
+                );
+              })}
+        </div>
+      </section>
 
       {/* Location */}
       <section>
