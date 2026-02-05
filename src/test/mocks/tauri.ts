@@ -122,4 +122,5 @@ export const defaultInvokeHandlers = {
   create_snapshot: "snapshot-20240101-120000",
   restore_snapshot: "Snapshot restored successfully",
   list_snapshots: "",
+  toggle_service: undefined,
 };

@@ -1,9 +1,10 @@
 use std::thread;
 use tauri::{Emitter, Window};
+use tokio::process::Command as AsyncCommand;
 
 use crate::ddev::{
-    get_ddev_command, get_enhanced_path, run_ddev_command_streaming, run_ddev_json_command_async,
-    run_streaming_command,
+    get_ddev_base_args, get_ddev_command, get_enhanced_path, run_ddev_command_streaming,
+    run_ddev_json_command_async, run_streaming_command,
 };
 use crate::error::DdevError;
 use crate::process::{
@@ -20,7 +21,42 @@ pub async fn list_projects() -> Result<Vec<DdevProjectBasic>, DdevError> {
 /// Get detailed information about a specific project
 #[tauri::command]
 pub async fn describe_project(name: String) -> Result<DdevProjectDetails, DdevError> {
-    run_ddev_json_command_async(&["describe", &name]).await
+    let mut details: DdevProjectDetails = run_ddev_json_command_async(&["describe", &name]).await?;
+
+    // Override xdebug_enabled with runtime status when project is running,
+    // because `ddev describe` reports the config value (xdebug_enabled in .ddev/config.yaml)
+    // while `ddev xdebug on/off` only changes runtime state.
+    if details.status == "running" {
+        if let Ok(runtime_enabled) = check_xdebug_runtime(&details.approot).await {
+            details.xdebug_enabled = runtime_enabled;
+        }
+    }
+
+    Ok(details)
+}
+
+/// Check xdebug runtime status by running `ddev xdebug status`
+async fn check_xdebug_runtime(approot: &str) -> Result<bool, DdevError> {
+    let ddev_cmd = get_ddev_command();
+    let enhanced_path = get_enhanced_path();
+
+    let base_args: Vec<String> = get_ddev_base_args().iter().map(|s| s.to_string()).collect();
+    let mut full_args: Vec<String> = base_args;
+    full_args.push("xdebug".to_string());
+    full_args.push("status".to_string());
+
+    let output = AsyncCommand::new(&ddev_cmd)
+        .args(&full_args)
+        .current_dir(approot)
+        .env("PATH", &enhanced_path)
+        .output()
+        .await
+        .map_err(|e| DdevError::IoError(e.to_string()))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let combined = format!("{}{}", stdout, stderr).to_lowercase();
+    Ok(combined.contains("xdebug enabled"))
 }
 
 /// Start a DDEV project (non-blocking, streams output via events)
@@ -218,6 +254,116 @@ fn change_project_config(
     });
 
     Ok(process_id)
+}
+
+/// Toggle a DDEV service on or off (e.g. xdebug, xhgui)
+/// Uses async command that waits for process exit directly, avoiding pipe-hang issues
+/// where subprocesses (like docker exec) inherit stdout/stderr file descriptors.
+/// Captures output and emits it via window events for terminal display.
+#[tauri::command]
+pub async fn toggle_service(
+    window: Window,
+    _name: String,
+    approot: String,
+    service: String,
+    enable: bool,
+) -> Result<(), DdevError> {
+    let action = if enable { "on" } else { "off" };
+    let ddev_cmd = get_ddev_command();
+    let enhanced_path = get_enhanced_path();
+
+    let base_args: Vec<String> = get_ddev_base_args().iter().map(|s| s.to_string()).collect();
+    let mut full_args: Vec<String> = base_args;
+    full_args.push(service.clone());
+    full_args.push(action.to_string());
+
+    let _ = window.emit(
+        "command-status",
+        CommandStatus {
+            command: format!("toggle-{}", service),
+            project: _name.clone(),
+            status: "started".to_string(),
+            message: Some(format!("Running: ddev {} {}", service, action)),
+            process_id: None,
+        },
+    );
+
+    let output = AsyncCommand::new(&ddev_cmd)
+        .args(&full_args)
+        .current_dir(&approot)
+        .env("PATH", &enhanced_path)
+        .output()
+        .await
+        .map_err(|e| {
+            let _ = window.emit(
+                "command-status",
+                CommandStatus {
+                    command: format!("toggle-{}", service),
+                    project: _name.clone(),
+                    status: "error".to_string(),
+                    message: Some(format!("Failed to run ddev {} {}", service, action)),
+                    process_id: None,
+                },
+            );
+            if e.kind() == std::io::ErrorKind::NotFound {
+                DdevError::NotInstalled
+            } else {
+                DdevError::IoError(e.to_string())
+            }
+        })?;
+
+    // Emit captured stdout
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    for line in stdout.lines() {
+        let _ = window.emit(
+            "command-output",
+            CommandOutput {
+                line: line.to_string(),
+                stream: "stdout".to_string(),
+            },
+        );
+    }
+
+    // Emit captured stderr
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    for line in stderr.lines() {
+        let _ = window.emit(
+            "command-output",
+            CommandOutput {
+                line: line.to_string(),
+                stream: "stderr".to_string(),
+            },
+        );
+    }
+
+    if output.status.success() {
+        let _ = window.emit(
+            "command-status",
+            CommandStatus {
+                command: format!("toggle-{}", service),
+                project: _name,
+                status: "finished".to_string(),
+                message: Some(format!("ddev {} {} completed", service, action)),
+                process_id: None,
+            },
+        );
+        Ok(())
+    } else {
+        let _ = window.emit(
+            "command-status",
+            CommandStatus {
+                command: format!("toggle-{}", service),
+                project: _name,
+                status: "error".to_string(),
+                message: Some(format!("ddev {} {} failed", service, action)),
+                process_id: None,
+            },
+        );
+        Err(DdevError::CommandFailed(format!(
+            "ddev {} {} failed",
+            service, action
+        )))
+    }
 }
 
 /// Change the PHP version for a DDEV project

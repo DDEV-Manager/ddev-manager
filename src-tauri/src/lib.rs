@@ -157,6 +157,7 @@ pub fn run() {
             poweroff,
             change_php_version,
             change_nodejs_version,
+            toggle_service,
             // Snapshots
             list_snapshots,
             create_snapshot,

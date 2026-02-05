@@ -373,6 +373,35 @@ export function useChangePhpVersion() {
   });
 }
 
+// Toggle a DDEV service on/off (async, waits for completion)
+export function useToggleService() {
+  const queryClient = useQueryClient();
+  const { open, autoOpen } = useTerminalStore();
+
+  return useMutation({
+    mutationFn: async ({
+      name,
+      approot,
+      service,
+      enable,
+    }: {
+      name: string;
+      approot: string;
+      service: string;
+      enable: boolean;
+    }) => {
+      if (autoOpen) open();
+      return invoke<void>("toggle_service", { name, approot, service, enable });
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate both the project list and the specific project details
+      // so the xdebug runtime status is re-fetched via describe_project
+      queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      queryClient.invalidateQueries({ queryKey: queryKeys.project(variables.name) });
+    },
+  });
+}
+
 // Change Node.js version (non-blocking, command runs in background)
 export function useChangeNodejsVersion() {
   const queryClient = useQueryClient();
