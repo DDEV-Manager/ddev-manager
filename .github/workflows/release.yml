@@ -61,9 +61,9 @@ jobs:
             args: ''
             rust_targets: ''
           - name: linux-arm64
-            platform: ubuntu-24.04-arm64
-            args: ''
-            rust_targets: ''
+            platform: ubuntu-22.04
+            args: '--target aarch64-unknown-linux-gnu --bundles deb'
+            rust_targets: 'aarch64-unknown-linux-gnu'
           - name: windows-x64
             platform: windows-latest
             args: ''
@@ -109,6 +109,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Setup ARM64 cross-compilation
+        if: steps.should_run.outputs.skip != 'true' && matrix.name == 'linux-arm64'
+        run: |
+          sudo dpkg --add-architecture arm64
+          # Restrict existing sources to amd64 only
+          sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+          # Add arm64 sources from ports.ubuntu.com
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
+          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/arm64.list
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu libwebkit2gtk-4.1-dev:arm64 libssl-dev:arm64 librsvg2-dev:arm64 libappindicator3-dev:arm64
+
+      - name: Configure ARM64 environment
+        if: steps.should_run.outputs.skip != 'true' && matrix.name == 'linux-arm64'
+        run: |
+          echo "PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu/" >> $GITHUB_ENV
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+
       - name: Install dependencies
         if: steps.should_run.outputs.skip != 'true'
         run: pnpm install
@@ -138,7 +157,7 @@ jobs:
             | Windows | x64 | `.msi` or `.exe` |
             | Windows | ARM64 | `.exe` |
             | Linux | x64 | `.deb` or `.AppImage` |
-            | Linux | ARM64 | `.deb` or `.AppImage` |
+            | Linux | ARM64 | `.deb` |
 
             ---
             **macOS users**: Run `xattr -cr "/Applications/DDEV Manager.app"` if blocked by Gatekeeper.
