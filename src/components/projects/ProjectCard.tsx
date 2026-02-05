@@ -11,6 +11,7 @@ import {
   useOpenUrl,
   useOpenFolder,
 } from "@/hooks/useDdev";
+import { useStatusStore } from "@/stores/statusStore";
 import type { DdevProjectBasic } from "@/types/ddev";
 
 interface ProjectCardProps {
@@ -29,8 +30,12 @@ export const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(function
   const openUrl = useOpenUrl();
   const openFolder = useOpenFolder();
 
+  const { isRunning: isStatusRunning, project: statusProject } = useStatusStore();
+  const isProjectBusy = isStatusRunning && statusProject === project.name;
+
   const isRunning = project.status === "running";
-  const isPending = startProject.isPending || stopProject.isPending || restartProject.isPending;
+  const isPending =
+    startProject.isPending || stopProject.isPending || restartProject.isPending || isProjectBusy;
 
   const handleStart = (e: React.MouseEvent) => {
     e.stopPropagation();

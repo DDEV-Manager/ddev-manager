@@ -44,6 +44,7 @@ import {
 } from "@/hooks/useDdev";
 import { useCaptureScreenshot } from "@/hooks/useScreenshot";
 import { useAppStore } from "@/stores/appStore";
+import { useStatusStore } from "@/stores/statusStore";
 import { cn, getStatusBgColor, formatProjectType } from "@/lib/utils";
 import { toast } from "@/stores/toastStore";
 
@@ -93,8 +94,10 @@ export function ProjectDetails() {
   const selectExportDest = useSelectExportDestination();
   const importDb = useImportDb();
   const exportDb = useExportDb();
+  const { isRunning: isStatusRunning, project: statusProject } = useStatusStore();
 
   const hasDatabase = !!project?.dbinfo;
+  const isProjectBusy = isStatusRunning && statusProject === selectedProject;
 
   const projectTabs: Tab[] = useMemo(() => {
     const tabs: Tab[] = [
@@ -313,7 +316,7 @@ export function ProjectDetails() {
   const isRunning = project.status === "running";
   // Only consider operation pending if it's for the current project
   const isCurrentProjectOp = operation.projectName === project.name;
-  const isOperationPending = operation.type !== null && isCurrentProjectOp;
+  const isOperationPending = (operation.type !== null && isCurrentProjectOp) || isProjectBusy;
   const currentOp = isCurrentProjectOp ? operation.type : null;
 
   return (
