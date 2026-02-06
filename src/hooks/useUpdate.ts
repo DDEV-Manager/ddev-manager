@@ -1,8 +1,10 @@
 import { useCallback, useEffect } from "react";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
+import { invoke } from "@tauri-apps/api/core";
 import { useAppStore } from "@/stores/appStore";
 import { useUpdateStore, type UpdateStatus } from "@/stores/updateStore";
+import { detectPlatform } from "@/lib/shortcuts/platform";
 import type { Update } from "@tauri-apps/plugin-updater";
 
 interface UseUpdateReturn {
@@ -10,6 +12,7 @@ interface UseUpdateReturn {
   update: Update | null;
   error: string | null;
   downloadProgress: number;
+  updaterSupported: boolean | null;
   checkForUpdate: () => Promise<void>;
   downloadAndInstall: () => Promise<void>;
   restart: () => Promise<void>;
@@ -19,6 +22,7 @@ export type { UpdateStatus };
 
 // Use a module-level flag to prevent multiple startup checks across component instances
 let startupCheckScheduled = false;
+let updaterSupportChecked = false;
 
 export function useUpdate(): UseUpdateReturn {
   const autoUpdateEnabled = useAppStore((state) => state.autoUpdateEnabled);
@@ -28,11 +32,13 @@ export function useUpdate(): UseUpdateReturn {
   const update = useUpdateStore((state) => state.update);
   const error = useUpdateStore((state) => state.error);
   const downloadProgress = useUpdateStore((state) => state.downloadProgress);
+  const updaterSupported = useUpdateStore((state) => state.updaterSupported);
 
   const setStatus = useUpdateStore((state) => state.setStatus);
   const setUpdate = useUpdateStore((state) => state.setUpdate);
   const setError = useUpdateStore((state) => state.setError);
   const setDownloadProgress = useUpdateStore((state) => state.setDownloadProgress);
+  const setUpdaterSupported = useUpdateStore((state) => state.setUpdaterSupported);
 
   const checkForUpdate = useCallback(async () => {
     setStatus("checking");
@@ -55,6 +61,13 @@ export function useUpdate(): UseUpdateReturn {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
+
+      // "no endpoints" means updater is not configured (dev/local build)
+      if (errorMessage.includes("does not have any endpoints")) {
+        setStatus("not-configured");
+        return;
+      }
+
       setStatus("error");
       setUpdate(null);
       setError(errorMessage || "Failed to check for updates");
@@ -100,10 +113,47 @@ export function useUpdate(): UseUpdateReturn {
     await relaunch();
   }, []);
 
+  // Check if updater is supported on this platform (Linux requires AppImage)
+  useEffect(() => {
+    if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
+      return;
+    }
+
+    if (updaterSupportChecked) {
+      return;
+    }
+    updaterSupportChecked = true;
+
+    const checkUpdaterSupport = async () => {
+      const platform = detectPlatform();
+      if (platform !== "linux") {
+        // Updater is supported on macOS and Windows
+        setUpdaterSupported(true);
+        return;
+      }
+
+      // On Linux, updater only works with AppImage
+      try {
+        const isAppImage = await invoke<boolean>("is_appimage");
+        setUpdaterSupported(isAppImage);
+      } catch {
+        // If we can't determine, assume not supported
+        setUpdaterSupported(false);
+      }
+    };
+
+    checkUpdaterSupport();
+  }, [setUpdaterSupported]);
+
   // Check for updates on startup if enabled
   useEffect(() => {
     // Skip in non-Tauri environment (e.g., tests)
     if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) {
+      return;
+    }
+
+    // Don't check if updater is not supported
+    if (updaterSupported === false) {
       return;
     }
 
@@ -115,13 +165,14 @@ export function useUpdate(): UseUpdateReturn {
       }, 3000);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoUpdateEnabled]);
+  }, [autoUpdateEnabled, updaterSupported]);
 
   return {
     status,
     update,
     error,
     downloadProgress,
+    updaterSupported,
     checkForUpdate,
     downloadAndInstall,
     restart,

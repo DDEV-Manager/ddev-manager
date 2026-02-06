@@ -161,9 +161,11 @@ jobs:
 
             ---
             **macOS users**: Run `xattr -cr "/Applications/DDEV Manager.app"` if blocked by Gatekeeper.
+
+            **Linux users**: Auto-update only works with AppImage. If you installed via `.deb`, download new versions manually.
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }} --config src-tauri/tauri.release.conf.json
+          args: ${{ matrix.args }}
           updaterJsonPreferNsis: true
 
       - name: Upload artifacts (dry run)

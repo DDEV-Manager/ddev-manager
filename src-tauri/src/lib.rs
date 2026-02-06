@@ -176,6 +176,7 @@ pub fn run() {
             get_ddev_version,
             open_project_url,
             open_project_folder,
+            is_appimage,
             sync_theme_menu,
             // Addons
             list_installed_addons,

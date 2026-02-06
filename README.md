@@ -249,6 +249,8 @@ pnpm tauri build
 
 The app includes automatic update checking via Tauri's updater plugin. Updates are signed to ensure authenticity.
 
+> **Linux Users:** Auto-update only works with the **AppImage** format. If you installed via `.deb`, you'll need to download new versions manually from [GitHub Releases](https://github.com/DDEV-Manager/ddev-manager/releases).
+
 **For contributors:**
 - No setup required. The updater won't affect development (`pnpm tauri dev`)
 - The public key in `tauri.conf.json` is safe to keep - it only verifies signatures

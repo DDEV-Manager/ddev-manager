@@ -93,6 +93,20 @@ pub fn open_project_folder(path: String) -> Result<(), DdevError> {
     Ok(())
 }
 
+/// Check if running as AppImage (Linux only)
+/// Returns true if the APPIMAGE environment variable is set
+#[tauri::command]
+pub fn is_appimage() -> bool {
+    #[cfg(target_os = "linux")]
+    {
+        std::env::var("APPIMAGE").is_ok()
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        false
+    }
+}
+
 /// Sync theme menu checkmarks with the current theme
 #[tauri::command]
 pub fn sync_theme_menu(app_handle: tauri::AppHandle, theme: String) -> Result<(), DdevError> {
