@@ -123,4 +123,5 @@ export const defaultInvokeHandlers = {
   restore_snapshot: "Snapshot restored successfully",
   list_snapshots: "",
   toggle_service: undefined,
+  is_appimage: false,
 };

@@ -15,6 +15,7 @@ describe("updateStore", () => {
       expect(state.update).toBeNull();
       expect(state.error).toBeNull();
       expect(state.downloadProgress).toBe(0);
+      expect(state.updaterSupported).toBeNull();
     });
   });
 
@@ -87,6 +88,18 @@ describe("updateStore", () => {
     it("should set download progress to 100", () => {
       useUpdateStore.getState().setDownloadProgress(100);
       expect(useUpdateStore.getState().downloadProgress).toBe(100);
+    });
+  });
+
+  describe("setUpdaterSupported", () => {
+    it("should set updater supported to true", () => {
+      useUpdateStore.getState().setUpdaterSupported(true);
+      expect(useUpdateStore.getState().updaterSupported).toBe(true);
+    });
+
+    it("should set updater supported to false", () => {
+      useUpdateStore.getState().setUpdaterSupported(false);
+      expect(useUpdateStore.getState().updaterSupported).toBe(false);
     });
   });
 

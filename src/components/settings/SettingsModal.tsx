@@ -34,8 +34,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const setAutoUpdateEnabled = useAppStore((state) => state.setAutoUpdateEnabled);
 
   const [appVersion, setAppVersion] = useState<string>("");
-  const { status, update, error, downloadProgress, checkForUpdate, downloadAndInstall, restart } =
-    useUpdate();
+  const {
+    status,
+    update,
+    error,
+    downloadProgress,
+    updaterSupported,
+    checkForUpdate,
+    downloadAndInstall,
+    restart,
+  } = useUpdate();
 
   useEffect(() => {
     getVersion()
@@ -168,16 +176,48 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <span className="font-medium text-gray-900 dark:text-gray-100">v{appVersion}</span>
         </div>
 
-        {/* Auto-update toggle */}
-        <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Check for updates automatically
-          </span>
-          <Toggle enabled={autoUpdateEnabled} onChange={setAutoUpdateEnabled} label="Auto-update" />
-        </div>
+        {/* Auto-update toggle - only show if updater is available */}
+        {updaterSupported !== false && status !== "not-configured" && (
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Check for updates automatically
+            </span>
+            <Toggle
+              enabled={autoUpdateEnabled}
+              onChange={setAutoUpdateEnabled}
+              label="Auto-update"
+            />
+          </div>
+        )}
 
-        {/* Update status */}
-        {status === "available" && update && (
+        {/* Updater not supported message (Linux non-AppImage) */}
+        {updaterSupported === false && (
+          <div className="mb-4 rounded-lg bg-amber-50 p-3 dark:bg-amber-900/20">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              Auto-update is only available for AppImage installations on Linux. Please download new
+              versions manually from{" "}
+              <a
+                href="https://github.com/DDEV-Manager/ddev-manager/releases"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline hover:no-underline"
+              >
+                GitHub Releases
+              </a>
+              .
+            </p>
+          </div>
+        )}
+
+        {/* Updater not configured (dev/local build) */}
+        {status === "not-configured" && (
+          <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+            Updates not available in this build.
+          </p>
+        )}
+
+        {/* Update status - only show if updater is supported */}
+        {updaterSupported !== false && status === "available" && update && (
           <div className="bg-primary-50 dark:bg-primary-900/20 mb-4 rounded-lg p-3">
             <p className="text-primary-800 dark:text-primary-300 text-sm font-medium">
               Update available: v{update.version}
@@ -194,7 +234,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         )}
 
-        {status === "downloading" && (
+        {updaterSupported !== false && status === "downloading" && (
           <div className="bg-primary-50 dark:bg-primary-900/20 mb-4 rounded-lg p-3">
             <p className="text-primary-800 dark:text-primary-300 mb-2 text-sm font-medium">
               Downloading update... {downloadProgress}%
@@ -208,7 +248,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         )}
 
-        {status === "ready" && (
+        {updaterSupported !== false && status === "ready" && (
           <div className="mb-4 rounded-lg bg-green-50 p-3 dark:bg-green-900/20">
             <p className="text-sm font-medium text-green-800 dark:text-green-300">
               Update ready to install
@@ -225,25 +265,27 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         )}
 
-        {status === "error" && error && (
+        {updaterSupported !== false && status === "error" && error && (
           <div className="mb-4 rounded-lg bg-red-50 p-3 dark:bg-red-900/20">
             <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
           </div>
         )}
 
-        {/* Check for updates button */}
-        <Button
-          variant="secondary"
-          size="md"
-          icon={<RefreshCw className={cn("h-4 w-4", status === "checking" && "animate-spin")} />}
-          onClick={checkForUpdate}
-          disabled={status === "checking" || status === "downloading"}
-          className="w-full"
-        >
-          {status === "checking" ? "Checking..." : "Check for Updates"}
-        </Button>
+        {/* Check for updates button - only show if updater is available */}
+        {updaterSupported !== false && status !== "not-configured" && (
+          <Button
+            variant="secondary"
+            size="md"
+            icon={<RefreshCw className={cn("h-4 w-4", status === "checking" && "animate-spin")} />}
+            onClick={checkForUpdate}
+            disabled={status === "checking" || status === "downloading"}
+            className="w-full"
+          >
+            {status === "checking" ? "Checking..." : "Check for Updates"}
+          </Button>
+        )}
 
-        {status === "idle" && (
+        {updaterSupported !== false && status === "idle" && (
           <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
             You&apos;re up to date!
           </p>
